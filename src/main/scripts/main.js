@@ -13,13 +13,15 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration: true,
             contextIsolation: true,
             sandbox: true,
             disableBlinkFeatures: "Auxclick",
+            nodeIntegration: true
         }
     })
 
+    // disable main menu
+    mainWindow.setMenuBarVisibility(false)
 
     // load the index.html of the app.
     mainWindow.loadFile('src/main/html/index.html')
@@ -34,6 +36,12 @@ function createWindow() {
         // when we should delete the corresponding element.
         mainWindow = null
     })
+
+    // Prevent user to initiate any navigation
+    mainWindow.webContents.on("will-navigate", (evt, newURL) => {
+        evt.preventDefault();
+    });
+
 }
 
 // This method will be called when Electron has finished
@@ -53,11 +61,6 @@ app.on('activate', function() {
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) createWindow()
 })
-
-// Prevent user to initiate any navigation
-mainWindow.webContents.on("will-navigate", (evt, newURL) => {
-    evt.preventDefault();
-});
 
 // In this file we can include the rest of the app's specific main process
 // code. We can also put them in separate files and require them here.
