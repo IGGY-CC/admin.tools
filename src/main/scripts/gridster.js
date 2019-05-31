@@ -2,10 +2,10 @@ var gridster = [];
 
 $(function () {
 
-    gridster[0] = $("#demo-1 ul").gridster({
-        namespace: '#demo-1',
+    gridster[0] = $("#left-bar ul").gridster({
+        namespace: '#left-bar',
         widget_base_dimensions: [100, 55],
-        widget_margins: [5, 5]
+        widget_margins: [0, 0]
     }).data('gridster');
 
     gridster[1] = $("#demo-2 ul").gridster({

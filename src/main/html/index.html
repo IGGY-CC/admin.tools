@@ -6,72 +6,36 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'">
     <meta http-equiv="Content-Security-Policy" content="script-src 'nonce-ZXh0ZXJuYWwgc2NyaXB0cw==' 'nonce-aW5saW5lIHNjcmlwdA=='">
     <title>hello, world -> from admin.tools</title>
-    <link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.dsmorse-gridster.min.css" />
-    <link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.gridster.min.css" />
-
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.dsmorse-gridster.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.gridster.min.css" / -->
+    <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" />
     <!-- FIXME: Why should I include jquery script twice, for it to work? -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
     <!-- END: FIXME -->
 
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/gridster/0.7.0/jquery.dsmorse-gridster.with-extras.min.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/simplebar/4.0.0/simplebar.min.js"></script>
 </head>
 
 <body>
     <script nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
         // We can also require other files to run in this process
-        require('../scripts/renderer.js')
+        // require('../scripts/renderer.js')
         // gridster.add_widget('<li class="new">The HTML of the widget...</li>', 2, 1);
     </script>
-
-    <div id="demo-1" class="gridster">
-        <ul>
-            <li data-row="1" data-col="1" data-sizex="2" data-sizey="2">0</li>
-            <li data-row="1" data-col="3" data-sizex="1" data-sizey="2">1</li>
-            <li data-row="1" data-col="4" data-sizex="1" data-sizey="1">2</li>
-            <li data-row="3" data-col="2" data-sizex="3" data-sizey="1">3</li>
-            <li data-row="4" data-col="1" data-sizex="1" data-sizey="1">4</li>
-            <li data-row="3" data-col="1" data-sizex="1" data-sizey="1">5</li>
-            <li data-row="4" data-col="2" data-sizex="1" data-sizey="1">6</li>
-            <li data-row="5" data-col="2" data-sizex="1" data-sizey="1">7</li>
-            <li data-row="4" data-col="4" data-sizex="1" data-sizey="1">8</li>
-        </ul>
+    <div class="container">
+        <div class="menu">Menu Bar</div>
+        <div class="tools">Tool Bar</div>
+        <div data-simplebar class="content">
+            <p >Content</p>
+        </div>
+        <div class="notes">Notes / Annotations</div>
+        <div class="status">Status Bar</div>
     </div>
-    
-    <h2>Demo 2</h2>
-    
-    <div id="demo-2" class="gridster">
-        <ul>
-            <li data-row="1" data-col="1" data-sizex="2" data-sizey="2">0</li>
-            <li data-row="1" data-col="3" data-sizex="1" data-sizey="2">1</li>
-            <li data-row="1" data-col="4" data-sizex="1" data-sizey="1">2</li>
-            <li data-row="3" data-col="2" data-sizex="3" data-sizey="1">3</li>
-            <li data-row="4" data-col="1" data-sizex="1" data-sizey="1">4</li>
-            <li data-row="3" data-col="1" data-sizex="1" data-sizey="1">5</li>
-            <li data-row="4" data-col="2" data-sizex="1" data-sizey="1">6</li>
-            <li data-row="5" data-col="2" data-sizex="1" data-sizey="1">7</li>
-            <li data-row="4" data-col="4" data-sizex="1" data-sizey="1">8</li>
-        </ul>
-    </div>
-
-    <h2>Demo 3</h2>
-    
-    <div id="demo-1" class="gridster">
-        <ul>
-            <li data-row="1" data-col="1" data-sizex="2" data-sizey="2">0</li>
-            <li data-row="1" data-col="3" data-sizex="1" data-sizey="2">1</li>
-            <li data-row="1" data-col="4" data-sizex="1" data-sizey="1">2</li>
-            <li data-row="3" data-col="2" data-sizex="3" data-sizey="1">3</li>
-            <li data-row="4" data-col="1" data-sizex="1" data-sizey="1">4</li>
-            <li data-row="3" data-col="1" data-sizex="1" data-sizey="1">5</li>
-            <li data-row="4" data-col="2" data-sizex="1" data-sizey="1">6</li>
-            <li data-row="5" data-col="2" data-sizex="1" data-sizey="1">7</li>
-            <li data-row="4" data-col="4" data-sizex="1" data-sizey="1">8</li>
-        </ul>
-    </div>
-
-    <script type="text/javascript" id="code" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
-        require("../scripts/gridster.js")
+    <script type="text/javascript" id="code" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/gridster.js">
+        // require("../scripts/gridster.js")
     </script>
 </body>
 </html>
