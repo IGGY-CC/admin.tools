@@ -1,0 +1,32 @@
+{
+    "name": "admin.tools",
+    "version": "1.0.0",
+    "description": "A GUI with majority of system and server administration tools",
+    "main": "src/main/scripts/main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "repository": "https://github.com/the-admin-tools/admin.tools.git",
+    "keywords": [
+        "SystemAdmin GUI",
+        "Server Administration",
+        "System Administration",
+        "Network Administration",
+        "Virtualbox Management",
+        "Container Management",
+        "Cloud Server Management",
+        "Terminal",
+        "Cluster Terminal",
+        "Advanced Monitoring",
+        "AI & ML based reporting",
+        "Database Administration"
+    ],
+    "author": "Aditya Naga Sanjeevi, Yellapu",
+    "license": "MIT",
+    "devDependencies": {
+        "@doyensec/electronegativity": "^1.2.1",
+        "electron": "^5.0.2",
+        "electron-reload": "^1.4.0"
+    },
+    "dependencies": {}
+}
