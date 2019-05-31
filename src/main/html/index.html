@@ -10,6 +10,8 @@
     <link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.gridster.min.css" / -->
     <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
     <link rel="stylesheet" type="text/css" href="../styles/main.css" />
+    <link rel="stylesheet" type="text/css" href="../../plugins/photon/0.1.2/css/photon.min.css" />
+
     <!-- FIXME: Why should I include jquery script twice, for it to work? -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
@@ -27,9 +29,30 @@
     </script>
     <div class="container">
         <div class="menu">Menu Bar</div>
-        <div class="tools">Tool Bar</div>
+        <div id="main-tool-menu" class="tools gridster">
+            <div class="toolbar-actions zero-out">
+                <ul class="zero-out">
+                    <li data-row="1" data-col="1" data-sizex="2" data-sizey="2"
+                        class="zero-out">
+                        <div class="btn-group zero-out">
+                            <button class="active btn btn-mini btn-default">
+                                <span class="icon icon-home"></span>
+                            </button>
+                        </div>
+                    </li>
+                    <li data-row="2" data-col="1" data-sizex="2" data-sizey="2"
+                        class="zero-out">
+                        <div class="btn-group zero-out">
+                            <button class="btn btn-mini btn-default">
+                                <span class="icon icon-credit-card"></span>
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
         <div data-simplebar class="content">
-            <p >Content</p>
+            <p>Content</p>
         </div>
         <div class="notes">Notes / Annotations</div>
         <div class="status">Status Bar</div>
