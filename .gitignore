@@ -59,3 +59,9 @@ typings/
 
 # next.js build output
 .next
+
+# remove package-lock
+package-lock.json
+
+# remove release files
+releases.*.json
