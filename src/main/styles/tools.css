@@ -1,0 +1,42 @@
+#the-tool-bar {
+    display: flex;
+    flex-direction: column;
+    flex-basis: content;
+    flex-wrap: nowrap;
+}
+
+.tool-nav-bar {
+    height: 100%;
+}
+
+.menu-item {
+    margin: 2px;
+    min-height: 26px;
+    height: 26px;
+    min-width: 26px;
+    width: 26px;
+    background-color: #1f1f1f;
+    border: 1px solid #0f0f0f;
+}
+
+.btn {
+    /* text-shadow: 1px 1px 1px #cfcfcf; */
+    line-height: 26px;
+    vertical-align: middle;
+    min-width: 100%;
+    min-height: 100%;
+    vertical-align: middle;
+    font-size: 14px;
+    color: #aaa;
+    text-align: center;
+}
+
+.toolbar-spacer {
+    margin: 8px 4px 8px 4px;
+}
+
+hr {
+    height: 1px;
+    background-color: #0f0f0f;
+    border: 0px;
+}
