@@ -3,6 +3,10 @@
 const {app, BrowserWindow} = require('electron')
 require('electron-reload')(__dirname)
 
+// var ppapiPath = __dirname + '\\..\\..\\plugins\\pnacl\\ssh_client\\ssh_client.nmf';
+// console.log('PPAPI path ' + ppapiPath);
+// app.commandLine.appendSwitch('register-pepper-plugins', ppapiPath + ';application/x-nacl');
+
 // Keep a global reference of the window object, if we don't, the window 
 // will be closed automatically when the JavaScript object is garbage collected.
 let mainWindow

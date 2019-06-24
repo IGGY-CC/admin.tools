@@ -1,0 +1,14 @@
+#terminal {
+    width: 80%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+}
+
+.base-terminal::-webkit-scrollbar {
+    width: 4px;
+    background-color: black;
+    scrollbar: hidden;
+    overflow-y: scroll;
+}

@@ -1,0 +1,18 @@
+{
+  "name": "hterm",
+  "version": "1.0.0",
+  "description": "hterm is a JS library that provides a terminal emulator.  It is reasonably fast, reasonably correct, and reasonably portable across browsers.",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4"
+  }
+}

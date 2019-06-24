@@ -1,0 +1,484 @@
+// Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+'use strict';
+
+/**
+ * @fileoverview Declares the hterm.* namespace and some basic shared utilities
+ * that are too small to deserve dedicated files.
+ */
+var hterm = {};
+
+/**
+ * The type of window hosting hterm.
+ *
+ * This is set as part of hterm.init().  The value is invalid until
+ * initialization completes.
+ */
+hterm.windowType = null;
+
+/**
+ * The OS we're running under.
+ *
+ * Used when setting up OS-specific behaviors.
+ *
+ * This is set as part of hterm.init().  The value is invalid until
+ * initialization completes.
+ */
+hterm.os = null;
+
+/**
+ * Warning message to display in the terminal when browser zoom is enabled.
+ *
+ * You can replace it with your own localized message.
+ */
+hterm.zoomWarningMessage = 'ZOOM != 100%';
+
+/**
+ * Brief overlay message displayed when text is copied to the clipboard.
+ *
+ * By default it is the unicode BLACK SCISSORS character, but you can
+ * replace it with your own localized message.
+ *
+ * This is only displayed when the 'enable-clipboard-notice' preference
+ * is enabled.
+ */
+hterm.notifyCopyMessage = '\u2702';
+
+
+/**
+ * Text shown in a desktop notification for the terminal
+ * bell.  \u226a is a unicode EIGHTH NOTE, %(title) will
+ * be replaced by the terminal title.
+ */
+hterm.desktopNotificationTitle = '\u266A %(title) \u266A';
+
+/**
+ * The hterm init function, registered with lib.registerInit().
+ *
+ * This is called during lib.init().
+ *
+ * @param {function} onInit The function lib.init() wants us to invoke when
+ *     initialization is complete.
+ */
+lib.registerInit('hterm', function(onInit) {
+  function initOs(os) {
+    hterm.os = os;
+
+    onInit();
+  }
+
+  function initMessageManager() {
+    lib.i18n.getAcceptLanguages((languages) => {
+      if (!hterm.messageManager)
+        hterm.messageManager = new lib.MessageManager(languages);
+
+      // If OS detection fails, then we'll still set the value to something.
+      // The OS logic in hterm tends to be best effort anyways.
+      lib.f.getOs().then(initOs).catch(initOs);
+    });
+  }
+
+  function onWindow(window) {
+    hterm.windowType = window.type;
+    initMessageManager();
+  }
+
+  function onTab(tab) {
+    if (tab && window.chrome) {
+      chrome.windows.get(tab.windowId, null, onWindow);
+    } else {
+      // TODO(rginda): This is where we end up for a v1 app's background page.
+      // Maybe windowType = 'none' would be more appropriate, or something.
+      hterm.windowType = 'normal';
+      initMessageManager();
+    }
+  }
+
+  if (!hterm.defaultStorage) {
+    if (window.chrome && chrome.storage && chrome.storage.sync) {
+      hterm.defaultStorage = new lib.Storage.Chrome(chrome.storage.sync);
+    } else {
+      hterm.defaultStorage = new lib.Storage.Local();
+    }
+  }
+
+  // The chrome.tabs API is not supported in packaged apps, and detecting if
+  // you're a packaged app is a little awkward.
+  var isPackagedApp = false;
+  if (window.chrome && chrome.runtime && chrome.runtime.getManifest) {
+    var manifest = chrome.runtime.getManifest();
+    isPackagedApp = manifest.app && manifest.app.background;
+  }
+
+  if (isPackagedApp) {
+    // Packaged apps are never displayed in browser tabs.
+    setTimeout(onWindow.bind(null, {type: 'popup'}), 0);
+  } else {
+    if (window.chrome && chrome.tabs) {
+      // The getCurrent method gets the tab that is "currently running", not the
+      // topmost or focused tab.
+      chrome.tabs.getCurrent(onTab);
+    } else {
+      setTimeout(onWindow.bind(null, {type: 'normal'}), 0);
+    }
+  }
+});
+
+/**
+ * Return decimal { width, height } for a given dom node.
+ */
+hterm.getClientSize = function(dom) {
+  return dom.getBoundingClientRect();
+};
+
+/**
+ * Return decimal width for a given dom node.
+ */
+hterm.getClientWidth = function(dom) {
+  return dom.getBoundingClientRect().width;
+};
+
+/**
+ * Return decimal height for a given dom node.
+ */
+hterm.getClientHeight = function(dom) {
+  return dom.getBoundingClientRect().height;
+};
+
+/**
+ * Copy the specified text to the system clipboard.
+ *
+ * We'll create selections on demand based on the content to copy.
+ *
+ * @param {HTMLDocument} document The document with the selection to copy.
+ * @param {string} str The string data to copy out.
+ */
+hterm.copySelectionToClipboard = function(document, str) {
+  // Request permission if need be.
+  const requestPermission = () => {
+    // Use the Permissions API if available.
+    if (navigator.permissions && navigator.permissions.query) {
+      return navigator.permissions.query({name: 'clipboard-write'})
+        .then((status) => {
+          const checkState = (resolve, reject) => {
+            switch (status.state) {
+              case 'granted':
+                return resolve();
+              case 'denied':
+                return reject();
+              default:
+                // Wait for the user to approve/disprove.
+                return new Promise((resolve, reject) => {
+                  status.onchange = () => checkState(resolve, reject);
+                });
+            }
+          };
+
+          return new Promise(checkState);
+        })
+        // If the platform doesn't support "clipboard-write", or is denied,
+        // we move on to the copying step anyways.
+        .catch(() => Promise.resolve());
+    } else {
+      // No permissions API, so resolve right away.
+      return Promise.resolve();
+    }
+  };
+
+  // Write to the clipboard.
+  const writeClipboard = () => {
+    // Use the Clipboard API if available.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // If this fails (perhaps due to focus changing windows), fallback to the
+      // legacy copy method.
+      return navigator.clipboard.writeText(str)
+        .catch(execCommand);
+    } else {
+      // No Clipboard API, so use the old execCommand style.
+      return execCommand();
+    }
+  };
+
+  // Write to the clipboard using the legacy execCommand method.
+  // TODO: Once we can rely on the Clipboard API everywhere, we can simplify
+  // this a lot by deleting the custom selection logic.
+  const execCommand = () => {
+    const copySource = document.createElement('pre');
+    copySource.id = 'hterm:copy-to-clipboard-source';
+    copySource.textContent = str;
+    copySource.style.cssText = (
+        '-webkit-user-select: text;' +
+        '-moz-user-select: text;' +
+        'position: absolute;' +
+        'top: -99px');
+
+    document.body.appendChild(copySource);
+
+    const selection = document.getSelection();
+    const anchorNode = selection.anchorNode;
+    const anchorOffset = selection.anchorOffset;
+    const focusNode = selection.focusNode;
+    const focusOffset = selection.focusOffset;
+
+    // FF sometimes throws NS_ERROR_FAILURE exceptions when we make this call.
+    // Catch it because a failure here leaks the copySource node.
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1178676
+    try {
+      selection.selectAllChildren(copySource);
+    } catch (ex) {}
+
+    try {
+      document.execCommand('copy');
+    } catch (firefoxException) {
+      // Ignore this. FF throws an exception if there was an error, even
+      // though the spec says just return false.
+    }
+
+    // IE doesn't support selection.extend.  This means that the selection won't
+    // return on IE.
+    if (selection.extend) {
+      // When running in the test harness, we won't have any related nodes.
+      if (anchorNode) {
+        selection.collapse(anchorNode, anchorOffset);
+      }
+      if (focusNode) {
+        selection.extend(focusNode, focusOffset);
+      }
+    }
+
+    copySource.parentNode.removeChild(copySource);
+
+    // Since execCommand is synchronous, resolve right away.
+    return Promise.resolve();
+  };
+
+  // Kick it all off!
+  return requestPermission().then(writeClipboard);
+};
+
+/**
+ * Paste the system clipboard into the element with focus.
+ *
+ * Note: In Chrome/Firefox app/extension environments, you'll need the
+ * "clipboardRead" permission.  In other environments, this might always
+ * fail as the browser frequently blocks access for security reasons.
+ *
+ * @param {HTMLDocument} The document to paste into.
+ * @return {boolean} True if the paste succeeded.
+ */
+hterm.pasteFromClipboard = function(document) {
+  try {
+    return document.execCommand('paste');
+  } catch (firefoxException) {
+    // Ignore this.  FF 40 and older would incorrectly throw an exception if
+    // there was an error instead of returning false.
+    return false;
+  }
+};
+
+/**
+ * Return a formatted message in the current locale.
+ *
+ * @param {string} name The name of the message to return.
+ * @param {Array<string>=} args The message arguments, if required.
+ * @param {string=} string The default message text.
+ * @return {string} The localized message.
+ */
+hterm.msg = function(name, args = [], string) {
+  return hterm.messageManager.get('HTERM_' + name, args, string);
+};
+
+/**
+ * Create a new notification.
+ *
+ * @param {Object} params Various parameters for the notification.
+ * @param {string} params.title The title (defaults to the window's title).
+ * @param {string} params.body The message body (main text).
+ */
+hterm.notify = function(params) {
+  var def = (curr, fallback) => curr !== undefined ? curr : fallback;
+  if (params === undefined || params === null)
+    params = {};
+
+  // Merge the user's choices with the default settings.  We don't take it
+  // directly in case it was stuffed with excess junk.
+  var options = {
+      'body': params.body,
+      'icon': def(params.icon, lib.resource.getDataUrl('hterm/images/icon-96')),
+  };
+
+  var title = def(params.title, window.document.title);
+  if (!title)
+    title = 'hterm';
+  title = lib.f.replaceVars(hterm.desktopNotificationTitle, {'title': title});
+
+  var n = new Notification(title, options);
+  n.onclick = function() {
+    window.focus();
+    this.close();
+  };
+  return n;
+};
+
+/**
+ * Launches url in a new tab.
+ *
+ * @param {string} url URL to launch in a new tab.
+ */
+hterm.openUrl = function(url) {
+  if (window.chrome && chrome.browser && chrome.browser.openTab) {
+    // For Chrome v2 apps, we need to use this API to properly open windows.
+    chrome.browser.openTab({'url': url});
+  } else {
+    const win = lib.f.openWindow(url, '_blank');
+    win.focus();
+  }
+};
+
+/**
+ * Constructor for a hterm.Size record.
+ *
+ * Instances of this class have public read/write members for width and height.
+ *
+ * @param {integer} width The width of this record.
+ * @param {integer} height The height of this record.
+ */
+hterm.Size = function(width, height) {
+  this.width = width;
+  this.height = height;
+};
+
+/**
+ * Adjust the width and height of this record.
+ *
+ * @param {integer} width The new width of this record.
+ * @param {integer} height The new height of this record.
+ */
+hterm.Size.prototype.resize = function(width, height) {
+  this.width = width;
+  this.height = height;
+};
+
+/**
+ * Return a copy of this record.
+ *
+ * @return {hterm.Size} A new hterm.Size instance with the same width and
+ * height.
+ */
+hterm.Size.prototype.clone = function() {
+  return new hterm.Size(this.width, this.height);
+};
+
+/**
+ * Set the height and width of this instance based on another hterm.Size.
+ *
+ * @param {hterm.Size} that The object to copy from.
+ */
+hterm.Size.prototype.setTo = function(that) {
+  this.width = that.width;
+  this.height = that.height;
+};
+
+/**
+ * Test if another hterm.Size instance is equal to this one.
+ *
+ * @param {hterm.Size} that The other hterm.Size instance.
+ * @return {boolean} True if both instances have the same width/height, false
+ *     otherwise.
+ */
+hterm.Size.prototype.equals = function(that) {
+  return this.width == that.width && this.height == that.height;
+};
+
+/**
+ * Return a string representation of this instance.
+ *
+ * @return {string} A string that identifies the width and height of this
+ *     instance.
+ */
+hterm.Size.prototype.toString = function() {
+  return '[hterm.Size: ' + this.width + ', ' + this.height + ']';
+};
+
+/**
+ * Constructor for a hterm.RowCol record.
+ *
+ * Instances of this class have public read/write members for row and column.
+ *
+ * This class includes an 'overflow' bit which is use to indicate that an
+ * attempt has been made to move the cursor column passed the end of the
+ * screen.  When this happens we leave the cursor column set to the last column
+ * of the screen but set the overflow bit.  In this state cursor movement
+ * happens normally, but any attempt to print new characters causes a cr/lf
+ * first.
+ *
+ * @param {integer} row The row of this record.
+ * @param {integer} column The column of this record.
+ * @param {boolean} opt_overflow Optional boolean indicating that the RowCol
+ *     has overflowed.
+ */
+hterm.RowCol = function(row, column, opt_overflow) {
+  this.row = row;
+  this.column = column;
+  this.overflow = !!opt_overflow;
+};
+
+/**
+ * Adjust the row and column of this record.
+ *
+ * @param {integer} row The new row of this record.
+ * @param {integer} column The new column of this record.
+ * @param {boolean} opt_overflow Optional boolean indicating that the RowCol
+ *     has overflowed.
+ */
+hterm.RowCol.prototype.move = function(row, column, opt_overflow) {
+  this.row = row;
+  this.column = column;
+  this.overflow = !!opt_overflow;
+};
+
+/**
+ * Return a copy of this record.
+ *
+ * @return {hterm.RowCol} A new hterm.RowCol instance with the same row and
+ * column.
+ */
+hterm.RowCol.prototype.clone = function() {
+  return new hterm.RowCol(this.row, this.column, this.overflow);
+};
+
+/**
+ * Set the row and column of this instance based on another hterm.RowCol.
+ *
+ * @param {hterm.RowCol} that The object to copy from.
+ */
+hterm.RowCol.prototype.setTo = function(that) {
+  this.row = that.row;
+  this.column = that.column;
+  this.overflow = that.overflow;
+};
+
+/**
+ * Test if another hterm.RowCol instance is equal to this one.
+ *
+ * @param {hterm.RowCol} that The other hterm.RowCol instance.
+ * @return {boolean} True if both instances have the same row/column, false
+ *     otherwise.
+ */
+hterm.RowCol.prototype.equals = function(that) {
+  return (this.row == that.row && this.column == that.column &&
+          this.overflow == that.overflow);
+};
+
+/**
+ * Return a string representation of this instance.
+ *
+ * @return {string} A string that identifies the row and column of this
+ *     instance.
+ */
+hterm.RowCol.prototype.toString = function() {
+  return ('[hterm.RowCol: ' + this.row + ', ' + this.column + ', ' +
+          this.overflow + ']');
+};

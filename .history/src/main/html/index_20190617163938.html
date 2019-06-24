@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!--meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'" -->
+    <!-- meta http-equiv="Content-Security-Policy" content="script-src 'self' 'nonce-ZXh0ZXJuYWwgc2NyaXB0cw==' 'nonce-aW5saW5lIHNjcmlwdA=='" -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' 'nonce-ZXh0ZXJuYWwgc2NyaXB0cw==' data:; ">
+    
+    <title>hello, world -> from admin.tools</title>
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.dsmorse-gridster.min.css" />
+    
+        <link rel="stylesheet" type="text/css" href="../../plugins/gridster/0.7.0/jquery.gridster.min.css" / -->
+    <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/4.7.0/css/font-awesome.min.css" / -->
+    <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css" />
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/regular.min.css" / -->
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/material-design/3.0.1/iconfont/material-icons.css" / -->
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/photon/0.1.2/css/photon.min.css" / -->
+    <!-- link rel="stylesheet" type="text/css" href="../../plugins/primer/3.0.1/primer.css" />
+    <link rel="stylesheet" type="text/css" href="../../plugins/octicons/3.5.0/octicons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../styles/fontawesone-all.css" / -->
+    <link rel="stylesheet" type="text/css" href="../styles/main.css" />
+    <link rel="stylesheet" type="text/css" href="../styles/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/grid.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/tools.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../../plugins/billboard/1.8.1/billboard.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../../plugins/chartjs/2.8.0/Chart.min.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../../plugins/jquery-ui/1.12.1/jquery-ui.min.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+
+    <!-- FIXME: Why should I include jquery script twice, for it to work? -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery/3.4.1/jquery-3.4.1.min.js"></script>
+    <!-- END: FIXME -->
+
+    <!-- jquery-ui -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jquery-ui/1.12.1/jquery-ui.min.js"></script>
+
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/gridster/0.7.0/jquery.dsmorse-gridster.with-extras.min.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/simplebar/4.0.0/simplebar.min.js"></script>
+
+    <!-- billboard.js -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/d3/5.9.2/d3.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/billboard/1.8.1/billboard.js"></script>
+    <!-- script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/chartjs/2.8.0/Chart.bundle.min.js"></script -->
+    <!-- script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/chartjs/2.8.0/Chart.min.js"></script-->
+    
+    <!-- hterm -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/hterm/dist/js/hterm_all.js"></script>
+    
+</head>
+
+<body>
+    <script nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+        // We can also require other files to run in this process
+        // require('../scripts/renderer.js')
+        // gridster.add_widget('<li class="new">The HTML of the widget...</li>', 2, 1);
+    </script>
+    <div data-simplebar>
+        <div id='the-grid'>
+            <div id="menu" class="box-shadow">
+                <div id="the-menu-grid">
+                    <div id="system-resources" class="chart_area">
+                        <!--canvas id="cpudata" class="bb" style="position: relative;" width="160" height="160"></canvas -->
+                        <div id="cpudata" class="bb" style="position: relative;"></div>
+                        <div id="cpu-text"></div>
+                        <div id="cpu-cycles"></div>
+                    </div>
+                    <div id="ram-text"><div id="ram-text-align"></div></div>
+                    <div id="ram-ratio" class="chart_area"></div>
+                </div>
+            </div>
+            <div id="toolbar">
+                <div id="the-tool-bar">
+                    <nav class="tool-nav-bar">
+                        <div class="menu-item">
+                            <div class="btn">
+                                <span class="fa fa-terminal" style="font-size: 12px;"></span>
+                                <!--span class="title">Terminal</span-->
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="btn">
+                                <span class="fa fa-key"></span>
+                                <!--span class="title">Login</span-->
+                            </div>
+                        </div>
+                        <hr class="toolbar-spacer">
+                        <div class="menu-item">
+                            <div class="btn">
+                                <span class="fa fa-shield-alt"></span>
+                                <!--span class="title">Password Manager</span-->
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="btn">
+                                <span class="fa fa-aws"></span>
+                                <!--span class="title">AWS</span-->
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            <div id="workboard" class="box-shadow-inset">
+                <!-- div id="workboard-grid" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+                    <div class="box-shadow-inset box-shadow" style="grid-column: 1 / 1; grid-row: 1 / 1; 
+                    background-color: lightseagreen;">
+                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
+                        <div class="grid-content">draft-board</div>
+                    </div>
+                    <div style="grid-column: 2 / span 20; grid-row: 1 / 1; background-color: grey;">
+                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
+                        <div class="grid-content">draft-board</div>
+                    </div>
+                    <div id="dash" style="grid-column: 2 / span 2; grid-row: 2 / 2; background-color: hotpink;">
+                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
+                        <div class="grid-content">draft-board</div>
+                    </div>
+                </div -->
+                <div id="board">
+                    <div id="workspace">
+                        <div class="gridster">
+                            <div>
+                                <li data-row="1" data-col="1" data-sizex="4" data-sizey="4" data-min-sizex="2" data-min-sizey="2" data-max-sizex="6" data-max-sizey="6">
+                                <!-- <li class="box-shadow" data-row="1" data-col="1" data-sizex="5" data-sizey="5"> -->
+                                    <div   data-simplebar></div><div id="terminal"></div>
+                                </li>
+                                <li class="box-shadow-inset" data-row="1" data-col="3" data-sizex="1" data-sizey="1">1</li>
+                                <!-- li data-row="1" data-col="4" data-sizex="1" data-sizey="1">2</li>
+                                                        <li data-row="3" data-col="2" data-sizex="3" data-sizey="1">3</li>
+                                                        <li data-row="4" data-col="1" data-sizex="1" data-sizey="1">4</li>
+                                                        <li data-row="3" data-col="1" data-sizex="1" data-sizey="1">5</li>
+                                                        <li data-row="4" data-col="2" data-sizex="1" data-sizey="1">6</li>
+                                                        <li data-row="5" data-col="2" data-sizex="1" data-sizey="1">7</li>
+                                                        <li data-row="4" data-col="4" data-sizex="1" data-sizey="1">8</li>
+                                                        <li data-row="1" data-col="5" data-sizex="1" data-sizey="3">9</li -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="command-line">
+                        <div class="cl-icon fa fa-terminal"><i class="icon-envelope"></i></div>
+                        <input type="text" class="command"></input>
+                    </div>
+                </div>
+            </div>
+            <div id="properties-bar">
+                properties
+            </div>
+            <div id="statusbar">
+                status bar
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/gridster.js"></script>
+    <!-- script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/resources.js"></script -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+        // We can also require other files to run in this process
+        // require('../scripts/renderer.js')
+        // gridster.add_widget('<li class="new">The HTML of the widget...</li>', 2, 1);
+        require('../scripts/cpu-data.js');
+        require('../scripts/ram-usage.js');
+        require('../scripts/terminal.js');
+    </script>
+</body>
+</html>

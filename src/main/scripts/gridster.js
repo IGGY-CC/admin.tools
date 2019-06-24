@@ -2,11 +2,14 @@ var gridster;
 
     $(function () {
         gridster = $(".gridster > div").gridster({
-            widget_base_dimensions: [50, 50],
+            widget_base_dimensions: [10, 10],
             widget_margins: [0, 0],
             autogrow_cols: true,
+            helper: 'clone',
             resize: {
-                enabled: true
+                enabled: true,
+                // max_size: [4, 4],
+                // min_size: [1, 1]
             }
         }).data('gridster');
     });
