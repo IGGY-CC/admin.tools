@@ -1,0 +1,14 @@
+# Cached scripts
+/bin/.png.crusher.*
+
+# Stuff we build for distribution
+dist
+*.tar
+*.tgz
+*.min.js
+*.js.map
+
+/js/libdot.js
+
+# npm related dirs.
+node_modules

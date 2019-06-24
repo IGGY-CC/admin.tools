@@ -77,3 +77,22 @@
     background-image: none;
     background-color: #888;    
 }
+
+#board {
+    display: grid;
+    box-sizing: content-box;
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    grid-template-rows: auto 25px;
+    grid-template-columns: 100%;
+    overflow: hidden;
+}
+
+#workspace {
+    grid-row: 1 / 1;
+    grid-column: 1 / 1;
+}
+

@@ -1,0 +1,11 @@
+#terminal {
+    width: 50%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+}
+
+li {
+    list-style: none;
+}
