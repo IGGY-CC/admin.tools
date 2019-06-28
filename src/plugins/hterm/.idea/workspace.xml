@@ -2,16 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d8528f3f-88c4-42d9-9c4c-8717583ba035" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/hterm.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../ssh_client/.idea/ssh_client.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/html/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/scripts/gridster.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/gridster.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/scripts/utils/cpu.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/terminal.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/terminal.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/styles/content.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/content.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/styles/fonts.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/fonts.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/styles/grid.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/grid.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -78,8 +78,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dist/js/hterm_all.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="16">
-              <caret line="11413" column="45" selection-start-line="11413" selection-start-column="21" selection-end-line="11413" selection-end-column="45" />
+            <state relative-caret-position="216">
+              <caret line="15423" column="51" selection-start-line="15423" selection-start-column="51" selection-end-line="15423" selection-end-column="51" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
               </folding>
@@ -102,13 +102,22 @@
       <find>addBinding</find>
       <find>font-size</find>
       <find>IO.prototype.print</find>
-      <find>background-color</find>
       <find>font-weight</find>
       <find>bold</find>
       <find>window</find>
       <find>document_</find>
       <find>shadow</find>
       <find>head</find>
+      <find>size</find>
+      <find>width</find>
+      <find>setWidth</find>
+      <find>paste</find>
+      <find>cursor up</find>
+      <find>cursor</find>
+      <find>background-color</find>
+      <find>cursor-shape</find>
+      <find>border-radi</find>
+      <find>showOverlay</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -199,16 +208,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1561025300756</updated>
-      <workItem from="1561025302046" duration="21474000" />
+      <workItem from="1561025302046" duration="31289000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="21474000" />
+    <option name="totallyTimeSpent" value="31289000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="22" width="1936" height="1066" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15858799" />
@@ -283,8 +291,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dist/js/hterm_all.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="11413" column="45" selection-start-line="11413" selection-start-column="21" selection-end-line="11413" selection-end-column="45" />
+        <state relative-caret-position="216">
+          <caret line="15423" column="51" selection-start-line="15423" selection-start-column="51" selection-end-line="15423" selection-end-column="51" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
           </folding>

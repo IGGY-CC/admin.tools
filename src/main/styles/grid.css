@@ -8,7 +8,7 @@
     grid-row-gap: 0px;
     background-color: rgb(54, 54, 54);
     grid-template-rows: minmax(min-content, 60px) calc(100% - 60px - 25px) 25px;
-    grid-template-columns: 33px calc(100% - 33px - 150px) minmax(min-content, 150px);
+    grid-template-columns: 33px calc(100% - 33px - 200px) minmax(min-content, 200px);
     overflow: hidden;
 }
 
@@ -86,13 +86,13 @@
     padding: 0px;
     grid-column-gap: 0px;
     grid-row-gap: 0px;
-    grid-template-rows: auto 25px;
+    grid-template-rows: calc(100% - 25px) 25px;
     grid-template-columns: 100%;
     overflow: hidden;
 }
 
 #workspace {
-    grid-row: 1 / 1;
+    grid-row-start: 1 / 1;
     grid-column: 1 / 1;
 }
 

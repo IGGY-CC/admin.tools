@@ -1,3 +1,6 @@
+@import "../webfonts/typewriter_condensed/stylesheet.css";
+@import "../webfonts/Dejavu-sans-mono/stylesheet.css";
+
 @font-face {
   font-family: 'Anton';
   font-style: normal;
@@ -34,12 +37,4 @@
     url('../webfonts/monaco/monaco-webfont.svg#MonacoRegular') format('svg');
   font-weight: normal;
   font-style: normal;
-}
-
-@font-face {
-  font-family: 'dejavu_sans_monobook';
-  src: url('../webfonts/Dejavu-sans-mono/dejavusansmono-webfont.woff2') format('woff2'),
-       url('../webfonts/Dejavu-sans-mono/dejavusansmono-webfont.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
 }
