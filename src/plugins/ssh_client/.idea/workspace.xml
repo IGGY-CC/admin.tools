@@ -2,16 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="447e36c8-5f71-41b4-b6c9-0126f7728476" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/hterm.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/ssh_client.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/html/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/scripts/gridster.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/gridster.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/scripts/utils/cpu.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/styles/fonts.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/fonts.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/terminal.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/terminal.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/styles/content.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/content.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/styles/grid.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/grid.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../hterm/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../hterm/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -53,7 +50,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-4" />
     <option name="y" value="-4" />
     <option name="width" value="968" />
@@ -115,6 +112,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
@@ -150,11 +148,10 @@
     <option name="totallyTimeSpent" value="3018000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="24" width="1381" height="895" extended-state="7" />
-    <editor active="true" />
+    <frame x="-8" y="22" width="1936" height="1066" extended-state="6" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.35241637" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24973656" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" />

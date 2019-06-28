@@ -2,17 +2,23 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"log"
 	"io"
-	// "bufio"
 	"bytes"
+
+	"golang.org/x/crypto/ssh"
 )
 
-type SSHClient struct {
+type SSHConnObject struct {
+	Host 	string
+	Port 	int
+	user 	string
+	pass 	string
+	rows 	int
+	cols 	int
+	commPty bool
+	admPty 	bool
 	Config *ssh.ClientConfig
-	Host   string
-	Port   int
 }
 
 type keyboardInteractive map[string]string
@@ -25,40 +31,64 @@ func (cr keyboardInteractive) Challenge(user string, instruction string, questio
 	return answers, nil
 }
 
-func sshInit(ws *Ws) {
-    answers := keyboardInteractive(map[string]string{
-		"Verification code: ": "12345678",
+type SSHConnection struct {
+	connection *ssh.Client
+	sessionPty *ssh.Session
+	sessionAdm *ssh.Session
+	connObject *SSHConnObject
+}
+
+func (sc *SSHConnection) createSSHObject(o *SSHConnObject) {
+	
+	sc.connObject = o;
+
+	answers := keyboardInteractive(map[string]string{
+		"Verification code: ": o.pass,
 	})
 
-	sshConfig := &ssh.ClientConfig{
-		User: "admin",
+	o.Config = &ssh.ClientConfig{
+		User: o.user,
 		Auth: []ssh.AuthMethod{
 			ssh.KeyboardInteractive(answers.Challenge),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
- 
-	client := &SSHClient{
-		Config: sshConfig,
-		Host:   "localhost",
-		Port:   9038,
-	}
+}
+
+func (sc *SSHConnection) connect(ws *AdmSocket) {
+	
+	ws.ssh = sc
 
 	// Connect to host
-	connection, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", client.Host, client.Port), client.Config)
+	connection, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sc.connObject.Host, sc.connObject.Port), sc.connObject.Config)
+	sc.connection = connection
+
 	if err != nil {
 		fmt.Printf("Failed to connect to the requested server: %s\n", err)
 	}
 	defer connection.Close()
  
-	// Create sesssion
-	session, err := connection.NewSession()
+	// Create a communication sesssion
+	sessionPty, err := sc.connection.NewSession()
+	sc.sessionPty = sessionPty
+
 	if err != nil {
-		fmt.Printf("Failed to create session: %s\n", err)
+		fmt.Printf("Failed to create session for pty: %s\n", err)
 	}
 	defer func() {
 		fmt.Println("Closing session")
-		session.Close()	
+		sessionPty.Close()	
+	}()
+
+	// Create an admin sesssion
+	sessionAdm, err := sc.connection.NewSession()
+	sc.sessionAdm = sessionAdm
+	if err != nil {
+		fmt.Printf("Failed to create an admin session: %s\n", err)
+	}
+	defer func() {
+		fmt.Println("Closing session")
+		sessionAdm.Close()	
 	}()
 
 	modes := ssh.TerminalModes{
@@ -67,12 +97,12 @@ func sshInit(ws *Ws) {
 		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
 
-	if err := session.RequestPty("xterm", 60, 20, modes); err != nil {
-		session.Close()
+	if err := sessionPty.RequestPty("xterm", sc.connObject.rows, sc.connObject.cols, modes); err != nil {
+		sessionPty.Close()
 		fmt.Printf("request for pseudo terminal failed: %s\n", err)
 	}
 
-	stdin, err := session.StdinPipe()
+	stdin, err := sessionPty.StdinPipe()
 	if err != nil {
 		fmt.Printf("Unable to setup stdin for session: %v\n", err)
 	}
@@ -89,13 +119,14 @@ func sshInit(ws *Ws) {
 		}
 	}()
 	
-	stdout, err := session.StdoutPipe()
+	stdout, err := sessionPty.StdoutPipe()
 	if err != nil {
 		fmt.Printf("Unable to setup stdout for session: %v\n", err)
 	}
 	
 	go func() { 
-		buf := make([]byte, 1024)
+		buf := make([]byte, sc.connObject.rows*sc.connObject.cols)
+		// buf := make([]byte, 20*sc.connObject.cols)
 		for {
 			n, _ := stdout.Read(buf)
 			if n > 0 {
@@ -104,12 +135,13 @@ func sshInit(ws *Ws) {
 		}
 	}()
 	
-	stderr, err := session.StderrPipe()
+	stderr, err := sessionPty.StderrPipe()
 	if err != nil {
 		fmt.Printf("Unable to setup stderr for session: %v\n", err)
 	}
 	go func() { 
-		buf := make([]byte, 1024)
+		buf := make([]byte, sc.connObject.rows*sc.connObject.cols)
+		// buf := make([]byte, 20*sc.connObject.cols)
 		for {
 			n, _ := stderr.Read(buf)
 			if n > 0 {
@@ -119,7 +151,7 @@ func sshInit(ws *Ws) {
 	}()
 	
 	// Start remote shell
-	err = session.Shell()
+	err = sessionPty.Shell()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,11 +168,22 @@ func sshInit(ws *Ws) {
 	
  
 	// Wait for sess to finish
-	err = session.Wait()
+	err = sessionPty.Wait()
 	if err != nil {
 		log.Fatal(err)
 	}
  
 	// Uncomment to store in variable
 	//fmt.Println(b.String())
+}
+
+func (sc *SSHConnection) run() {
+	session, _ := sc.connection.NewSession()
+    defer session.Close()
+
+    var stdoutBuf bytes.Buffer
+    session.Stdout = &stdoutBuf
+    session.Run("free -m")
+
+    fmt.Printf("free -m -> %s", stdoutBuf.String())
 }

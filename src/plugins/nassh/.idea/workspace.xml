@@ -2,16 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="317c2fee-232f-4675-85e0-1aebf46ca0aa" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/hterm.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../hterm/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../ssh_client/.idea/ssh_client.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/html/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/scripts/gridster.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/gridster.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/scripts/utils/cpu.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/styles/fonts.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/fonts.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/terminal.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/terminal.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/styles/content.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/content.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/styles/grid.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/grid.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../hterm/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../hterm/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -141,7 +138,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-4" />
     <option name="y" value="-4" />
     <option name="width" value="968" />
@@ -173,6 +170,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../ssh_client" />
   </component>
@@ -207,10 +205,9 @@
     <option name="totallyTimeSpent" value="7396000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="24" width="1381" height="895" extended-state="7" />
-    <editor active="true" />
+    <frame x="-8" y="22" width="1936" height="1066" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2527881" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17913593" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />

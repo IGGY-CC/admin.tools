@@ -1,9 +1,24 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-touch-callout: text;
+    -webkit-user-select: text;
+    user-select: text;
+}
 
-* { margin:0; }
-
-html, body {
-    height:100%;
+html,
+body {
+    height: 100%;
     width: 100%;
     overflow-x: hidden;
     /* font-family: 'Open Sans', sans-serif; */
+}
+
+input {
+    -webkit-touch-callout: text;
+    -webkit-user-select: text;
+    user-select: text;
 }

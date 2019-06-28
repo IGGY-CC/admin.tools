@@ -65,3 +65,14 @@ package-lock.json
 
 # remove release files
 releases.*.json
+
+# remove history
+.history/
+
+# remove stackdump files
+*.stackdump
+
+# remove zip files
+*.zip
+*/*.zip
+

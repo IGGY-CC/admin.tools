@@ -1,4 +1,3 @@
-console.log("hello world!")
 const os = require('os');
 
 chart = bb.generate({
@@ -26,7 +25,7 @@ chart = bb.generate({
     y2: { 
       show: true,
       tick: {
-        format: function(d) { return parseInt(d, 10) },
+        format: function(d) { return parseInt(d, 10); },
         count: 2,
         text: {
           position: {
@@ -67,13 +66,13 @@ chart.zoom.enable(true);
 // }, 1000);
 
 
-let cpuFrequency
+let cpuFrequency;
 
 function cpuTimes() {
-  const cpus = os.cpus()
+  const cpus = os.cpus();
   return cpus.map(cpu => {
-    const times = cpu.times
-    cpuFrequency = cpu.model.split("@ ")[1]
+    const times = cpu.times;
+    cpuFrequency = cpu.model.split("@ ")[1];
     return {
       tick: Object.keys(times).reduce((tick, time) => tick + times[time], 0),
       idle: times.idle,
@@ -81,19 +80,19 @@ function cpuTimes() {
   })
 }
 
-let initMeasurements = cpuTimes()
+let initMeasurements = cpuTimes();
 document.getElementById("cpu-cycles").innerHTML = os.cpus().length + " * " + cpuFrequency;
 
 // Set a delay of 1 sec (timeout) before the next call to cpu times and next update to graph
 setTimeout(function () {
   cpufreqInterval = setInterval(function () {
-    const currentMeasurements = cpuTimes()
+    const currentMeasurements = cpuTimes();
     const diffValues = currentMeasurements.map((cur, i) => {
-      return ((cur.idle - initMeasurements[i].idle) / (cur.tick - initMeasurements[i].tick) * 100)
+      return ((cur.idle - initMeasurements[i].idle) / (cur.tick - initMeasurements[i].tick) * 100);
     })
-    initMeasurements = currentMeasurements
-    totalPercentage = 100 - ((diffValues.reduce((sum, val) => sum + val)) / os.cpus().length)
-    document.getElementById("cpu-text").innerHTML = totalPercentage.toFixed(1) + "%"
+    initMeasurements = currentMeasurements;
+    totalPercentage = 100 - ((diffValues.reduce((sum, val) => sum + val)) / os.cpus().length);
+    document.getElementById("cpu-text").innerHTML = totalPercentage.toFixed(1) + "%";
     chart.flow({
       columns: [
         ["x", new Date().getUTCSeconds()],
@@ -104,5 +103,5 @@ setTimeout(function () {
     // if (++loopCount == 30) {
     //   window.clearInterval(cpufreqInterval)
     // }
-  }, 1000)
+  }, 1000);
 }, 1000);
