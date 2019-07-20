@@ -27,6 +27,7 @@
     <link rel="stylesheet" type="text/css" href="../styles/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/tools.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/content.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/modal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/terminal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/command-line.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/properties.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
@@ -64,6 +65,8 @@
     <!-- hterm -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="
         src="../../plugins/hterm/dist/js/hterm_all.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="
+        src="../../plugins/libdot/third_party/punycode/lib_punycode.js"></script>
 
 </head>
 
@@ -88,45 +91,46 @@
                     </div>
                     <div id="ram-ratio" class="chart_area"></div>
                 </div>
+                <div id="progressbar"><div class="pb"></div></div>
             </div>
             <div id="toolbar">
                 <div id="the-tool-bar">
                     <nav class="tool-nav-bar">
-                        <div class="menu-item">
-                            <div class="btn">
-                                <ul id="float-toolbar" class="float-toolbar">
+                        <div class="menu-item" id="floating-tool-button">
+                            <div id="float-toolbar-buttons" class="btn">
+                                <!-- <ul id="float-toolbar" class="float-toolbar">
                                     <li class="active"><a id="term-local" href="#" onclick="selectTool();"><i class="fa fa-terminal"></i></a></li>
                                     <li><a id="term-horiz-split" href="#" onclick="selectTool();"><i class="fa fa-grip-lines"></i></a></li>
                                     <li><a id="term-vert-split" href="#" onclick="selectTool();"><i class="fa fa-grip-lines-vertical"></i></a></li>
                                     <li><a id="term-three-split" href="#" onclick="selectTool();"><i class="fa fa-bars"></i></a></li>
                                     <li><a id="term-four-split" href="#" onclick="selectTool();"><i class="fa fa-th-large"></i></a></li>
                                     <li><a id="term-multi-split" href="#" onclick="selectTool();"><i class="fa fa-th-list"></i></a></li>
-                                </ul>
+                                </ul> -->
                                 
                                 <!--span class="title">Terminal</span-->
                             </div>
                         </div>
                         <div class="menu-item">
-                            <div class="btn">
+                            <div class="btn" id="terminal-btn">
                                 <span class="fa fa-terminal" style="font-size: 12px;"></span>
                                 <!--span class="title">Terminal</span-->
                             </div>
                         </div>
                         <div class="menu-item">
-                            <div class="btn">
+                            <div class="btn" id="passwords-btn">
                                 <span class="fa fa-key"></span>
                                 <!--span class="title">Login</span-->
                             </div>
                         </div>
                         <hr class="toolbar-spacer">
                         <div class="menu-item">
-                            <div class="btn">
+                            <div class="btn" id="shield-btn">
                                 <span class="fa fa-shield-alt"></span>
                                 <!--span class="title">Password Manager</span-->
                             </div>
                         </div>
                         <div class="menu-item">
-                            <div class="btn">
+                            <div class="btn" id="aws-btn">
                                 <span class="fa fa-aws"></span>
                                 <!--span class="title">AWS</span-->
                             </div>
@@ -135,21 +139,22 @@
                 </div>
             </div>
             <div id="workboard" class="box-shadow-inset">
-                <!-- div id="workboard-grid" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
-                    <div class="box-shadow-inset box-shadow" style="grid-column: 1 / 1; grid-row: 1 / 1; 
-                    background-color: lightseagreen;">
-                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
-                        <div class="grid-content">draft-board</div>
+                <div id="info-window" class="modal">
+                    <!-- Modal content -->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <span class="close" id="close-info-window">&times;</span>
+                            <h2>Header</h2>
+                        </div>
+                        <div class="modal-body">
+                            <p>Content in the body</p>
+                            <p>Some other text...</p>
+                        </div>
+                        <div class="modal-footer">
+                            <h3>Footer</h3>
+                        </div>
                     </div>
-                    <div style="grid-column: 2 / span 20; grid-row: 1 / 1; background-color: grey;">
-                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
-                        <div class="grid-content">draft-board</div>
-                    </div>
-                    <div id="dash" style="grid-column: 2 / span 2; grid-row: 2 / 2; background-color: hotpink;">
-                        <div id="resize-handle" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="></div>
-                        <div class="grid-content">draft-board</div>
-                    </div>
-                </div -->
+                </div>
                 <div id="board">
                     <div id="workspace">
                         <div id="content-grid">
@@ -164,7 +169,7 @@
                     </div>
                 </div>
             </div>
-            <div id="properties-bar">
+            <div id="properties-bar" style="display: none;">
                 <div id="properties">
                     <div class="property">
                         <div class="property-server">
@@ -302,24 +307,28 @@
         </div>
     </div>
 
-
-
-
     <!-- script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/gridster.js"></script -->
     <!-- script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/resources.js"></script -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
         // We can also require other files to run in this process
         // require('../scripts/renderer.js')
         // gridster.add_widget('<li class="new">The HTML of the widget...</li>', 2, 1);
+        
+        require("../scripts/modal.js");
         require("../scripts/context-menus.js");
         require("../scripts/menu-flyout.js");
         require("../scripts/commands.js");
         require('../scripts/cpu-data.js');
         require('../scripts/ram-usage.js');
         require('../scripts/local-term.js');
+        // require('../scripts/streams.js');
+        // require('../scripts/streams_command_instance.js');
+        require("../scripts/grid-element.js");
+        require("../scripts/grid-manager.js");
         require('../scripts/terminal.js');
         require('../scripts/terminal-manager.js');
         // require('../scripts/ssh_client.js');
+        require("../scripts/full-screen.js");
     </script>
 </body>
 

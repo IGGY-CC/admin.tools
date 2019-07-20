@@ -20,6 +20,14 @@
     background-color: rgb(42, 42, 42);
 }
 
+#progressbar {
+    height: 3px;
+    position: absolute;
+    top: 57px;
+    left: 0;
+    right: 0;
+}
+
 #toolbar {
     grid-column: 1 1;
     grid-row: 2 2;
@@ -92,7 +100,7 @@
 }
 
 #workspace {
-    grid-row-start: 1 / 1;
+    grid-row: 1 / 1;
     grid-column: 1 / 1;
 }
 
