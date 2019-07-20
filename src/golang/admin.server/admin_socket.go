@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -19,6 +20,7 @@ type AdmSocket struct {
 
 func (as *AdmSocket) readInit() {
 	defer func() {
+		log.Println("closing read channel...")
 		as.conn.Close()
 	}()
 	for {
@@ -29,20 +31,20 @@ func (as *AdmSocket) readInit() {
 			}
 			break
 		}
-		// fmt.Printf("Received message: %c\n", message)
+		fmt.Printf("Received message: %c\n", message)
 		as.read <- message
 	}
 }
 
 func (as *AdmSocket) writeInit() {
 	defer func() {
+		log.Println("closing write channel...")
 		as.conn.Close()
 	}()
 	for {
 		select {
 		case message, ok := <- as.write:
 			if !ok {
-				// The hub closed the channel.
 				as.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}

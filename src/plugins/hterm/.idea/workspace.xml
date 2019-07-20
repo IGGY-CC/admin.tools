@@ -3,15 +3,126 @@
   <component name="ChangeListManager">
     <list default="true" id="d8528f3f-88c4-42d9-9c4c-8717583ba035" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../../../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../golang/admin.server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/../../golang/admin.server/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/html/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/html/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/scripts/gridster.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/gridster.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/menu-flyout.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/menu-flyout.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/scripts/terminal-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/terminal-manager.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../main/scripts/terminal.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/scripts/terminal.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/styles/content.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/content.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/styles/fonts.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/fonts.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../main/styles/grid.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../main/styles/grid.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../nassh/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ssh_client/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Alegreya Sans and Alegreya.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Alegreya and Alegreya.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Alegreya and Open Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Alegreya and Source Sans Pro.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Alfaslab One and Gentium Book Basic.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Amaranth and Titilium Web.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Amatic SC and Andika.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Amatic SC and Josefin Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Anton.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Architects_Daughter.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Asap and Asap.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/BioRhyme and Cabin.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/BioRhyme and Space Mono.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Bitter and Raleway.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Bree Serif and Lora.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Bree Serif and Open Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Cabin and Old Standard TT.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Cantata One and Imprima.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Cardo and Josefin Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Chivo and Overpass.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Clicker Script and EB Garamond.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Cormorant Garamond and Proza Libre.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Crete Round and AbeeZee.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Dancing Script and EB Garamond.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Dancing Script and Ledger.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Domine and Open Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Domine and Roboto.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Dosis and Dosis.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Fira Sans and Merriweather.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Fjalla One and Average.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Flamenco and Asap.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Abril_Fatface.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Alegreya.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Architects_Daughter.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Exo.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Lato.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Lobster.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Merriweather.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Open_Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Playfair_Display.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Poppins.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Roboto_Slab.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/Source_Sans_Pro.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Google/fonts.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Halant and Nunito Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Inconsolata and Inconsolata.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Karla and Karla.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Libre Baskerville and Source Sans Pro.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lobster and Arimo.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Lora/Lora-Bold.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Lora/Lora-BoldItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Lora/Lora-Italic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Lora/Lora-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Lora/OFL.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-Black.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-BlackItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-Bold.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-BoldItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-Italic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-Light.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-LightItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/Merriweather-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/Lora and Merriweather/Merriweather/OFL.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/._Lora" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/._Merriweather" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Lora/._Lora-Bold.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Lora/._Lora-BoldItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Lora/._Lora-Italic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Lora/._Lora-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Lora/._OFL.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-Black.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-BlackItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-Bold.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-BoldItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-Italic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-Light.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-LightItalic.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._Merriweather-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Merriweather/__MACOSX/Lora and Merriweather/Merriweather/._OFL.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Lora and Roboto.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Medula One and Lato.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Montserrat and Cardo.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Montserrat and Crimson Text.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Muli and Muli.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Nunito and Alegreya.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Nunito and Lora.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Nunito and Nunito.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Open Sans and Gentium Book Basic.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Oswald and Merriweather.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Oswald and Quattrocento.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Ovo and Muli.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/PT Sans and PT Serif.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Pacifico and Arimo.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Patua One and Lora.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Patua One and Oswald.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Poppins and PT Serif.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Proza Libre and Open Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Quando and Judson.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Quicksand and EB Garamond.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Raleway and Raleway.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Rancho and Gudea.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Rubik and Karla.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Sansita One and Kameron (1).zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Sansita One and Kameron.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Shadows and Roboto.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Space Mono and Space Mono.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Spectral and Karla.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Stint Ultra Expanded and Pontano Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Unica One and Vollkorn.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Vollkorn and Exo.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Work Sans and Bitter.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Work Sans and Work Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../main/webfonts/downloaded/Yeseva One and Josefin Sans.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../nassh/js/.nassh_command_instance.js.swp" beforeDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -23,11 +134,11 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/hterm_terminal.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-408">
+            <state>
               <folding>
                 <element signature="n#!!doc" expanded="true" />
               </folding>
@@ -38,7 +149,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/hterm_tests.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="579">
+            <state relative-caret-position="816">
               <caret line="50" column="33" selection-start-line="50" selection-start-column="33" selection-end-line="50" selection-end-column="33" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
@@ -61,9 +172,7 @@
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test_data/utf-8.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6426" />
-          </provider>
+          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -79,7 +188,7 @@
         <entry file="file://$PROJECT_DIR$/dist/js/hterm_all.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="216">
-              <caret line="15423" column="51" selection-start-line="15423" selection-start-column="51" selection-end-line="15423" selection-end-column="51" />
+              <caret line="15417" column="51" selection-start-line="15417" selection-start-column="51" selection-end-line="15417" selection-end-column="51" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
               </folding>
@@ -142,7 +251,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -175,6 +283,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -209,22 +318,20 @@
       <option name="presentableId" value="Default" />
       <updated>1561025300756</updated>
       <workItem from="1561025302046" duration="31289000" />
+      <workItem from="1562399291058" duration="613000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="31289000" />
+    <option name="totallyTimeSpent" value="31902000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="22" width="1936" height="1066" extended-state="6" />
+    <frame x="-6" y="24" width="1381" height="895" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info id="Favorites" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15858799" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15836431" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info active="true" anchor="bottom" id="Find" order="1" visible="true" weight="0.3290461" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3290461" />
@@ -232,6 +339,10 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info anchor="bottom" id="Terminal" order="9" />
+      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -241,9 +352,10 @@
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$USER_HOME$/AppData/Local/Temp/Temp1_webfontkit-20190621-131046.zip/stylesheet.css" />
     <entry file="file://$PROJECT_DIR$/js/hterm_terminal.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-408">
+        <state>
           <folding>
             <element signature="n#!!doc" expanded="true" />
           </folding>
@@ -252,7 +364,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/hterm_tests.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="579">
+        <state relative-caret-position="816">
           <caret line="50" column="33" selection-start-line="50" selection-start-column="33" selection-end-line="50" selection-end-column="33" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
@@ -271,9 +383,7 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test_data/utf-8.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6426" />
-      </provider>
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/html/hterm_test.html">
       <provider selected="true" editor-type-id="text-editor">
@@ -282,17 +392,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/AppData/Local/Temp/Temp1_webfontkit-20190621-131046.zip/stylesheet.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="38" lean-forward="true" selection-start-line="5" selection-start-column="18" selection-end-line="5" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/dist/js/hterm_all.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="216">
-          <caret line="15423" column="51" selection-start-line="15423" selection-start-column="51" selection-end-line="15423" selection-end-column="51" />
+          <caret line="15417" column="51" selection-start-line="15417" selection-start-column="51" selection-end-line="15417" selection-end-column="51" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
           </folding>

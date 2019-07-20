@@ -10,7 +10,5 @@ selectTool = function(e) {
     }
     
     theTool.className = 'active';
-  
-    console.log(theTool);
 };
   
