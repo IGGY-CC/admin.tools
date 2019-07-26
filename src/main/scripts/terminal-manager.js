@@ -6,8 +6,8 @@
 'use strict';
 
 let admin = require("./terminal");
-let jsGridManager = require("./grid-manager");
 let grid = require("./grid-element");
+let JSGridManager_ = require("./grid-manager");
 
 /**
  * @fileoverview Declares the control.* namespace.
@@ -25,12 +25,18 @@ control.TerminalManager = function (parentID) {
 
     this.parent = document.querySelector(parentID);
     this.terminals = new Map();
+
+    // setup dimensional variables
+    this.width = 0;
+    this.height = 0;
     this.gridRows = 100;
     this.gridCols = 100;
     this.rowHeight = 0;
     this.colWidth = 0;
-    this.width = 0;
-    this.height = 0;
+
+    // initiate dimensions
+    this.calculateDimensions();
+
     this.totalTerminals = 0;
     this.gridElementsConfig = {};
     this.gridElements = {};
@@ -41,15 +47,22 @@ control.TerminalManager = function (parentID) {
     // extract sibling gutters from element
     this.elementGutters = {};
 
-    this.createCSSGridManager();
-    this.createFirstTerminal();
     // the newly created grid manager. Will change on every invocation of split* calls
     this.cssGridManager = null;
 
     // create the jsGridManager which will manage all the created elements
-    this.jsGridManager = new grid.Manager();
+    this.jsGridManager = new JSGridManager_(this.rowHeight, this.colWidth, this.width, this.height);
 
     window.onresize = this.resizeCallback.bind(this);
+    this.createCSSGridManager();
+    this.createFirstTerminal();
+};
+
+control.TerminalManager.prototype.calculateDimensions = function() {
+    this.width = this.parent.clientWidth;
+    this.height = this.parent.clientHeight;
+    this.colWidth = this.width / this.gridCols;
+    this.rowHeight = this.height / this.gridRows;
 };
 
 control.TerminalManager.prototype.checkTerminal = function (name) {
@@ -62,11 +75,6 @@ control.TerminalManager.prototype.checkTerminal = function (name) {
 control.TerminalManager.prototype.createCSSGridManager = function () {
     this.totalTerminals++;
     this.cssGridManager = document.createElement("div");
-
-    this.width = this.parent.clientWidth;
-    this.height = this.parent.clientHeight;
-    this.colWidth = this.width / this.gridCols;
-    this.rowHeight = this.height / this.gridRows;
     // TODO: The last grid row/col height/width should be the difference left out converting float to int.
 
     console.log("TOTAL WIDTH AND HEIGHT: ", this.colWidth, this.rowHeight);
@@ -95,38 +103,43 @@ control.TerminalManager.prototype.resizeCallback = function () {
     this.cssGridManager.style.height = this.height + "px";
     this.cssGridManager.style["grid-template-rows"] = "repeat(" + this.gridRows + ", fit-content(" + this.rowHeight + "px))";
     this.cssGridManager.style["grid-template-columns"] = "repeat(" + this.gridCols + ", fit-content(" + this.colWidth + "px))";
+
+    let widthRatio = this.width / origWidth;
+    let heightRatio = this.height / origHeight;
+    this.jsGridManager.resize(this.rowHeight, this.colWidth, widthRatio, heightRatio);
+
     // this.cssGridManager.style["grid-gap"] = "2px";
-
-    if(this.totalTerminals === 1) {
-        // this is the only element/terminal in the dashboard
-        let element = document.querySelector("#terminal");
-
-        // update the element's dimensions
-        element.style.width = this.width + "px";
-        element.style.height = this.height + "px";
-
-        // update the config array so that if new element is created, it uses the correct values
-        this.gridElementsConfig[element.id].width = this.width;
-        this.gridElementsConfig[element.id].height = this.height;
-    } else {
-        // there are multiple elements in the dashboard, update each element with new widths and heights
-        for (let index = 0; index < this.totalTerminals; index++) {
-            let appender = (index === 0) ? "" : index + 1;
-            let widthRatio = this.width / origWidth;
-            let heightRatio = this.height / origHeight;
-            let element = document.querySelector("#terminal" + appender);
-            let newWidth = parseFloat(element.style.width) * widthRatio;
-            let newHeight = parseFloat(element.style.height) * heightRatio;
-
-            // update the element's dimensions
-            element.style.width =  newWidth + "px";
-            element.style.height = newHeight  + "px";
-
-            // update the config array so that if new element is created, it uses the correct values
-            this.gridElementsConfig[element.id].width = newWidth;
-            this.gridElementsConfig[element.id].height = newHeight;
-        }
-    }
+    //
+    // if(this.totalTerminals === 1) {
+    //     // this is the only element/terminal in the dashboard
+    //     let element = document.querySelector("#terminal");
+    //
+    //     // update the element's dimensions
+    //     element.style.width = this.width + "px";
+    //     element.style.height = this.height + "px";
+    //
+    //     // update the config array so that if new element is created, it uses the correct values
+    //     this.gridElementsConfig[element.id].width = this.width;
+    //     this.gridElementsConfig[element.id].height = this.height;
+    // } else {
+    //     // there are multiple elements in the dashboard, update each element with new widths and heights
+    //     for (let index = 0; index < this.totalTerminals; index++) {
+    //         let appender = (index === 0) ? "" : index + 1;
+    //         let widthRatio = this.width / origWidth;
+    //         let heightRatio = this.height / origHeight;
+    //         let element = document.querySelector("#terminal" + appender);
+    //         let newWidth = parseFloat(element.style.width) * widthRatio;
+    //         let newHeight = parseFloat(element.style.height) * heightRatio;
+    //
+    //         // update the element's dimensions
+    //         element.style.width =  newWidth + "px";
+    //         element.style.height = newHeight  + "px";
+    //
+    //         // update the config array so that if new element is created, it uses the correct values
+    //         this.gridElementsConfig[element.id].width = newWidth;
+    //         this.gridElementsConfig[element.id].height = newHeight;
+    //     }
+    // }
 
     return true;
 };
@@ -134,24 +147,26 @@ control.TerminalManager.prototype.resizeCallback = function () {
 
 control.TerminalManager.prototype.createFirstTerminal = function () {
     /* create element to hold terminal */
-    let terminalElem = document.createElement("div");
     let name = "terminal";
-    terminalElem.setAttribute("id", name);
-    terminalElem.setAttribute("class", "base-terminal");
-    terminalElem.style.width = "100%";
-    terminalElem.style.height = "100%";
-    // terminalElem.style.position = "relative";
-    terminalElem.style["grid-area"] = "1 / 1 / " + this.gridRows + " / " + this.gridCols;
-    this.cssGridManager.appendChild(terminalElem);
-    this.gridElements[name] = terminalElem;
-    this.gridElementsConfig[name] = this.makeGridElementMap(this.width, this.height, 1, this.gridRows, 1, this.gridCols);
 
-    // setup element gutters
-    this.makeGutterMap(name, terminalElem, GUTTER);
-    this.makeGutterMap(name, terminalElem, TERMBLK);
+    // using grid-element
+    let newTerminalElement = grid.Element.init(name, this.jsGridManager);
+    newTerminalElement.addToGrid(this.cssGridManager);
+    newTerminalElement.setArea(1, this.gridRows, 1, this.gridCols);
+    newTerminalElement.setupParentElement(this.cssGridManager);
 
+    // old code
+    {
+        let terminalElem = newTerminalElement.element;
+        this.gridElements[name] = terminalElem;
+        this.gridElementsConfig[name] = this.makeGridElementMap(this.width, this.height, 1, this.gridRows, 1, this.gridCols);
+
+        // setup element gutters
+        this.makeGutterMap(name, terminalElem, GUTTER);
+        this.makeGutterMap(name, terminalElem, TERMBLK);
+    }
     /* create terminal */
-    this.createTerminal("terminal", "#terminal");
+    // this.createTerminal("terminal", "#terminal");
 };
 
 control.TerminalManager.prototype.makeGridElementMap = function (width, height, rowStart, rowEnd, colStart, colEnd) {
@@ -184,16 +199,15 @@ control.TerminalManager.prototype.makeGutterMap = function(name, element, type) 
 };
 
 control.TerminalManager.prototype.createTerminal = function (name, parent, width, height) {
-    let terminal = new admin.Terminal(name, parent);
-    let self = this;
-
-    this.terminals.set(name, terminal);
-    terminal.addMenuItem('Split Vertically', (evt) => self.splitVertical(evt));
-    terminal.addMenuItem('Split Horizontally', (evt) => self.splitHorizontal(evt));
-    terminal.addMenuItem('New Tab', () => self.newTab());
+    // let terminal = new admin.Terminal(name, parent);
+    // let self = this;
+    //
+    // this.terminals.set(name, terminal);
+    // terminal.addMenuItem('Split Vertically', (evt) => self.splitVertical(evt));
+    // terminal.addMenuItem('Split Horizontally', (evt) => self.splitHorizontal(evt));
+    // terminal.addMenuItem('New Tab', () => self.newTab());
 
     // terminal.addTerminalReadyFunction(function() { self.parent.dispatchEvent(new Event('resize')); });
-
 };
 
 control.TerminalManager.prototype.splitVertical = function (current) {

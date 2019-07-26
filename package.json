@@ -30,6 +30,7 @@
     },
     "dependencies": {
         "mstsc.js": "^0.2.4",
+        "node-pty": "^0.8.1",
         "overlayscrollbars": "^1.8.0",
         "random-word": "^2.0.0",
         "split-grid": "^1.0.9"

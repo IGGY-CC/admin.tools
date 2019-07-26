@@ -37,12 +37,12 @@ admin.Terminal = function (name, parent) {
     this.input = '';
     this.history = [];
     this.histTravCount = 0;
-    this.promptSize = 0;
     this.isLocalCommand = true;
     this.underLocalCommand = false;
     this.localCommandTrigger = ',';
     this.prompt = "";
     this.promptSize = 0;
+    this.promptLengthPx = 0;
     this.defaultPrompt = "";
     this.defaultPromptSize = 0;
     this.shell = null;
@@ -356,7 +356,10 @@ admin.Terminal.prototype.walkThroughHistory = function () {
  */
 admin.Terminal.prototype.setPrompt = function (prompt) {
     this.prompt = prompt;
-    this.promptSize = this.stripAnsi(prompt).length;
+
+    let ansiStrippedPrompt = this.stripAnsi(this.defaultPrompt);
+    this.promptSize = ansiStrippedPrompt.length;
+    this.promptLengthPx = lib.wc.strWidth(ansiStrippedPrompt);
 };
 
 /**
@@ -389,10 +392,12 @@ admin.Terminal.prototype.setupDefaultPrompt = function () {
                 additionalData +
                 " ";
     this.defaultPrompt = time + '\x1b[36;1m>' + '\x1b[0m ';
-    this.defaultPromptSize = this.stripAnsi(this.defaultPrompt).length;
+    let ansiStrippedPrompt = this.stripAnsi(this.defaultPrompt);
+    this.defaultPromptSize = ansiStrippedPrompt.length;
 
     this.prompt = this.defaultPrompt;
     this.promptSize = this.defaultPromptSize;
+    this.promptLengthPx = lib.wc.strWidth(ansiStrippedPrompt);
 };
 
 /**
