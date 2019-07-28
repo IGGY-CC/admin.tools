@@ -6,11 +6,13 @@
 'use strict';
 
 const randomWord = require('random-word');
+const os = require('os');
+const pty = require('node-pty-prebuilt');
 
 /**
  * @fileoverview Declares the admin.* namespace.
  */
-var admin = {};
+let admin = {};
 
 /**
  * Constructor to generate a Terminal.
@@ -473,6 +475,50 @@ admin.Terminal.prototype.execute = function() {
                 this.terminal.prefs_.set('font-size', t); 
             }
             break;
+        case "bash":
+        case "cmd":
+            let shell = os.platform() === 'win32' ?  'powershell.exe': 'bash';
+            let self = this;
+            let shell_ = function() {
+                this.readyState = 0;
+                this.pty = null;
+                this.isLocal = true;
+            };
+            shell_.prototype.isReadyState = function() {
+                return this.readyState;
+            };
+            shell_.prototype.setReadyState = function(state) {
+                this.readyState = state;
+            };
+            shell_.prototype.setupPty = function() {
+                this.pty = pty.spawn(shell, [], {
+                    name: 'xterm-color',
+                    cols: 80,
+                    rows: 30,
+                    // cwd: process.env.HOME,
+                    // env: process.env
+                });
+                this.setReadyState(1);
+                this.pty.on('data', function(data) {
+                    // process.stdout.write(data);
+                    self.io.print(data);
+                });
+            };
+            shell_.prototype.send = function(data) {
+                this.pty.write(data);
+            };
+            shell_.onclose = function (data) {
+                self.io.print(data);
+                console.log("connection closed!");
+                self.io.println('');
+                self.io.println('');
+                self.printPrompt();
+                self.shell.close();
+                self.shell = null;
+            };
+            this.shell = new shell_();
+            this.shell.setupPty();
+            break;
         case "ssh":
             if(!this.isInSubCommand) {
                 this.sshusername = null;
@@ -484,7 +530,7 @@ admin.Terminal.prototype.execute = function() {
                 let hostPort = srvrDetails[1].split(":");
                 this.sshusername = srvrDetails[0];
                 this.sshserver = hostPort[0];
-                this.sshport = hostPort.length == 2? parseInt(hostPort[1]) : 22;
+                this.sshport = hostPort.length === 2? parseInt(hostPort[1]) : 22;
                 if(this.sshusername && this.sshserver !== null && this.sshport !== null) {
                     this.isInSubCommand = true;
                     this.inProgressCommand = _command;
@@ -520,14 +566,18 @@ admin.Terminal.prototype.onTerminalResize = function(cols, rows) {
     if(this.shell != null) {
         console.log("Calling resize on terminal...", this.terminalName);
         try {
-            let resizeShell = new WebSocket("ws://localhost:16443/ws/" +
-                this.terminalName +
-                "/resize/" +
-                (rows - 1) +
-                "/" +
-                (cols - 1));
-            // Close the websocket connection after 5 seconds.
-            setTimeout(() => resizeShell.close(), 5000);
+            if(typeof this.shell.isLocal === 'undefined') {
+                let resizeShell = new WebSocket("ws://localhost:16443/ws/" +
+                    this.terminalName +
+                    "/resize/" +
+                    (rows - 1) +
+                    "/" +
+                    (cols - 1));
+                // Close the websocket connection after 5 seconds.
+                setTimeout(() => resizeShell.close(), 5000);
+            } else {
+                this.shell.pty.resize((cols - 1), (rows - 1));
+            }
         } catch (exception) {
             // nothing to do here.
         }
@@ -565,7 +615,7 @@ admin.Terminal.prototype.setupSSHConnection = function (value) {
             prompt("SSH Server name or IP: ");
             break;
         case 2:
-            if(value[0] == "") {
+            if(value[0] === "") {
                 this.inProgressCommandStep--;
                 prompt("SSH Server name or IP > ", true);
             } else {
@@ -671,7 +721,7 @@ admin.Terminal.prototype.makeSSHConnObject = function() {
 
 admin.Terminal.prototype.makeSSHConnection = function () {
     this.notify("Opening connection to server...", true);
-    this.authType = (this.sshport == 9038) ? "" : "/password";
+    this.authType = (this.sshport === 9038) ? "" : "/password";
 
     this.shell = new WebSocket("ws://localhost:16443/ws/" +
         this.terminalName +
