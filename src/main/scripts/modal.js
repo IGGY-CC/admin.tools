@@ -6,7 +6,6 @@ ui.ModalWindow = function() {
     // Get modal window
     this.modal = document.querySelector("#info-window");
 
-    // The div that holds the
     // Get the close button
     this.closeButton = document.querySelector("#close-info-window");
 
@@ -46,5 +45,4 @@ ui.ModalWindow.prototype.activateWindow = function() {
 
 let testModal = new ui.ModalWindow();
 testModal.addModal("#terminal-btn");
-testModal.activateWindow();
-console.error(testModal);
+//testModal.activateWindow();
