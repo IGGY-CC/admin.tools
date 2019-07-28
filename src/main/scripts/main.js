@@ -9,26 +9,30 @@ require('electron-reload')(__dirname);
 
 // Keep a global reference of the window object, if we don't, the window 
 // will be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+let mainWindow;
 
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
+        show: false,
+        frame: false,
         width: 800,
+        minWidth: 800,
         height: 600,
+        minHeight: 600,
         webPreferences: {
             contextIsolation: false,
             sandbox: false,
-            disableBlinkFeatures: "Auxclick",
+            //disableBlinkFeatures: "Auxclick",
             nodeIntegration: true
         }
-    })
+    });
 
     // disable main menu
-    mainWindow.setMenuBarVisibility(false)
+    mainWindow.setMenuBarVisibility(false);
 
     // load the index.html of the app.
-    mainWindow.loadFile('src/main/html/index.html')
+    mainWindow.loadFile('src/main/html/index.html');
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
@@ -44,6 +48,10 @@ function createWindow() {
     // Prevent user to initiate any navigation
     mainWindow.webContents.on("will-navigate", (evt, newURL) => {
         evt.preventDefault();
+    });
+
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show();
     });
 
 }
