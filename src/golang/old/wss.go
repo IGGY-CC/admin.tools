@@ -1,7 +1,7 @@
 /*
 https://github.com/codenvy-legacy/che-websocket-terminal/blob/master/src/main/go/server.go
 */
-package main
+package old
 import (
 	"flag"
 	"github.com/codenvy/websocket"

@@ -101,13 +101,13 @@ ui.ModalWindow.prototype.activateWindow = function() {
 };
 
 
-let testModal = new ui.ModalWindow("QR", 400, 150, "rgb(0, 188, 213)", 10);
-testModal.addModal("#passwords-btn");
-testModal.activateWindow();
-testModal.addContent("" +
-    "<div style='display: grid; grid-template: 50% 50% 50% 50%'>" +
-    "<div style='grid-area: 1 / 1 / 100 / 50'><img src=\"../assets/face_auth_fm.svg\" style=\"position: relative; left: -5px; top: -15px; filter: drop-shadow( 2px 2px 2px rgba(0, 0, 0, .3));\" width='150vw'/></div>" +
-    "<div style='grid-area: 1 / 50 / 100 / 100;'><p style='font-family: MonacoRegular;'>WELCOME</p><p><br/></p><p>Login: _____</p></div>" +
-    "</div>" +
-    "");
+// let testModal = new ui.ModalWindow("QR", 400, 150, "rgb(0, 188, 213)", 10);
+// testModal.addModal("#passwords-btn");
+// testModal.activateWindow();
+// testModal.addContent("" +
+//     "<div style='display: grid; grid-template: 50% 50% 50% 50%'>" +
+//     "<div style='grid-area: 1 / 1 / 100 / 50'><img src=\"../assets/face_auth_fm.svg\" style=\"position: relative; left: -5px; top: -15px; filter: drop-shadow( 2px 2px 2px rgba(0, 0, 0, .3));\" width='150vw'/></div>" +
+//     "<div style='grid-area: 1 / 50 / 100 / 100;'><p style='font-family: MonacoRegular;'>WELCOME</p><p><br/></p><p>Login: _____</p></div>" +
+//     "</div>" +
+//     "");
 //console.error(testModal);

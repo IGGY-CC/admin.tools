@@ -53,7 +53,8 @@ control.TerminalManager = function (parentID) {
     // create the jsGridManager which will manage all the created elements
     this.jsGridManager = new JSGridManager_(this.rowHeight, this.colWidth, this.width, this.height);
 
-    window.onresize = this.resizeCallback.bind(this);
+    // window.onresize = this.resizeCallback.bind(this);
+    resizeManager.onResize(this.resizeCallback.bind(this));
     this.createCSSGridManager();
     this.createFirstTerminal();
 };

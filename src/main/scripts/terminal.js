@@ -7,7 +7,7 @@
 
 const randomWord = require('random-word');
 const os = require('os');
-const pty = require('node-pty-prebuilt');
+// const pty = require('node-pty-prebuilt');
 
 /**
  * @fileoverview Declares the admin.* namespace.
@@ -184,7 +184,7 @@ admin.Terminal.prototype.onTerminalReady = function () {
     this.printPrompt();
 
 
-    this.io.sendString = (str) => this.io.print(str);
+    // this.io.sendString = (str) => this.io.print(str);
     this.io.onVTKeystroke = (ch) => this.onVTKeystroke(ch);
 
     this.io.onTerminalResize = (columns, rows) => this.onTerminalResize(columns, rows);
@@ -547,7 +547,8 @@ admin.Terminal.prototype.execute = function() {
             }
             break;
         case "sshrun":
-            let test = new WebSocket("ws://localhost:16443/ws/first/sshrun");
+            let test = new WebSocket("ws://localhost:16443/ws/" +
+                                            this.terminalName + "/ssh/sshrun");
             test.close();
             break;
         case "reset":
@@ -567,12 +568,14 @@ admin.Terminal.prototype.onTerminalResize = function(cols, rows) {
         console.log("Calling resize on terminal...", this.terminalName);
         try {
             if(typeof this.shell.isLocal === 'undefined') {
+                let dimens = {};
+                dimens.Rows = rows;
+                dimens.Cols = cols;
+
                 let resizeShell = new WebSocket("ws://localhost:16443/ws/" +
                     this.terminalName +
-                    "/resize/" +
-                    (rows - 1) +
-                    "/" +
-                    (cols - 1));
+                    "/ssh/resize/" +
+                    this.makeWSObject(dimens));
                 // Close the websocket connection after 5 seconds.
                 setTimeout(() => resizeShell.close(), 5000);
             } else {
@@ -725,7 +728,7 @@ admin.Terminal.prototype.makeSSHConnection = function () {
 
     this.shell = new WebSocket("ws://localhost:16443/ws/" +
         this.terminalName +
-        "/ssh/" + this.makeSSHConnObject());
+        "/ssh/init/" + this.makeSSHConnObject());
 
 
     let self = this;
@@ -743,6 +746,7 @@ admin.Terminal.prototype.makeSSHConnection = function () {
 
     this.shell.onmessage = function (evt) {
         self.io.print(evt.data);
+        // self.io.sendString(evt.data);
     };
 };
 
