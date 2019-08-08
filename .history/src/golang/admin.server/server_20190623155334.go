@@ -47,7 +47,7 @@ func (ws *Ws) write() {
 		if err != nil {
 			return
 		}
-		w.Write("Write message:")
+		w.Write("Read message:")
 	}
 }
 

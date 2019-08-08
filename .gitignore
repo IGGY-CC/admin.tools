@@ -68,6 +68,8 @@ releases.*.json
 
 # remove history
 .history/
+.history*
+.history*/*
 
 # remove stackdump files
 *.stackdump
@@ -76,3 +78,6 @@ releases.*.json
 *.zip
 */*.zip
 
+# remove idea directory
+.idea/
+.idea*/*
