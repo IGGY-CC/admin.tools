@@ -14,37 +14,38 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-type OTPDBSchema struct {
+type DBSchema struct {
 	ID string
 	Key string
 	db.DataTemplate
 }
 
-func (otpDB OTPDBSchema) GetID() (id string) {
+func (otpDB DBSchema) GetID() (id string) {
 	return otpDB.ID
 }
 
-type OTPManager struct {
-	schema 		*OTPDBSchema
-	dbManager 	*db.AdminDBManager
+type Manager struct {
+	schema 		*DBSchema
+	dbManager 	*db.Manager
 	key 		*otp.Key
 }
 
-const OTPDB string = "otp_manager"
+const DB string = "otp_manager"
 const ACCOUNT string = "a@admin.tools"
 
-func (otpManager OTPManager) Setup() {
-	otpManager.dbManager = new(db.AdminDBManager)
-	otpManager.dbManager.DBInit(OTPDB, "OTP-Database")
+func New() (otpManager *Manager) {
+	otpManager = &Manager{}
+	otpManager.dbManager = db.New(DB, "OTP-Database")
+	return
 }
 
-func (otpManager OTPManager) display(data []byte) {
+func (otpManager Manager) display(data []byte) {
 	fmt.Printf("Issuer:       %s\n", otpManager.key.Issuer())
 	fmt.Printf("Account Name: %s\n", otpManager.key.AccountName())
 	fmt.Printf("Secret:       %s\n", otpManager.key.Secret())
 }
 
-func (otpManager OTPManager) GenerateTOTP() (err error) {
+func (otpManager Manager) GenerateTOTP() (err error) {
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer: "admin.tools",
 		AccountName: ACCOUNT,
@@ -55,14 +56,14 @@ func (otpManager OTPManager) GenerateTOTP() (err error) {
 	}
 
 	otpManager.key = key
-	otpManager.schema = new(OTPDBSchema)
+	otpManager.schema = new(DBSchema)
 	otpManager.schema.Key = key.Secret()
 	otpManager.schema.ID = key.AccountName()
 
 	return
 }
 
-func (otpManager OTPManager) generatePNG(key *otp.Key) () {
+func (otpManager Manager) generatePNG(key *otp.Key) () {
 	// Convert TOTP into a PNG
 	var buf bytes.Buffer
 	img, err := key.Image(200, 200)
@@ -75,17 +76,27 @@ func (otpManager OTPManager) generatePNG(key *otp.Key) () {
 	otpManager.display(buf.Bytes())
 }
 
-func (otpManager OTPManager) GetKeyFromName(name string) (schema *OTPDBSchema, err error) {
+func (otpManager Manager) GetKeyFromName(name string) (schema *DBSchema, err error) {
 	recvBytes, err := otpManager.dbManager.GetOne(name)
 	if err != nil {
 		log.Println("Could not retrieve secret key for name", name, err)
 	}
-	schema = new(OTPDBSchema)
+	schema = new(DBSchema)
 	err = otpManager.dbManager.Unmarshal(schema, recvBytes)
 	return
 }
 
-func (otpManager OTPManager) ValidateOTP(name string, otp string) (validated bool) {
+func (otpManager Manager) GetKeys() (strings []string, err error) {
+	log.Println("Requesting database for data: ", otpManager.dbManager)
+	strings, err = otpManager.dbManager.GetAll()
+	if err != nil {
+		log.Println("Could not retrieve list of keys", err)
+	}
+
+	return
+}
+
+func (otpManager Manager) ValidateOTP(name string, otp string) (validated bool) {
 	schema, err := otpManager.GetKeyFromName(name)
 	if err != nil {
 		log.Println("Could not retrieve secret key for name", name, err)
@@ -98,7 +109,7 @@ func (otpManager OTPManager) ValidateOTP(name string, otp string) (validated boo
 	return false
 }
 
-func (otpManager OTPManager) ValidateAndSave(name string, otp string) (err error) {
+func (otpManager Manager) ValidateAndSave(name string, otp string) (err error) {
 	valid := otpManager.ValidateOTP(name, otp)
 	if !valid {
 		log.Println("The given OTP did not match the respective key's OTP")
@@ -108,7 +119,7 @@ func (otpManager OTPManager) ValidateAndSave(name string, otp string) (err error
 	return otpManager.dbManager.Save(otpManager.schema)
 }
 
-func (otpManager OTPManager) CheckAndSave(name string, key string, otp string) (err error) {
+func (otpManager Manager) CheckAndSave(name string, key string, otp string) (err error) {
 	if otp != "" {
 		valid := totp.Validate(otp, key)
 		if !valid {
@@ -116,18 +127,18 @@ func (otpManager OTPManager) CheckAndSave(name string, key string, otp string) (
 			return errors.New("the given OTP did not match the key's OTP")
 		}
 	}
-	otpManager.schema = new(OTPDBSchema)
+	otpManager.schema = new(DBSchema)
 	otpManager.schema.Key = key
 	otpManager.schema.ID = name
 	return otpManager.dbManager.Save(otpManager.schema)
 }
 
-func (otpManager OTPManager) GenerateCodeFromKey(key string) (otp string, err error) {
+func (otpManager Manager) GenerateCodeFromKey(key string) (otp string, err error) {
 	otp, err = totp.GenerateCode(key, time.Now())
 	return
 }
 
-func (otpManager OTPManager) GenerateCodeFromName(name string) (otp string, err error) {
+func (otpManager Manager) GenerateCodeFromName(name string) (otp string, err error) {
 	schema, err := otpManager.GetKeyFromName(name)
 	if err != nil {
 		log.Println("Couldn't fetch a valid key for name", name, err)
@@ -136,7 +147,7 @@ func (otpManager OTPManager) GenerateCodeFromName(name string) (otp string, err 
 	return
 }
 
-func (otpManager OTPManager) GenerateCodeFromNames(names []string) (otp[] string, err error) {
+func (otpManager Manager) GenerateCodeFromNames(names []string) (otp[] string, err error) {
 	for _,name := range names {
 		otpcode, err := otpManager.GenerateCodeFromName(name)
 		if err != nil{

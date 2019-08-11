@@ -16,8 +16,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 	}
 
 	createAndClose = true
-	var otpManager = new(otp.OTPManager)
-	otpManager.Setup()
+	var otpManager = otp.New()
 	var otpData = new(OTPData)
 	err := json.Unmarshal([]byte(jsonString), &otpData)
 	if err != nil {
@@ -27,6 +26,13 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 	switch action {
 	case "create":
 		_ = otpManager.GenerateTOTP()
+		break
+	case "list":
+		strings, err := otpManager.GetKeys()
+		if err != nil {
+			log.Println("Couldn't retrieve any list")
+		}
+		log.Println("Retrieved list: ", strings)
 		break
 	case "validate":
 		valid := otpManager.ValidateOTP(otpData.Name, otpData.OTP)
@@ -74,7 +80,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 		break
 	}
 
-	log.Println("OTP Validated Successfully!")
+	//log.Println("OTP Validated Successfully!")
 	createAndClose = true
 
 	return
