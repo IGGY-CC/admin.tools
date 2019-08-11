@@ -701,7 +701,7 @@ admin.Terminal.prototype.smartFloorDivide = function (numerator, denominator) {
 
 admin.Terminal.prototype.makeWSObject = function(object) {
     return encodeURIComponent(JSON.stringify(object));
-}
+};
 
 admin.Terminal.prototype.makeSSHConnObject = function() {
     let sshConnObject = {};

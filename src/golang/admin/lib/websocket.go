@@ -52,7 +52,11 @@ func (as *AdmSocket) AddCloseCallback(closeCallback func()) {
 }
 
 func (as *AdmSocket) CreateAndCloseConnection(w http.ResponseWriter, r *http.Request) {
-	conn, _ := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("There is an error upgrading connection to websocket connection", err)
+		return
+	}
 	conn.Close()
 }
 

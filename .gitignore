@@ -81,3 +81,9 @@ releases.*.json
 # remove idea directory
 .idea/
 .idea*/*
+
+# remove db files
+*.db
+db/
+db/*.db
+.db

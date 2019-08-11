@@ -22,31 +22,13 @@
     max-width: available;
     background-color: rgb(26, 26, 37);
 }
+
 .tfa-title {
     height: 40px;
     display: flex;
     flex-direction: row;
     /*padding: 5px;*/
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6)
-}
-
-.tfa-title-add {
-    margin-top: 3px;
-    position: absolute;
-    right: 20px;
-    /*padding: 10px;*/
-    width: 30px;
-    height: 30px;
-    padding: 7px;
-    font-size: 16px;
-    font-weight: bolder;
-    font-family: Courier, monospace;
-    /*line-height: 16px;*/
-    color: #000;
-    border-radius: 50%;
-    background-color: #efefef;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 }
 
 .tfa-title-search {
@@ -69,6 +51,102 @@
     transition: text-indent 0.4s 0.4s ease;
     text-indent: -100%;
     opacity: 1;
+}
+
+#tfa-title-add {
+    margin-top: 3px;
+    width: 29px;
+    height: 29px;
+    padding: 5px;
+    font-size: 16px;
+    color: #ccc;
+    border-radius: 50%;
+    /*background-color: #efefef;*/
+    background-color: transparent;
+    /*box-shadow: 2px 2px 2px rgba(220, 220, 220, 0.7);*/
+    cursor: pointer;
+}
+
+#tfa-title-add i {
+    font-size: 20px;
+}
+
+#tfa-title-add:hover {
+    background-color: #111111;
+}
+
+#new-tfa-server {
+    display: flex;
+    flex-direction: column;
+    height: 222px;
+    background-color: #1f1f1f;
+    padding: 10px;
+    font-family: "VarelaRound";
+}
+
+#new-tfa-name-label, #new-tfa-key-label {
+    padding: 5px 5px 5px 0;
+    color: #6f6f6f;
+    text-transform: uppercase;
+}
+
+#new-tfa-key-input {
+    height: 48px;
+    text-transform: uppercase;
+    resize: none;
+}
+
+#new-tfa-name-input, #new-tfa-key-input {
+    outline: 0;
+    background-color: transparent;
+    /*border: 1px solid darkslategray;*/
+    border-bottom: 2px solid #0f7595;
+    width: 90%;
+    padding: 2px 2px 2px 25px;
+    color: white;
+    font-family: OpenSansCondensed;
+    font-size: 16px;
+    /*font-weight: bold;*/
+    letter-spacing: 2px;
+}
+
+#new-tfa-input-icon, #new-tfa-input-ticon {
+    display: inline-block;
+    position: relative;
+    top: -19px;
+    font-size: 16px;
+    color: #0b97c4;
+}
+
+#tfa-add-server-buttons {
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+    justify-content: flex-end;
+}
+
+#close-button, #create-button, #clear-button {
+    outline: 0;
+    border: 1px solid darkorange;
+    margin: 5px 2px 0 2px;
+    padding: 1px;
+    border-radius: 6px;
+    height: 20px;
+    width: 40px;
+    font-family: OpenSansCondensed;
+    font-size: 14px;
+    line-height: 2px;
+    font-weight: bolder;
+    background: orange;
+    text-transform: uppercase;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    /*text-shadow: 0 -1px 1px rgba(220, 220, 220, 0.8);*/
+}
+
+#clear-button {
+    background-color: #1f1f1f;
+    border: 1px solid black;
+    margin-right: 15px;
 }
 
 .tfa {
