@@ -23,6 +23,8 @@ type AdmSocket struct {
 	write 			chan []byte
 	writeErr 		chan []byte
 	closeCallbacks 	[]func()
+	httpWriter		http.ResponseWriter
+	httpReader		*http.Request
 }
 
 func Init() {
@@ -31,7 +33,7 @@ func Init() {
 	}
 }
 
-func GetAdminSocket(name string) *AdmSocket {
+func GetAdminSocket(name string, w http.ResponseWriter, r *http.Request) *AdmSocket {
 	admSocket, ok := Sockets[name]
 	if !ok {
 		admSocket = new(AdmSocket)
@@ -44,6 +46,8 @@ func GetAdminSocket(name string) *AdmSocket {
 	} else {
 		log.Println("Connection already exists, trying to use one: ", Sockets[name])
 	}
+	admSocket.httpWriter = w
+	admSocket.httpReader = r
 	return admSocket
 }
 
@@ -51,19 +55,21 @@ func (as *AdmSocket) AddCloseCallback(closeCallback func()) {
 	as.closeCallbacks = append(as.closeCallbacks, closeCallback)
 }
 
-func (as *AdmSocket) CreateAndCloseConnection(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("There is an error upgrading connection to websocket connection", err)
-		return
+func (as *AdmSocket) CreateAndCloseConnection() {
+	if as.conn != nil {
+		conn, err := upgrader.Upgrade(as.httpWriter, as.httpReader, nil)
+		if err != nil {
+			log.Println("There is an error upgrading connection to websocket connection", err)
+			return
+		}
+		_ = conn.Close()
 	}
-	conn.Close()
 }
 
-func (as *AdmSocket) CreateConnection(w http.ResponseWriter, r *http.Request) {
+func (as *AdmSocket) CreateConnection() {
 	if as.conn == nil {
 		log.Println("Request for new websocket connection after checking for old existent connection")
-		conn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := upgrader.Upgrade(as.httpWriter, as.httpReader, nil)
 		if err != nil {
 			log.Println(err)
 			as.DeleteSocket()
@@ -78,7 +84,7 @@ func (as *AdmSocket) CreateConnection(w http.ResponseWriter, r *http.Request) {
 
 func (as *AdmSocket) Close() {
 	log.Println("closing websocket connection...")
-	as.conn.Close()
+	_ = as.conn.Close()
 	as.DeleteSocket()
 	for _, value := range as.closeCallbacks {
 		value()
@@ -197,6 +203,17 @@ func (as *AdmSocket) WriteErr(rows int, cols int, readStderr func(msg []byte) (n
 func (as *AdmSocket) GetWriter() (io.WriteCloser, error) {
 	writer, err := as.conn.NextWriter(websocket.TextMessage)
 	return writer, err
+}
+
+func (as *AdmSocket) WriteHTTP(data string) {
+	if as.conn == nil {
+		code, err := io.WriteString(as.httpWriter, data + "\n")
+		//as.httpWriter.(http.Flusher).Flush()
+		//code, err := fmt.Fprintf(*as.httpWriter, data)
+		if err != nil {
+			log.Println("Error while writing to http(s) stream", err, code)
+		}
+	}
 }
 
 func (as *AdmSocket) GetName() string {

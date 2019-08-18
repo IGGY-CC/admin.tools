@@ -24,20 +24,27 @@
     "author": "Aditya Naga Sanjeevi, Yellapu",
     "license": "MIT",
     "devDependencies": {
-        "@doyensec/electronegativity": "^1.3.0",
-        "electron": "^5.0.5",
-        "electron-reload": "^1.4.0"
+        "@doyensec/electronegativity": "^1.3.2",
+        "electron": "^6.0.2"
     },
-    "dependencies": {
+    "dependencies2": {
+        "dialogflow": "^0.10.3",
         "mstsc.js": "^0.2.4",
-        "node-pty": "^0.8.1",
-        "node-pty-prebuilt": "^0.7.6",
         "overlayscrollbars": "^1.8.0",
+        "pb-util": "^0.1.2",
         "random-word": "^2.0.0",
-        "split-grid": "^1.0.9"
+        "split-grid": "^1.0.9",
+        "sweetalert": "^2.1.2",
+        "yargs": "^13.3.0"
     },
     "engines": {
-        "node": "8.16.0"
+        "node": "12.8.0",
+        "nodeOldVersion": "8.16.0"
     },
-    "engineStrict": true
+    "engineStrict": true,
+    "dependencies": {
+        "dialogflow": "^0.10.3",
+        "sweetalert": "^2.1.2",
+        "uuid": "latest"
+    }
 }

@@ -13,7 +13,7 @@ const CHAR_HEIGHT = 20;
 
 describe('MouseHelper.getCoords', () => {
   let dom: jsdom.JSDOM;
-  let window: Window;
+  let window: Terminal;
   let document: Document;
   let mouseHelper: MouseHelper;
 

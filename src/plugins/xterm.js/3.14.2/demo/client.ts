@@ -18,7 +18,7 @@ import * as fit from '../lib/addons/fit/fit';
 // little weird here as we're importing "this" module
 import { Terminal as TerminalType, ITerminalOptions } from 'xterm';
 
-export interface IWindowWithTerminal extends Window {
+export interface IWindowWithTerminal extends Terminal {
   term: TerminalType;
   Terminal?: typeof TerminalType;
 }

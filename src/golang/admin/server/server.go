@@ -57,18 +57,19 @@ func  webSocketHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		jsonString = params[5]
 	}
 
-	admSocket := lib.GetAdminSocket(name)
-	admSocket.CreateConnection(w, r)
+	admSocket := lib.GetAdminSocket(name, w, r)
 	createAndClose := false
 
 	switch command {
 	case "ssh":
+		admSocket.CreateConnection()
 		createAndClose = webSocketSSHInit(admSocket, action, jsonString)
 		break
 	case "otp":
 		createAndClose = webSocketOTPInit(admSocket, action, jsonString)
 	}
+
 	if createAndClose {
-		admSocket.CreateAndCloseConnection(w, r)
+		admSocket.CreateAndCloseConnection()
 	}
 }

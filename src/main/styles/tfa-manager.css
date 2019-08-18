@@ -130,7 +130,7 @@
     border: 1px solid darkorange;
     margin: 5px 2px 0 2px;
     padding: 1px;
-    border-radius: 6px;
+    border-radius: 5px;
     height: 20px;
     width: 40px;
     font-family: OpenSansCondensed;
@@ -139,7 +139,9 @@
     font-weight: bolder;
     background: orange;
     text-transform: uppercase;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);*/
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+    border-bottom: 1px solid rgba(0,0,0,0.25);
     /*text-shadow: 0 -1px 1px rgba(220, 220, 220, 0.8);*/
 }
 
@@ -150,6 +152,8 @@
 }
 
 .tfa {
+    position: relative;
+    float: right;
     height: 50px;
     display: flex;
     flex-direction: row;
@@ -170,14 +174,30 @@
     text-align: center;
     text-transform: uppercase;
     font-size: 20px;
-    /*max-width: 12ch;*/
+    max-width: 20px;
     text-overflow: ellipsis;
     font-family: typewriter_condensedbold, sans-serif;
     white-space: nowrap;
 }
 
+.tfa-delete {
+    position: absolute;
+    top: 15px;
+    right: 10px;
+    opacity: 0.3;
+    font-size: 12px;
+}
+
+.tfa-delete:hover {
+    opacity: 1;
+    transition: 0.3s;
+}
+
 .tfa-otp {
-    border: 10px solid transparent;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 2px solid transparent;
+    border-right: 10px solid transparent;
     display: flex;
     flex-direction: row;
     align-content: space-around;

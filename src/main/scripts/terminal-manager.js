@@ -1,6 +1,6 @@
 // SOURCE FILE: admin.tools/src/main/scripts/terminal-manager.js
 // Copyright (c) 2019 "Aditya Naga Sanjeevi, Yellapu". All rights reserved.
-// Use of this source code is governed by a MIT-style license that can be
+// Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 'use strict';
@@ -652,6 +652,6 @@ control.TerminalManager.prototype.setUpResizingGrid = function (parent, sibling,
     });
 
     return resizeElem;
-}
+};
 
-let terminalManager = new control.TerminalManager('#first-terminal');
+// let terminalManager = new control.TerminalManager('#first-terminal');

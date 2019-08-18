@@ -14,7 +14,7 @@ import { IColor } from '../../ui/Types';
  * @param canvasFactory A function to generate a canvas with a width or height.
  * @param config The config for the new char atlas.
  */
-export function generateStaticCharAtlasTexture(context: Window, canvasFactory: (width: number, height: number) => HTMLCanvasElement, config: ICharAtlasConfig): HTMLCanvasElement | Promise<ImageBitmap> {
+export function generateStaticCharAtlasTexture(context: Terminal, canvasFactory: (width: number, height: number) => HTMLCanvasElement, config: ICharAtlasConfig): HTMLCanvasElement | Promise<ImageBitmap> {
   const cellWidth = config.scaledCharWidth + CHAR_ATLAS_CELL_SPACING;
   const cellHeight = config.scaledCharHeight + CHAR_ATLAS_CELL_SPACING;
   const canvas = canvasFactory(

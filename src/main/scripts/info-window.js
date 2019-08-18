@@ -30,7 +30,7 @@ ui.ModalWindow = function(name, width, height, background, roundness, x, y) {
   
 };
 
-ui.ModalWindow.prototype.createWindow = function(background, roundness) {
+ui.ModalWindow.prototype.createTerminal = function(background, roundness) {
     let element = document.createElement("div");
     element.id = this.name;
     element.className = "modal-content-iw";

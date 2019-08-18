@@ -15,7 +15,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 		All []string
 	}
 
-	createAndClose = true
+	createAndClose = false
 	var otpManager = otp.New()
 	var otpData = new(OTPData)
 	err := json.Unmarshal([]byte(jsonString), &otpData)
@@ -25,7 +25,12 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 
 	switch action {
 	case "create":
-		_ = otpManager.GenerateTOTP()
+		err = otpManager.GenerateTOTP()
+		if err != nil {
+			log.Println("Couldn't generate a new TOTP: ", err)
+			socket.WriteHTTP(err.Error())
+		}
+		socket.WriteHTTP(doMarshall(otpManager))
 		break
 	case "list":
 		strings, err := otpManager.GetKeys()
@@ -33,6 +38,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 			log.Println("Couldn't retrieve any list")
 		}
 		log.Println("Retrieved list: ", strings)
+		socket.WriteHTTP(doMarshall(strings))
 		break
 	case "validate":
 		valid := otpManager.ValidateOTP(otpData.Name, otpData.OTP)
@@ -84,4 +90,12 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 	createAndClose = true
 
 	return
+}
+
+func doMarshall(v interface{}) string {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		log.Println("There is an error Marshalling object to Json string", err)
+	}
+	return string(bytes)
 }

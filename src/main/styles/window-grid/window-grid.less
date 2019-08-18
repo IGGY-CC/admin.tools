@@ -1,0 +1,111 @@
+@themes: "../../themes";
+@import "@{themes}/selected.less";
+
+@width: `window.innerWidth`;
+@height: `window.innerHeight`;
+@grid-gap: 1px;
+
+@title-height: 25px;
+@menu-height: 60px;
+
+@toolbar-width: 35px;
+@toolbar-content-width: 120px;
+@right-content: @toolbar-content-width;
+@right-tab-width: 18px;
+
+@bottom-content-height: 30px;
+@bottom-tab-height: @right-tab-width;
+@status-height: 15px;
+
+@content-width: @width - (@grid-gap*4) - (@toolbar-width + @toolbar-content-width + @right-content + @right-tab-width);
+@content-height: @height - (@grid-gap*5) - (@title-height + @menu-height + @bottom-content-height + @bottom-tab-height + @status-height);
+
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  user-select: text;
+}
+
+.grid-container {
+  min-width: unit(@width, px);
+  min-height: unit(@height, px);
+  display: grid;
+  grid-template-columns: @toolbar-width @toolbar-content-width @content-width @right-content @right-tab-width;
+  grid-template-rows: @title-height @menu-height @content-height @bottom-content-height @bottom-tab-height @status-height;
+  grid-template-areas: "title-bar title-bar title-bar title-bar title-bar"
+  "menu-bar menu-bar menu-bar menu-bar menu-bar"
+  "tool-bar toolbar-tab-content main-content right-tab-content right-tab-bar"
+  "tool-bar bottom-tab-content bottom-tab-content bottom-tab-content right-tab-bar"
+  "bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar"
+  "status-bar status-bar status-bar status-bar status-bar";
+  grid-gap: 1px;
+}
+
+.base-container() {
+  background: @base;
+  color: @base-complement;
+}
+
+.dark-container() {
+  background: @darkest;
+  color: @darkest-foreground;
+}
+
+.light-container() {
+  background: @light;
+  color: @light-complement;
+}
+
+.title-bar {
+  grid-area: title-bar;
+  .dark-container()
+}
+
+.menu-bar {
+  grid-area: menu-bar;
+  .base-container()
+}
+
+.status-bar {
+  grid-area: status-bar;
+  background: lighten(@darkest, 2%);
+  color: lighten(@darkest-foreground, 2%);
+}
+
+.bottom-tab-bar {
+  grid-area: bottom-tab-bar;
+  .base-container()
+}
+
+.bottom-tab-content {
+  grid-area: bottom-tab-content;
+  .light-container()
+}
+
+.tool-bar {
+  grid-area: tool-bar;
+  .base-container()
+}
+
+.toolbar-tab-content {
+  grid-area: toolbar-tab-content;
+  .light-container()
+}
+
+.main-content {
+  grid-area: main-content;
+  .dark-container()
+}
+
+.right-tab-bar {
+  grid-area: right-tab-bar;
+  .base-container()
+}
+
+.right-tab-content {
+  grid-area: right-tab-content;
+  .light-container()
+}
