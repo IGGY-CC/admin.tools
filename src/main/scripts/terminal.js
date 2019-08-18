@@ -1,11 +1,11 @@
 // SOURCE FILE: admin.tools/src/main/scripts/terminal.js
 // Copyright (c) 2019 "Aditya Naga Sanjeevi, Yellapu". All rights reserved.
-// Use of this source code is governed by a MIT-style license that can be
+// Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 'use strict';
 
-const randomWord = require('random-word');
+// const randomWord = require('random-word');
 const os = require('os');
 // const pty = require('node-pty-prebuilt');
 
@@ -13,6 +13,13 @@ const os = require('os');
  * @fileoverview Declares the admin.* namespace.
  */
 let admin = {};
+
+/**
+ * TextEncoder takes a stream of code points as input and emits a stream of bytes.
+ *
+ * @type {TextEncoder}
+ */
+const encoder = new TextEncoder();
 
 /**
  * Constructor to generate a Terminal.
@@ -184,7 +191,8 @@ admin.Terminal.prototype.onTerminalReady = function () {
     this.printPrompt();
 
 
-    // this.io.sendString = (str) => this.io.print(str);
+    // TODO: what to happen when pasting data on terminal. Fix and uncomment below
+    // this.io.sendString = (str) => this.onVTKeystroke(str);
     this.io.onVTKeystroke = (ch) => this.onVTKeystroke(ch);
 
     this.io.onTerminalResize = (columns, rows) => this.onTerminalResize(columns, rows);
@@ -226,7 +234,7 @@ admin.Terminal.prototype.onVTKeystroke = function (ch) {
             this.isLocalCommand = true;
             this.underLocalCommand = false;
         }
-        this.shell.send(ch);
+        this.shell.send(encoder.encode(ch));
     } else {
         // Keep track of consecutive up and down arrow key presses
         if (ch === '\\033[A') { // UP arrow
@@ -610,7 +618,7 @@ admin.Terminal.prototype.setupSSHConnection = function (value) {
         case 1:
             let name = value[0];
             if(name === "" || !this.sshname) {
-                name = randomWord();
+                name = "server";
                 notify("No name provided. Taking '" + highlightColor + name + resetColor + "' for now.");
             }
             this.sshname = name;
@@ -745,9 +753,18 @@ admin.Terminal.prototype.makeSSHConnection = function () {
 
 
     this.shell.onmessage = function (evt) {
-        self.io.print(evt.data);
+        self.io.print(this.strEncodeUTF16(evt.data));
         // self.io.sendString(evt.data);
     };
+};
+
+admin.Terminal.prototype.strEncodeUTF16 = function(str) {
+    let buf = new ArrayBuffer(str.length*2);
+    let bufView = new Uint16Array(buf);
+    for (let i=0, strLen=str.length; i < strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return bufView;
 };
 
 /**

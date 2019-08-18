@@ -5,7 +5,7 @@
 
 import { ITerminal, ISelectionManager } from './Types';
 
-interface IWindow extends Window {
+interface IWindow extends Terminal {
   clipboardData?: {
     getData(format: string): string;
     setData(format: string, data: string): void;

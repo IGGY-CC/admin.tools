@@ -74,6 +74,11 @@
     transform: translateX(0%);
 }
 
+#sysinfo-tab-content {
+    overflow-y: scroll;
+    overflow: auto;
+}
+
 #sysinfo-icon {
     color: #cea61b;
 }

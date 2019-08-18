@@ -10,7 +10,7 @@ import { CharMeasure } from './CharMeasure';
 
 describe('CharMeasure', () => {
   let dom: jsdom.JSDOM;
-  let window: Window;
+  let window: Terminal;
   let document: Document;
   let container: HTMLElement;
   let charMeasure: ICharMeasure;

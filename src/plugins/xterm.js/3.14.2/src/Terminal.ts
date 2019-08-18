@@ -126,7 +126,7 @@ export class Terminal extends EventEmitter implements ITerminal, IDisposable, II
    * The HTMLElement that the terminal is created in, set by Terminal.open.
    */
   private _parent: HTMLElement;
-  private _context: Window;
+  private _context: Terminal;
   private _document: Document;
   private _viewportScrollArea: HTMLElement;
   private _viewportElement: HTMLElement;

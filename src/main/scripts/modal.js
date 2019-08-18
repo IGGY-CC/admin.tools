@@ -20,7 +20,7 @@ ui.ModalWindow = function() {
   
 };
 
-ui.ModalWindow.prototype.createWindow = function(name, width, height, roundedness, x, y) {
+ui.ModalWindow.prototype.createTerminal = function(name, width, height, roundedness, x, y) {
 
 };
 

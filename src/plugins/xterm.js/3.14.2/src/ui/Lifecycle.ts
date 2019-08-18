@@ -11,7 +11,7 @@ import { IDisposable } from '../common/Types';
  * @param handler The handler for the listener.
  */
 export function addDisposableDomListener(
-  node: Element | Window | Document,
+  node: Element | Terminal | Document,
   type: string,
   handler: (e: any) => void,
   useCapture?: boolean
