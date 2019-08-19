@@ -1,4 +1,4 @@
-@themes: "../../themes";
+@themes: "../themes";
 @import "@{themes}/selected.less";
 
 @width: `window.innerWidth`;
@@ -29,7 +29,7 @@
   user-select: text;
 }
 
-.grid-container {
+#grid-container {
   min-width: unit(@width, px);
   min-height: unit(@height, px);
   display: grid;
@@ -42,6 +42,10 @@
   "bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar"
   "status-bar status-bar status-bar status-bar status-bar";
   grid-gap: 1px;
+  grid-auto-columns: auto;
+  grid-auto-rows: auto;
+  //grid-auto-columns: fit-content(50%);
+
 }
 
 .base-container() {
@@ -59,53 +63,56 @@
   color: @light-complement;
 }
 
-.title-bar {
+#title-bar {
   grid-area: title-bar;
   .dark-container()
 }
 
-.menu-bar {
+#menu-bar {
   grid-area: menu-bar;
   .base-container()
 }
 
-.status-bar {
+#tool-bar {
+  grid-area: tool-bar;
+  .base-container()
+}
+
+#toolbar-tab-content {
+  grid-area: toolbar-tab-content;
+  .light-container()
+}
+
+#main-content {
+  grid-area: main-content;
+  .dark-container()
+}
+
+#right-tab-content {
+  grid-area: right-tab-content;
+  .light-container()
+}
+
+#right-tab-bar {
+  grid-area: right-tab-bar;
+  .base-container()
+}
+
+#bottom-tab-content {
+  grid-area: bottom-tab-content;
+  .light-container();
+}
+
+#bottom-tab-bar {
+  grid-area: bottom-tab-bar;
+  .base-container()
+}
+
+#status-bar {
   grid-area: status-bar;
   background: lighten(@darkest, 2%);
   color: lighten(@darkest-foreground, 2%);
 }
 
-.bottom-tab-bar {
-  grid-area: bottom-tab-bar;
-  .base-container()
-}
-
-.bottom-tab-content {
-  grid-area: bottom-tab-content;
-  .light-container()
-}
-
-.tool-bar {
-  grid-area: tool-bar;
-  .base-container()
-}
-
-.toolbar-tab-content {
-  grid-area: toolbar-tab-content;
-  .light-container()
-}
-
-.main-content {
-  grid-area: main-content;
-  .dark-container()
-}
-
-.right-tab-bar {
-  grid-area: right-tab-bar;
-  .base-container()
-}
-
-.right-tab-content {
-  grid-area: right-tab-content;
-  .light-container()
-}
+@import "title.less";
+@import "resize.less";

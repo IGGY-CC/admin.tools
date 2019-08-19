@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <title>Hello, World!</title>
     <link rel="stylesheet" href="main.css"/>
-    <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less" />
+    <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
+
+    <!-- External/third-party CSS files -->
+    <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
+
     <script>
         less = {
             env: "development",
@@ -17,20 +21,37 @@
             dumpLineNumbers: "comments",
         };
     </script>
-    <script type="text/javascript" src="../../plugins/less/less.js" ></script>
+    <script type="text/javascript" src="../../plugins/less/less.js"></script>
+    <script type="text/javascript" src="../scripts/window-grid/window-grid.js"></script>
 </head>
 <body>
-<div class="grid-container">
-    <div class="title-bar"></div>
-    <div class="menu-bar"></div>
-    <div class="status-bar"></div>
-    <div class="bottom-tab-bar"></div>
-    <div class="bottom-tab-content"></div>
-    <div class="tool-bar"></div>
-    <div class="toolbar-tab-content"></div>
-    <div class="main-content"></div>
-    <div class="right-tab-bar"></div>
-    <div class="right-tab-content"></div>
+<div id="grid-container">
+    <div id="title-bar">
+        <div class="at-win icon"><span class="fab fa-pagelines"></span></div>
+        <div class="title">hello, world</div>
+        <div class="notifications"></div>
+        <div class="at-win minimize"><span class="fa fa-window-minimize"></span></div>
+        <div class="at-win maximize"><span class="far fa-window-maximize"></span></div>
+        <div class="at-win close"><span class="fa fa-power-off"></span></div>
+    </div>
+    <div id="menu-bar"></div>
+    <div id="tool-bar"></div>
+    <div id="toolbar-tab-content" class="resize-container vertical-right">
+        <div id="toolbar-content">hello, world</div>
+        <div class="resize-handle resize-vertical"></div>
+    </div>
+    <div id="main-content"></div>
+    <div id="right-tab-content" class="resize-container vertical-left">
+        <div id="right-content">hello, world</div>
+        <div class="resize-handle resize-vertical"></div>
+    </div>
+    <div id="right-tab-bar"></div>
+    <div id="bottom-tab-content" class="resize-container horizontal-top">
+        <div id="bottom-content" style="width: 100%">hello, world, this is a test for a bug</div>
+        <div class="resize-handle resize-horizontal" id="bottom-tab-handle"></div>
+    </div>
+    <div id="bottom-tab-bar"></div>
+    <div id="status-bar"></div>
 </div>
 </body>
 </html>

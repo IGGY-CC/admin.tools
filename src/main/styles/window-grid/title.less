@@ -1,0 +1,59 @@
+@title-grid-gap: 3px;
+@icon-width: @title-height;
+@title-remain-width: @width - (5*@title-grid-gap) - (4*@icon-width);
+@title-notification-width: @title-remain-width * 1/4;
+@title-text-width: @title-remain-width * 3/4;
+
+#title-bar {
+  min-width: @width;
+  min-height: @title-height;
+  display: grid;
+  grid-template-columns: @icon-width @title-text-width @title-notification-width @icon-width @icon-width @icon-width;
+  grid-template-rows: 1fr;
+  grid-template-areas: "icon title notifications minimize maximize close";
+  justify-content: center;
+  align-items: center;
+  -webkit-app-region: drag;
+  border-top: 1px solid @base;
+  border-bottom: 1px solid darken(@darkest, 2%);
+  grid-gap: @title-grid-gap;
+}
+
+.at-win {
+  height: @title-height;
+  padding: 6px;
+  font-size: 0.8em;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.at-win:hover {
+  background: @compat-red;
+  color: white;
+}
+
+.icon {
+  grid-area: icon;
+  color: @compat-aqua;
+}
+
+.close {
+  grid-area: close;
+}
+
+.maximize {
+  grid-area: maximize;
+}
+
+.minimize {
+  grid-area: minimize;
+}
+
+.notifications {
+  grid-area: notifications;
+}
+
+.title {
+  grid-area: title;
+  color: @compat-green;
+}
