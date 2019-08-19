@@ -5,6 +5,11 @@
   display: grid;
 }
 
+.resize-container2 {
+  display: grid;
+  grid-template-rows: 0.5fr 0.5fr;
+}
+
 .vertical-right {
   grid-template-columns: auto @resize-handle;
   grid-template-areas: "content handle";
@@ -19,13 +24,13 @@
 
 .horizontal-top {
   grid-template-rows: @resize-handle auto;
-  grid-template-areas: "handle content";
+  grid-template-areas: "handle" "content";
   grid-template-columns: 1fr;
 }
 
 .horizontal-bottom {
   grid-template-rows: auto @resize-handle;
-  grid-template-areas: "content handle";
+  grid-template-areas: "content" "handle";
   grid-template-columns: 1fr;
 }
 
@@ -56,8 +61,3 @@
 #toolbar-content, #bottom-content, #right-content {
   grid-area: content;
 }
-
-#bottom-tab-handle {
-  grid-area: handle;
-}
-
