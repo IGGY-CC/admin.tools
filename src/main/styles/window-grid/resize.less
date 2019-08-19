@@ -1,0 +1,63 @@
+@resize-handle: 2px;
+@resize-hover: 4px;
+
+.resize-container {
+  display: grid;
+}
+
+.vertical-right {
+  grid-template-columns: auto @resize-handle;
+  grid-template-areas: "content handle";
+  grid-template-rows: 1fr;
+}
+
+.vertical-left {
+  grid-template-columns: @resize-handle auto;
+  grid-template-areas: "handle content";
+  grid-template-rows: 1fr;
+}
+
+.horizontal-top {
+  grid-template-rows: @resize-handle auto;
+  grid-template-areas: "handle content";
+  grid-template-columns: 1fr;
+}
+
+.horizontal-bottom {
+  grid-template-rows: auto @resize-handle;
+  grid-template-areas: "content handle";
+  grid-template-columns: 1fr;
+}
+
+.resize-vertical {
+  height: 100%;
+  width: @resize-handle;
+  background-color: red;
+  z-index: 3;
+}
+
+.resize-horizontal {
+  width: 100%;
+  height: @resize-handle;
+  background-color: red;
+  z-index: 3;
+}
+
+.resize-vertical:hover {
+  cursor: col-resize;
+  width: @resize-hover;
+}
+
+.resize-horizontal:hover {
+  cursor: row-resize;
+  height: @resize-hover;
+}
+
+#toolbar-content, #bottom-content, #right-content {
+  grid-area: content;
+}
+
+#bottom-tab-handle {
+  grid-area: handle;
+}
+

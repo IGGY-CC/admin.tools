@@ -20,6 +20,7 @@ function createWindow() {
         minWidth: 800,
         height: 600,
         minHeight: 600,
+        frame: false,
         webPreferences: {
             contextIsolation: false,
             sandbox: false,

@@ -13,19 +13,19 @@
 
     <!-- CSS FILES -->
     <!-- Internal CSS files -->
-    <link rel="stylesheet" type="text/css" href="../styles/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
     <link rel="stylesheet" type="text/css" href="../styles/main.css" />
-    <link rel="stylesheet" type="text/css" href="../styles/grid.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/tools.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/content.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/modal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/terminal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/command-line.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/properties.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/menu-flyout.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/tfa-manager.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
-    <link rel="stylesheet" type="text/css" href="../styles/property-tabs.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/grid.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/tools.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/content.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/modal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/terminal.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/command-line.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/properties.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/menu-flyout.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/tfa-manager.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/old/property-tabs.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
@@ -35,8 +35,8 @@
 
     <!-- JAVASCRIPT FILES -->
     <!-- Internal scripts -->
-    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/window-tools.js"></script>
-    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/socket_comm.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/old/window-tools.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/old/socket_comm.js"></script>
 
     <!-- External/third-party scripts -->
     <!-- simplebar: scrollbar -->
@@ -323,15 +323,15 @@
         // require('../scripts/renderer.js')
         // gridster.add_widget('<li class="new">The HTM L of the widget...</li>', 2, 1);
         
-        require("../scripts/info-window.js");
-        require("../scripts/context-menus.js");
-        require("../scripts/menu-flyout.js");
-        require("../scripts/property-tabs");
-        require("../scripts/tfa-manager");
-        require("../scripts/commands.js");
-        require('../scripts/cpu-data.js');
-        require('../scripts/ram-usage.js');
-        require('../scripts/local-term.js');
+        require("../scripts/old/info-window.js");
+        require("../scripts/old/context-menus.js");
+        require("../scripts/old/menu-flyout.js");
+        require("../scripts/old/property-tabs");
+        require("../scripts/old/tfa-manager");
+        require("../scripts/old/commands.js");
+        require('../scripts/old/cpu-data.js');
+        require('../scripts/old/ram-usage.js');
+        require('../scripts/old/local-term.js');
         require('../scripts/terminals/term');
         require('../scripts/terminals/term_terminal_manager');
         require('../scripts/terminals/term_event');
@@ -344,12 +344,12 @@
 
         // require('../scripts/streams.js');
         // require('../scripts/streams_command_instance.js');
-        require("../scripts/grid-element.js");
-        require("../scripts/grid-manager.js");
-        require('../scripts/terminal.js');
-        require('../scripts/terminal-manager.js');
+        require("../scripts/old/grid-element.js");
+        require("../scripts/old/grid-manager.js");
+        require('../scripts/old/terminal.js');
+        require('../scripts/old/terminal-manager.js');
         // require('../scripts/ssh_client.js');
-        require("../scripts/full-screen.js");
+        require("../scripts/old/full-screen.js");
         require("../scripts/assistants/dialogflow");
     </script>
 </body>
