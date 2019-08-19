@@ -3,7 +3,7 @@
 
 @width: `window.innerWidth`;
 @height: `window.innerHeight`;
-@grid-gap: 1px;
+@grid-gap: 0;
 
 @title-height: 25px;
 @menu-height: 60px;
@@ -13,8 +13,7 @@
 @right-content: @toolbar-content-width;
 @right-tab-width: 18px;
 
-@bottom-content-height: 300px;
-//@bottom-content-height: 30px;
+@bottom-content-height: 30px;
 @bottom-tab-height: @right-tab-width;
 @status-height: 15px;
 
@@ -42,7 +41,7 @@
   "tool-bar toolbar-tab-content bottom-tab-content right-tab-content right-tab-bar"
   "tool-bar toolbar-tab-content bottom-tab-bar right-tab-content right-tab-bar"
   "status-bar status-bar status-bar status-bar status-bar";
-  grid-gap: 1px;
+  grid-gap: @grid-gap;
 }
 
 .base-container() {
