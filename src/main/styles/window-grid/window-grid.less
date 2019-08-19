@@ -13,7 +13,8 @@
 @right-content: @toolbar-content-width;
 @right-tab-width: 18px;
 
-@bottom-content-height: 30px;
+@bottom-content-height: 300px;
+//@bottom-content-height: 30px;
 @bottom-tab-height: @right-tab-width;
 @status-height: 15px;
 
@@ -38,14 +39,10 @@
   grid-template-areas: "title-bar title-bar title-bar title-bar title-bar"
   "menu-bar menu-bar menu-bar menu-bar menu-bar"
   "tool-bar toolbar-tab-content main-content right-tab-content right-tab-bar"
-  "tool-bar bottom-tab-content bottom-tab-content bottom-tab-content right-tab-bar"
-  "bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar bottom-tab-bar"
+  "tool-bar toolbar-tab-content bottom-tab-content right-tab-content right-tab-bar"
+  "tool-bar toolbar-tab-content bottom-tab-bar right-tab-content right-tab-bar"
   "status-bar status-bar status-bar status-bar status-bar";
   grid-gap: 1px;
-  grid-auto-columns: auto;
-  grid-auto-rows: auto;
-  //grid-auto-columns: fit-content(50%);
-
 }
 
 .base-container() {
