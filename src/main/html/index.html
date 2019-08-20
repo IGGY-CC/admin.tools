@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Hello, World!</title>
-    <link rel="stylesheet" href="main.css"/>
+    <link rel="stylesheet" href="../styles/main.css"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
 
     <!-- External/third-party CSS files -->
@@ -23,16 +23,17 @@
     </script>
     <script type="text/javascript" src="../../plugins/less/less.js"></script>
     <script type="text/javascript" defer src="../scripts/window-grid/window-grid.js"></script>
+    <script type="text/javascript" defer src="../scripts/window-grid/title-bar.js"></script>
 </head>
 <body>
 <div id="grid-container">
-    <div id="title-bar" style="visibility: hidden;">
+    <div id="title-bar" sstyle="visibility: hidden;">
         <div class="at-win icon"><span class="fab fa-pagelines"></span></div>
         <div class="title">hello, world</div>
         <div class="notifications"></div>
-        <div class="at-win minimize"><span class="fa fa-window-minimize"></span></div>
-        <div class="at-win maximize"><span class="far fa-window-maximize"></span></div>
-        <div class="at-win close"><span class="fa fa-power-off"></span></div>
+        <div class="at-win" id="minimize"><span class="fa fa-window-minimize"></span></div>
+        <div class="at-win" id="maximize"><span class="far fa-window-maximize"></span></div>
+        <div class="at-win" id="close"><span class="fa fa-power-off"></span></div>
     </div>
     <div id="menu-bar"></div>
     <div id="tool-bar"></div>

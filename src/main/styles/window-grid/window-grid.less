@@ -1,25 +1,32 @@
 @themes: "../themes";
 @import "@{themes}/selected.less";
 
-@width: `window.innerWidth`;
-@height: `window.innerHeight`;
-@grid-gap: 0;
 
+@grid-gap: 0;
+// Fixed sizes. Change here if something default
+// size needs to be changed. Javascript uses these
+// values.
 @title-height: 25px;
 @menu-height: 60px;
-
 @toolbar-width: 35px;
-@toolbar-content-width: 120px;
-@right-content: @toolbar-content-width;
-@right-tab-width: 18px;
-
-@bottom-content-height: 30px;
-@bottom-tab-height: @right-tab-width;
+@tab-width: 18px;
 @status-height: 15px;
 
-@content-width: @width - (@grid-gap*4) - (@toolbar-width + @toolbar-content-width + @right-content + @right-tab-width);
-@content-height: @height - (@grid-gap*5) - (@title-height + @menu-height + @bottom-content-height + @bottom-tab-height + @status-height);
+// The following values derive from the above. In
+// most cases leave them to auto and it is the
+// responsibility of the element creator to setup
+// exact value (min-width, max-width) and to write
+// their own on-resize calls.
+@right-tab-width: @tab-width;
+@bottom-tab-height: @tab-width;
 
+@toolbar-content-width: auto;
+@right-content: auto;
+@bottom-content-height: auto;
+//@content-width: @width - (@grid-gap*4) - (@toolbar-width + @toolbar-content-width + @right-content + @right-tab-width);
+//@content-height: @height - (@grid-gap*5) - (@title-height + @menu-height + @bottom-content-height + @bottom-tab-height + @status-height);
+@content-width: auto;
+@content-height: auto;
 
 * {
   margin: 0;
@@ -30,9 +37,11 @@
 }
 
 #grid-container {
-  min-width: unit(@width, px);
-  min-height: unit(@height, px);
+  min-width: 100%;
+  min-height: 100%;
   display: grid;
+  //grid-template-columns: @toolbar-width @toolbar-content-width @content-width @right-content @right-tab-width;
+  //grid-template-rows: @title-height @menu-height @content-height @bottom-content-height @bottom-tab-height @status-height;
   grid-template-columns: @toolbar-width @toolbar-content-width @content-width @right-content @right-tab-width;
   grid-template-rows: @title-height @menu-height @content-height @bottom-content-height @bottom-tab-height @status-height;
   grid-template-areas: "title-bar title-bar title-bar title-bar title-bar"
@@ -60,16 +69,23 @@
 }
 
 #title-bar {
+  max-height: @title-height;
+  min-height: @title-height;
   grid-area: title-bar;
   .dark-container()
 }
 
 #menu-bar {
+  max-height: @menu-height;
+  min-height: @menu-height;
   grid-area: menu-bar;
-  .base-container()
+  //.base-container()
+  .dark-container()
 }
 
 #tool-bar {
+  max-width: @toolbar-width;
+  min-width: @toolbar-width;
   grid-area: tool-bar;
   .base-container()
 }
@@ -91,6 +107,8 @@
 
 #right-tab-bar {
   grid-area: right-tab-bar;
+  max-width: @right-tab-width;
+  min-width: @right-tab-width;
   .base-container()
 }
 
@@ -100,11 +118,15 @@
 }
 
 #bottom-tab-bar {
+  max-height: @bottom-tab-height;
+  min-height: @bottom-tab-height;
   grid-area: bottom-tab-bar;
   .base-container()
 }
 
 #status-bar {
+  max-height: @status-height;
+  min-height: @status-height;
   grid-area: status-bar;
   background: lighten(@darkest, 2%);
   color: lighten(@darkest-foreground, 2%);
@@ -112,3 +134,5 @@
 
 @import "title.less";
 @import "resize.less";
+@import "menu-bar.less";
+@import "tool-bar.less";
