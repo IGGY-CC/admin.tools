@@ -1,21 +1,17 @@
 @title-grid-gap: 3px;
 @icon-width: @title-height;
-@title-remain-width: @width - (5*@title-grid-gap) - (4*@icon-width);
-@title-notification-width: @title-remain-width * 1/4;
-@title-text-width: @title-remain-width * 3/4;
 
 #title-bar {
-  min-width: @width;
   min-height: @title-height;
   display: grid;
-  grid-template-columns: @icon-width @title-text-width @title-notification-width @icon-width @icon-width @icon-width;
+  grid-template-columns: @icon-width calc((100% - (4*@icon-width) - (5*@title-grid-gap)) * 3/4) calc((100% - (4*@icon-width) - (5*@title-grid-gap)) * 1/4) @icon-width @icon-width @icon-width;
   grid-template-rows: 1fr;
   grid-template-areas: "icon title notifications minimize maximize close";
   justify-content: center;
   align-items: center;
   -webkit-app-region: drag;
   border-top: 1px solid @base;
-  border-bottom: 1px solid darken(@darkest, 2%);
+  //border-bottom: 1px solid darken(@darkest, 2%);
   grid-gap: @title-grid-gap;
 }
 

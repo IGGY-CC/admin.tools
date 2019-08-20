@@ -38,6 +38,7 @@ function startResizing(event) {
 
     window.addEventListener(("mousemove"), resizeColumn);
     window.addEventListener(("mouseup"), finishResizing);
+
     window.addEventListener(("touchmove"), resizeColumn);
     window.addEventListener(("touchend"), finishResizing);
 }
@@ -53,8 +54,7 @@ function resizeColumn(event) {
     let gridArea = computedStyle.gridTemplateAreas;
     let gridRows = gridArea.match(/"[^"]+"/g);
     let gridIndex = -1;
-    let rowIndex = 0;
-
+    let previousElement, nextElement = null;
     /**
      * This loop detects where the current element (gridName) falls in.
      * As the gridAre is a matrix of rows and columns, the first time
@@ -62,13 +62,35 @@ function resizeColumn(event) {
      * checking for horizontal axis, it is the row number (rowIndex)
      * else it will be the column index.
      */
+    let rowIndex = 0;
     for(let row of gridRows) {
-        let rowAreaArr = row.toLocaleUpperCase().split(' ');
+        let rowAreaArr = row.replace(/'+|"+/g, '').toLocaleUpperCase().split(' ');
         // Column index
         gridIndex = rowAreaArr.indexOf(gridName.toLocaleUpperCase());
         if(gridIndex > -1) {
             // Row index
             if(axis === HORIZONTAL) gridIndex = rowIndex;
+            // if(axis === VERTICAL) {
+            //     if (gridIndex - 1 >= 0) {
+            //         previousElement = document.querySelector('div[id^="' + rowAreaArr[gridIndex - 1] + '" i]');
+            //         console.log("Previous Node: ", rowAreaArr[gridIndex - 1], previousElement.id);
+            //     }
+            //     if (gridIndex + 1 <= rowAreaArr.length) {
+            //         nextElement = document.querySelector('div[id^="' + rowAreaArr[gridIndex + 1] + '" i]');
+            //         console.log("Next Node: ", rowAreaArr[gridIndex + 1], nextElement.id);
+            //     }
+            // } else {
+            //     if (rowIndex - 1 >= 0) {
+            //         let tmpRowArr = gridRows[rowIndex - 1].split(' ');
+            //         previousElement = document.querySelector("#" + tmpRowArr[gridIndex]);
+            //         console.log("Previous Node: ", previousElement.id);
+            //     }
+            //     if (rowIndex + 1 <= gridRows.length) {
+            //         let tmpRowArr = gridRows[rowIndex + 1].split(' ');
+            //         nextElement = document.querySelector("#" + tmpRowArr[gridIndex]);
+            //         console.log("Next Node: ", nextElement.id);
+            //     }
+            // }
             break;
         }
         rowIndex += 1;
@@ -93,10 +115,8 @@ function resizeColumn(event) {
      * the element/cell, then the total size of cells including the current
      * cell is taken.
      */
-    let includeCurrentCell = 0;
-    if(direction === RIGHT || direction === BOTTOM) {
-        includeCurrentCell = 1;
-    }
+    let includeCurrentCell = (direction === RIGHT || direction === BOTTOM)? 1 : 0;
+
     for (let i = 0; i < (gridIndex + includeCurrentCell); i++) {
         spaceBefore += parseInt(gridSizeArray[i]);
     }
@@ -126,6 +146,9 @@ function resizeColumn(event) {
         gridSizeArray[gridIndex + 1] = (nextElementSize - pixelDifference) + "px";
     }
 
+    if(gridSizeArray[gridIndex] < 1 || gridSizeArray[gridIndex + 1] < 1 || gridSizeArray[gridIndex - 1] < 1) {
+        finishResizing();
+    }
     /**
      * Update the setting with the calculated value.
      */
@@ -146,3 +169,26 @@ for (let i=0; i<= resizeHandle.length-1; i++){
     resizeHandle[i].addEventListener(("mousedown"), startResizing);
     resizeHandle[i].addEventListener(("touchend"), startResizing);
 }
+
+document.querySelector("#right-tab-content").handleResize = (e) => {
+  console.log(e);
+};
+
+document.body.handleResize = (e) => {
+    console.log(e);
+};
+
+let ro = new ResizeObserver( entries => {
+    for (let entry of entries) {
+        let cs = window.getComputedStyle(entry.target);
+        console.log('watching element:', entry.target);
+        console.log(entry.contentRect.width,' is ', cs.width);
+        console.log(entry.contentRect.height,' is ', cs.height);
+        // console.log(entry.borderBoxSize.inlineSize,' is ', cs.width);
+        // console.log(entry.borderBoxSize.blockSize,' is ', cs.height)
+        if (entry.target.handleResize)
+            entry.target.handleResize(entry);
+    }
+});
+
+ro.observe(document.querySelector('#right-tab-content'));
