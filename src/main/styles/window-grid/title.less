@@ -1,31 +1,40 @@
-@title-grid-gap: 3px;
-@icon-width: @title-height;
+@title-grid-gap: 0px;
+@icon-width: @title-height *1.5;
+@title-padding: 6px;
 
 #title-bar {
   min-height: @title-height;
   display: grid;
   grid-template-columns: @icon-width calc((100% - (4*@icon-width) - (5*@title-grid-gap)) * 3/4) calc((100% - (4*@icon-width) - (5*@title-grid-gap)) * 1/4) @icon-width @icon-width @icon-width;
-  grid-template-rows: 1fr;
-  grid-template-areas: "icon title notifications minimize maximize close";
-  justify-content: center;
-  align-items: center;
+  grid-template-rows: 1px calc(100% - 1px);
+  grid-template-areas: "icon resizewin resizewin minimize maximize close"
+                      "icon title notifications minimize maximize close";
+  //justify-content: center;
+  //align-items: center;
   -webkit-app-region: drag;
-  border-top: 1px solid @base;
+  //border-top: 1px solid @base;
   //border-bottom: 1px solid darken(@darkest, 2%);
   grid-gap: @title-grid-gap;
 }
 
 .at-win {
   height: @title-height;
-  padding: 6px;
   font-size: 0.8em;
   cursor: pointer;
   -webkit-app-region: no-drag;
+  text-align: center;
+  padding: @title-padding;
 }
 
 .at-win:hover {
   background: @compat-red;
   color: white;
+}
+
+.resize-win {
+  grid-area: resizewin;
+  .dark-container();
+  -webkit-app-region: no-drag;
 }
 
 .icon {
@@ -47,9 +56,11 @@
 
 .notifications {
   grid-area: notifications;
+  padding: @title-padding;
 }
 
 .title {
   grid-area: title;
+  padding: @title-padding;
   color: @compat-green;
 }

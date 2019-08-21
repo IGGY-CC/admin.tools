@@ -1,24 +1,24 @@
-@darkest: #ffffff;
+@darkest: #eeeeee;
 @darkest-select: #efefef;
 @darkest-foreground: #4d4d4c;
 @darkest-highlight: #d6d6d6;
 @darkest-alt-foreground: #8e908c;
-@darkest-border: rgb();
+@darkest-border: darken(@darkest, 10%);
 
-@base: rgb();
-@base-complement: rgb();
-@base-select: rgb();
-@base-border: rgb();
+@base: lighten(@darkest, 10%);
+@base-foreground: lighten(@darkest-foreground, 10%);
+@base-select: lighten(@darkest-select, 10%);
+@base-border: lighten(@darkest-border, 10%);
 
-@light: rgb();
-@light-complement: rgb();
-@light-select: rgb();
+@light: lighten(@base, 20%);
+@light-foreground: lighten(@base-foreground, 20%);
+@light-select: lighten(@base-select, 20%);
 
 
-@title-bar: rgb();
-@title-bar-complement: rgb();
-@title-bar-select: rgb();
-@title-bar-border: rgb();
+@title-bar: lighten(@darkest, 10%);
+@title-bar-foreground: lighten(@darkest-foreground, 10%);
+@title-bar-select: lighten(@darkest-select, 10%);
+@title-bar-border: lighten(@darkest-border, 10%);
 
 @compat-red: #c82829;
 @compat-orange: #f5871f;

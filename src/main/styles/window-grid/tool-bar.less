@@ -1,10 +1,23 @@
-#toolbar-content {
-
+#toolbar-tab-content {
+  .light-container();
+  .resize-vertical {
+    background-color: darken($background, 5%);
+    box-shadow: 1px 0 4px fade($background-color, 60%);
+  }
 }
 
-#toolbar-content {
-  //.dark-container();
+#right-tab-content {
+  .light-container();
   .resize-vertical {
-    background-color: darken(@darkest, 2%);
+    background-color: darken($background, 5%);
+    box-shadow: -1px 0 4px fade($background-color, 60%);
+  }
+}
+
+#bottom-tab-content {
+  .light-container();
+  .resize-horizontal {
+    background-color: darken($background, 5%);
+    box-shadow: -1px 0 4px fade($background-color, 60%);
   }
 }

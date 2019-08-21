@@ -3,23 +3,21 @@
 @darkest-foreground: #cccccc;
 @darkest-highlight: #515151;
 @darkest-alt-foreground: #999999;
-@darkest-border: rgb();
+@darkest-border: darken(@darkest, 50%);
 
+@base: lighten(@darkest, 10%);
+@base-foreground: lighten(@darkest-foreground, 10%);
+@base-select: lighten(@darkest-select, 10%);
+@base-border: lighten(@darkest-border, 10%);
 
-@base: rgb();
-@base-complement: rgb();
-@base-select: rgb();
-@base-border: rgb();
+@light: lighten(@base, 20%);
+@light-foreground: lighten(@base-foreground, 20%);
+@light-select: lighten(@base-select, 20%);
 
-@light: rgb();
-@light-complement: rgb();
-@light-select: rgb();
-
-
-@title-bar: rgb();
-@title-bar-complement: rgb();
-@title-bar-select: rgb();
-@title-bar-border: rgb();
+@title-bar: lighten(@darkest, 10%);
+@title-bar-foreground: lighten(@darkest-foreground, 10%);
+@title-bar-select: lighten(@darkest-select, 10%);
+@title-bar-border: lighten(@darkest-border, 10%);
 
 @compat-red: #f2777a;
 @compat-orange: #f99157;
