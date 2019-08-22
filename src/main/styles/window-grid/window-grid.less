@@ -1,33 +1,4 @@
-@themes: "../themes";
-@selected-theme: "light";
-@import "@{themes}/@{selected-theme}.less";
-
-
-@grid-gap: 0;
-// Fixed sizes. Change here if something default
-// size needs to be changed. Javascript uses these
-// values.
-@title-height: 25px;
-@menu-height: 60px;
-@toolbar-width: 35px;
-@tab-width: 18px;
-@status-height: 15px;
-
-// The following values derive from the above. In
-// most cases leave them to auto and it is the
-// responsibility of the element creator to setup
-// exact value (min-width, max-width) and to write
-// their own on-resize calls.
-@right-tab-width: @tab-width;
-@bottom-tab-height: @tab-width;
-
-@toolbar-content-width: auto;
-@right-content: auto;
-@bottom-content-height: auto;
-//@content-width: @width - (@grid-gap*4) - (@toolbar-width + @toolbar-content-width + @right-content + @right-tab-width);
-//@content-height: @height - (@grid-gap*5) - (@title-height + @menu-height + @bottom-content-height + @bottom-tab-height + @status-height);
-@content-width: auto;
-@content-height: auto;
+@import "window-variables.less";
 
 * {
   margin: 0;
@@ -143,3 +114,4 @@
 @import "resize.less";
 @import "menu-bar.less";
 @import "tool-bar.less";
+@import "tabs.less";
