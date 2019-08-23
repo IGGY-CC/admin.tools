@@ -21,7 +21,6 @@ const BOTTOM = 32;
 grid.window = function(container, handle) {
     this.container = document.querySelector(container);
     this.resizeHandles = document.querySelectorAll(handle);
-    this.boundListeners = {};
     this.gridName = null;
     this.gridTemplateAreas = null;
     this.templateRows = [];

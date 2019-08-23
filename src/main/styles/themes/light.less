@@ -15,19 +15,25 @@
 @light-select: lighten(@base-select, 20%);
 
 @main-tabs-background: darken(@darkest, 3%);
-@tab-text-active-color: darken(@darkest-foreground, 10%);
+@tab-text-active-color: darken(@darkest-foreground, 50%);
 @tab-text-shadow: darken(@darkest-foreground, 30%);
-@tab-text-active-shadow: @tab-text-color;
+@tab-text-active-shadow: darken(@tab-text-color, 30%);
 
 @tab-background-color: darken(@light,10%);
 @tab-text-color: darken(@light-foreground, 50%);
 @tab-active-shadow: darken(@light, 25%);
-@tab-active-background-color: darken(@light, 15%);
+@tab-active-background-color: darken(@light, 20%);
 
 @title-bar: lighten(@darkest, 10%);
 @title-bar-foreground: lighten(@darkest-foreground, 10%);
 @title-bar-select: lighten(@darkest-select, 10%);
 @title-bar-border: lighten(@darkest-border, 10%);
+
+@tool-background: darken(@darkest-select, 7%);
+@tool-foreground: lighten(@darkest-foreground, 5%);
+@tool-foreground-hover: darken(@darkest-foreground, 35%);
+@tool-border: @darkest;
+@tool-shadow: darken(@darkest-select, 10%);
 
 @compat-red: #c82829;
 @compat-orange: #f5871f;
