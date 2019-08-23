@@ -39,7 +39,7 @@
 
 // Main Content
 @main-cont-tab-height: 20px;
-@main-cont-tab-width: 120px;
+@main-cont-tab-width: 140px;
 @main-cont-tab-border: 3px;
 @main-cont-tab-border-top: 1px;
 @main-cont-text-padding: 5px;
@@ -50,6 +50,15 @@
 // Tool Bar
 @tool-width: @toolbar-width - 4px;
 @tool-height: @tool-width;
+
+// Menu Bar
+@menu-items-height: 18px;
+@menu-progress-bar-height: 1px;
+@menu-icons-first-row: (@menu-height - @menu-items-height - @menu-progress-bar-height) / 2;
+@menu-icons-second-row: auto;
+@menu-toolbar-width: auto;
+@widget-area-first-column: 150px;
+@widget-area-second-column: 150px;
 
 .overflow-clip() {
   .overflow();

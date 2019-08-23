@@ -1,3 +1,74 @@
 #menu-bar {
-  border-bottom: 1px solid darken(@darkest, 2%);
+  border-bottom: 1px solid @menu-bar-border;
+  display: grid;
+  grid-template-rows: @menu-items-height @menu-icons-first-row @menu-icons-second-row @menu-progress-bar;
+  grid-template-columns: @menu-toolbar-width @widget-area-first-column @widget-area-second-column;
+  grid-template-areas:  "menu-items widget-area widget-area"
+                        "icons-first-row widget-area widget-area"
+                        "icons-second-row widget-area widget-area"
+                        "menu-progress-bar menu-progress-bar menu-progress-bar";
+
+  #menu-items, #icons-first-row, #icons-second-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  #menu-items {
+    grid-area: menu-items;
+
+    .text {
+      padding: 2px 8px;
+      text-transform: uppercase;
+      font-family: Inconsolata;
+      font-size: 12px;
+      line-height: 14px;
+      text-decoration: none;
+      letter-spacing: 2px;
+      color: @menu-text;
+    }
+
+    :hover {
+      background: @menu-text-hover;
+    }
+  }
+
+  #icons-first-row {
+    grid-area: icons-first-row;
+  }
+
+  #icons-second-row {
+    grid-area: icons-second-row;
+  }
+
+  #icons-first-row, #icons-second-row {
+    .tool {
+      padding: 2px 8px;
+      font-size: 10px;
+      line-height: 15px;
+      color: @menu-icon;
+
+      input {
+        background: @menu-input-background;
+        border: 1px solid @menu-input-background;
+      }
+    }
+    :hover {
+      background: @menu-icon-hover-background;
+      color: @menu-icon-hover;
+    }
+
+    .spacer {
+      color: fade(@menu-spacer, 15%);
+      font-size: 0.8em;
+      line-height: 1.8em;
+    }
+  }
+
+  #menu-progress-bar {
+    grid-area: menu-progress-bar;
+    min-height: @menu-progress-bar-height;
+    max-height: @menu-progress-bar-height;
+    background: @menu-progress-bar;
+  }
+
 }
