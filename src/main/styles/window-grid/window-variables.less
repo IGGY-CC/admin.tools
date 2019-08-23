@@ -4,7 +4,6 @@
 @selected-theme: extract(@available-themes, @selected-theme-number);
 @import "@{themes}/@{selected-theme}.less";
 
-
 @grid-gap: 0;
 // Fixed sizes. Change here if something default
 // size needs to be changed. Javascript uses these
@@ -30,3 +29,35 @@
 //@content-height: @height - (@grid-gap*5) - (@title-height + @menu-height + @bottom-content-height + @bottom-tab-height + @status-height);
 @content-width: auto;
 @content-height: auto;
+
+// Main tabs: #right-tab-bar #bottom-tab-bar
+@tab-item-min-size: 100px;
+@tab-item-max-size: 200px;
+@tab-horizontal-max-width: 25ch;
+@tab-vertical-max-width: 10ch;
+
+
+// Main Content
+@main-tabs-background: darken(@darkest, 6%);
+@main-cont-tab-background: darken(@base-select, 15%);
+@main-cont-tab-height: 20px;
+@main-cont-tab-width: 120px;
+@main-cont-tab-border: 3px;
+@main-cont-tab-border-color: darken(@main-cont-tab-background, 5%);
+@main-cont-tab-border-top: 1px;
+@main-cont-tab-border-top-color: @compat-red;
+@main-cont-tab-selected-background: lighten(@main-cont-tab-background, 5%); // darken(@compat-red, 10%);
+@main-cont-tab-close-color: darken(@darkest, 15%);
+@main-cont-text-padding: 5px;
+@main-cont-close-padding: 2px;
+@main-cont-text-max-width: 100px;
+
+.overflow-clip() {
+  .overflow();
+  text-overflow: clip;
+};
+
+.overflow() {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
