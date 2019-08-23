@@ -8,7 +8,7 @@
 
 let grid = {};
 
-let resizeObserver = require("../scripts/utils/util_resize_observer");
+let resizer = require("../scripts/utils/util_resizer");
 let listeners = require("../scripts/utils/util_listeners");
 
 const VERTICAL = 1;
@@ -93,9 +93,10 @@ grid.window.prototype.registerHandles = function() {
     }
 
     // Register a callback for each element whose min/max size needs to be considered or gets effected
-    resizeObserver.observe(document.querySelector("#toolbar-tab-content"));
-    resizeObserver.observe(document.querySelector("#right-tab-content"));
-    resizeObserver.observe(document.querySelector("#bottom-tab-content"));
+    resizer.onResize((e) => {
+        this.updateCellSize("main-content", false, window.innerWidth, null, true);
+        this.updateCellSize("main-content", true, window.innerHeight, null, true);
+    });
 };
 
 grid.window.prototype.startResizing = function(event) {
@@ -221,27 +222,45 @@ grid.window.prototype.finishResizing = function() {
     listeners.addRemoveListener("mousemove", null, true);
 };
 
-grid.window.prototype.hideChild = function(element, row=true, expand=LEFT) {
+grid.window.prototype.hideCell = function(element, row=true, expand=LEFT) {
+    this.updateCellSize(element, row, 0, expand);
+};
+
+grid.window.prototype.updateCellSize = function(element, row, newSize, expand, calculateSize=false) {
     let gridIndex = this.getGridIndex(element, row);
     let gridSizeArray = this.getAreaValues(row);
-
-    let expandIndex = (expand === LEFT || expand === TOP)? gridIndex - 1 : gridIndex + 1;
-    /**
-     * Get the adjacent cell widths/heights including current cell
-     */
-    let expandElementSize = parseInt(gridSizeArray[expandIndex]);
     let crntElementSize = parseInt(gridSizeArray[gridIndex]);
-    gridSizeArray[expandIndex] = expandElementSize + crntElementSize + "px";
-    gridSizeArray[gridIndex] = 0 + "px";
+    if(calculateSize) {
+        let totSize = 0;
+        gridSizeArray.forEach(cell => {
+            totSize += parseInt(cell);
+        });
+        newSize = crntElementSize + newSize - totSize;
+    }
+
+
+    if((typeof expand !== "undefined") && expand !== null) {
+        let expandIndex = (expand === LEFT || expand === TOP)? gridIndex - 1 : gridIndex + 1;
+        /**
+         * Get the adjacent cell widths/heights including current cell
+         */
+        let expandElementSize = parseInt(gridSizeArray[expandIndex]);
+        gridSizeArray[expandIndex] = expandElementSize + (crntElementSize - newSize) + "px";
+    }
+
+
+    gridSizeArray[gridIndex] = newSize + "px";
 
     /**
      * Update the setting with the calculated value.
      */
     this.updateNewAreaValues(gridSizeArray, row);
-    document.querySelector("#" + element).style.display = "none";
+    if(newSize === 0) {
+        document.querySelector("#" + element).style.display = "none";
+    }
 };
 
 let gridWindow = new grid.window("#grid-container", "#grid-container .resize-handle");
-gridWindow.hideChild("toolbar-tab-content", false, RIGHT);
-gridWindow.hideChild("right-tab-content", false, LEFT);
-gridWindow.hideChild("bottom-tab-content", true, TOP);
+gridWindow.hideCell("toolbar-tab-content", false, RIGHT);
+gridWindow.hideCell("right-tab-content", false, LEFT);
+gridWindow.hideCell("bottom-tab-content", true, TOP);

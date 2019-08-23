@@ -1,0 +1,86 @@
+#main-content {
+  display: grid;
+  grid-template-rows: @main-cont-tab-height auto;
+  grid-template-columns: 1fr;
+  grid-template-areas: "main-tabs" "main-tab-content";
+
+  #main-tabs {
+    //border-bottom: 1px solid darken(@main-cont-tab-border-color, 3%);
+    grid-area: main-tabs;
+    //border: 1px solid red;
+    display: flex;
+    flex-direction: row;
+    background: @main-tabs-background;
+
+    .tab {
+      padding-right: 2px;
+      max-width: @main-cont-tab-width;
+      background: @main-cont-tab-background;
+      display: flex;
+      flex-direction: row;
+      border-right: @main-cont-tab-border solid @main-cont-tab-border-color;
+      border-bottom: @main-cont-tab-border-top solid darken(@main-tabs-background, 5%);
+
+      .icon {
+        padding: 4px;
+        font-size: 0.6em;
+        margin-right: 2px;
+      }
+
+      .text {
+        padding-right: 4px;
+        white-space: nowrap;
+        font-family: typewriter_condensedregular;
+        text-decoration: none;
+        letter-spacing: 1px;
+        max-width: @main-cont-text-max-width;
+        font-size: 0.9em;
+        line-height: 1.3em;
+        -webkit-font-smoothing: subpixel-antialiased;
+        text-transform: uppercase;
+        .overflow();
+        color: darken(@darkest-foreground, 5%);
+        text-shadow: 1px 0 0 darken(@darkest-foreground, 20%);
+      }
+
+      .close {
+        color: @main-cont-tab-close-color;
+        font-size: 0.65em;
+        cursor: pointer;
+      }
+    }
+
+    .tab:hover {
+      background: @compat-red;
+      color: @darkest;
+      text-shadow: 1px 0 1px @darkest;
+      border-bottom: @main-cont-tab-border-top solid @main-cont-tab-border-top-color;
+      .icon {
+        color: darken(@darkest, 10%);
+      }
+    }
+
+    .active {
+      background: @main-cont-tab-selected-background;
+      //text-shadow: 1px 0 1px $color;
+      border-bottom: @main-cont-tab-border-top solid @main-cont-tab-border-top-color;
+      .text {
+        color: darken(@darkest-foreground, 5%);
+        text-shadow: 1px 0 0 darken(@darkest-foreground, 20%);
+      }
+    }
+
+    .active:hover {
+      background: @main-cont-tab-selected-background;
+      color: @base-foreground;
+      .icon {
+        color: darken(@base-foreground, 10%);
+      }
+    }
+  }
+
+  #main-tab-content {
+    grid-area: main-tab-content;
+  }
+}
+

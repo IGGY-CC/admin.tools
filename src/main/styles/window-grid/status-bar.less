@@ -1,4 +1,17 @@
 #status-bar {
   display: grid;
+  grid-template-columns: 0.5fr 0.5fr;
+  grid-template-rows: 1fr;
 
+  .left, .right {
+    display: flex;
+  }
+
+  .left {
+    flex-direction: row;
+  }
+
+  .right {
+    flex-direction: row-reverse;
+  }
 }

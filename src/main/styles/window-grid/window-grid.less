@@ -8,14 +8,22 @@
   user-select: text;
 }
 
+@toolbar-width-final: "minmax(" + @toolbar-width + ", " + @toolbar-width + ")";
+@right-tab-width-final: "minmax(" + @right-tab-width + ", " + @right-tab-width + ")";
+@title-height-final: "minmax(" + @title-height + ", " + @title-height + ")";
+@menu-height-final: "minmax(" + @menu-height + ", " + @menu-height + ")";
+@bottom-tab-height-final: "minmax(" + @bottom-tab-height + ", " + @bottom-tab-height + ")";
+@status-height-final: "minmax(" + @status-height + ", " + @status-height + ")";
+
+
+
+
 #grid-container {
   min-width: 100%;
   min-height: 100%;
   display: grid;
-  //grid-template-columns: @toolbar-width @toolbar-content-width @content-width @right-content @right-tab-width;
-  //grid-template-rows: @title-height @menu-height @content-height @bottom-content-height @bottom-tab-height @status-height;
-  grid-template-columns: @toolbar-width @toolbar-content-width @content-width @right-content @right-tab-width;
-  grid-template-rows: @title-height @menu-height @content-height @bottom-content-height @bottom-tab-height @status-height;
+  grid-template-columns: minmax(@toolbar-width, @toolbar-width) @toolbar-content-width @content-width @right-content minmax(@right-tab-width, @right-tab-width);
+  grid-template-rows: minmax(@title-height, @title-height) minmax(@menu-height, @menu-height) @content-height @bottom-content-height minmax(@bottom-tab-height, @bottom-tab-height) minmax(@status-height, @status-height);
   grid-template-areas: "title-bar title-bar title-bar title-bar title-bar"
   "menu-bar menu-bar menu-bar menu-bar menu-bar"
   "tool-bar toolbar-tab-content main-content right-tab-content right-tab-bar"
@@ -115,3 +123,4 @@
 @import "menu-bar.less";
 @import "tool-bar.less";
 @import "tabs.less";
+@import "main-content.less";

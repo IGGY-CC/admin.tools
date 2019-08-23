@@ -1,6 +1,3 @@
-@tab-item-min-size: 100px;
-@tab-item-max-size: 200px;
-
 #right-tab-bar {
   flex-direction: column;
   // leave 1px on left and right
@@ -18,6 +15,7 @@
   overflow: hidden;
 
   .tab {
+    max-width: 100%;
     display: flex;
     background-color: @tab-background-color;
     cursor: pointer;
@@ -28,6 +26,7 @@
     }
 
     .text {
+      width: 100%;
       white-space: nowrap;
       font-family: Oswald;
       font-size: 7pt;
@@ -74,6 +73,8 @@
     .text {
       padding-left: 8px;
       line-height: 14pt;
+      max-width: @tab-horizontal-max-width;
+      .overflow();
     }
   }
 }
