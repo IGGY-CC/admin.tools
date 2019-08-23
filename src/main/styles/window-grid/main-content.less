@@ -5,30 +5,30 @@
   grid-template-areas: "main-tabs" "main-tab-content";
 
   #main-tabs {
-    //border-bottom: 1px solid darken(@main-cont-tab-border-color, 3%);
     grid-area: main-tabs;
-    //border: 1px solid red;
     display: flex;
     flex-direction: row;
     background: @main-tabs-background;
 
     .tab {
-      padding-right: 2px;
+      padding-right: 1px;
+      padding-left: @main-cont-cell-padding;
       max-width: @main-cont-tab-width;
-      background: @main-cont-tab-background;
+      background: @tab-background-color;
       display: flex;
       flex-direction: row;
-      border-right: @main-cont-tab-border solid @main-cont-tab-border-color;
-      border-bottom: @main-cont-tab-border-top solid darken(@main-tabs-background, 5%);
+      border-right: @main-cont-tab-border solid transparent;
+      border-bottom: @main-cont-tab-border-top solid @tab-text-shadow;
 
       .icon {
-        padding: 4px;
+        padding: @main-cont-cell-padding;
         font-size: 0.6em;
-        margin-right: 2px;
+        //margin-right: 4px;
       }
 
       .text {
-        padding-right: 4px;
+        padding-right: @main-cont-cell-padding;
+        padding-left: @main-cont-cell-padding;
         white-space: nowrap;
         font-family: typewriter_condensedregular;
         text-decoration: none;
@@ -39,42 +39,42 @@
         -webkit-font-smoothing: subpixel-antialiased;
         text-transform: uppercase;
         .overflow();
-        color: darken(@darkest-foreground, 5%);
-        text-shadow: 1px 0 0 darken(@darkest-foreground, 20%);
+        color: @tab-text-color;
+        text-shadow: 1px 0 0 @tab-text-shadow;
       }
 
       .close {
-        color: @main-cont-tab-close-color;
+        padding-left: @main-cont-cell-padding;
+        color: @tab-text-shadow;
         font-size: 0.65em;
         cursor: pointer;
       }
     }
 
     .tab:hover {
-      background: @compat-red;
-      color: @darkest;
-      text-shadow: 1px 0 1px @darkest;
-      border-bottom: @main-cont-tab-border-top solid @main-cont-tab-border-top-color;
+      //background: @compat-red;
+      //color: @darkest;
+      //text-shadow: 1px 0 1px @darkest;
+      //border-bottom: @main-cont-tab-border-top solid @main-tab-highlight-border;
       .icon {
-        color: darken(@darkest, 10%);
+        //color: darken(@darkest, 10%);
       }
     }
 
     .active {
-      background: @main-cont-tab-selected-background;
-      //text-shadow: 1px 0 1px $color;
-      border-bottom: @main-cont-tab-border-top solid @main-cont-tab-border-top-color;
+      background: @tab-active-background-color;
+      border-bottom: @main-cont-tab-border-top solid @tab-text-active-color;
       .text {
-        color: darken(@darkest-foreground, 5%);
-        text-shadow: 1px 0 0 darken(@darkest-foreground, 20%);
+        color: @tab-text-active-color;
+        text-shadow: 1px 0 0 @tab-text-active-shadow;
       }
     }
 
     .active:hover {
-      background: @main-cont-tab-selected-background;
-      color: @base-foreground;
+      //background: @main-cont-tab-selected-background;
+      //color: @base-foreground;
       .icon {
-        color: darken(@base-foreground, 10%);
+        //color: darken(@base-foreground, 10%);
       }
     }
   }
@@ -83,4 +83,3 @@
     grid-area: main-tab-content;
   }
 }
-
