@@ -10,7 +10,7 @@
 // values.
 @title-height: 25px;
 @menu-height: 60px;
-@toolbar-width: 35px;
+@toolbar-width: 30px;
 @tab-width: 20px;
 @status-height: 15px;
 
@@ -47,6 +47,10 @@
 @main-cont-close-padding: 2px;
 @main-cont-text-max-width: 100px;
 
+// Tool Bar
+@tool-width: @toolbar-width - 4px;
+@tool-height: @tool-width;
+
 .overflow-clip() {
   .overflow();
   text-overflow: clip;
@@ -55,4 +59,8 @@
 .overflow() {
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.material-icons {
+  font-size: 1.5em;
 }

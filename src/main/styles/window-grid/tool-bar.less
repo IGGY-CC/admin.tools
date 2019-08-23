@@ -1,3 +1,32 @@
+#tool-bar {
+  display: flex;
+  flex-direction: column;
+  padding: 1px 2px 1px 1px;
+
+  .tool {
+    margin-bottom: 2px;
+    background: @tool-background;
+    color: @tool-foreground;
+    border: 1px solid @tool-border;
+    min-width: @tool-width;
+    min-height: @tool-height;
+    //box-shadow: 0 1px 0 @tool-shadow;
+
+    :hover {
+      color: @tool-foreground-hover;
+    }
+
+    span {
+      padding: 4px;
+      font-size: 0.8em;
+      line-height: 1.2em;
+      text-shadow: 1px 1px 0 @tool-shadow;
+    }
+  }
+}
+
+
+
 #toolbar-tab-content {
   .light-container();
   .resize-vertical {
