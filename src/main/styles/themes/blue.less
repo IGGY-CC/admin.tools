@@ -5,7 +5,7 @@
 @darkest-alt-foreground: #7285b7;
 @darkest-border: #3d3d3d;
 
-@base: lighten(@darkest, 20%);
+@base: lighten(@darkest, 8%);
 @base-foreground: lighten(@darkest-foreground, 20%);
 @base-select: lighten(@darkest-select, 20%);
 @base-border: lighten(@darkest-border, 20%);
@@ -45,6 +45,10 @@
 @menu-input-border: @main-tabs-background;
 @menu-progress-bar: transparent; //@compat-yellow;
 @menu-spacer: @tool-foreground;
+
+@tooltip-background: darken(@darkest, 8%);
+@tooltip-foreground: @darkest-foreground;
+@tool-tip-shadow: @base;
 
 @compat-red: #ff9da4;
 @compat-orange: #ffc58f;
