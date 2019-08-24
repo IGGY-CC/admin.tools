@@ -3,10 +3,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// This class and its methods are influenced or copy-modified from
-// The Chromium OS wash project.
+'use strict';
 
-let grid = {};
+let grid = require("../scripts/window-grid/grid");
 
 let resizer = require("../scripts/utils/util_resizer");
 let listeners = require("../scripts/utils/util_listeners");

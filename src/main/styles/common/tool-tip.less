@@ -1,0 +1,106 @@
+@import "../window-grid/window-variables";
+
+.tip {
+  position: relative;
+
+  &:before {
+    content: attr(data-tip);
+    position: absolute;
+    padding: 6px 12px;
+
+    font-family: Oswald;
+    letter-spacing: 1.5px;
+    font-size: 10px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 1px fade(@tool-tip-shadow, 15%);
+    white-space: nowrap;
+
+    background: fade(@tooltip-background, 85%);
+    color: @tooltip-foreground;
+    box-shadow: 0 1px 3px fade(@tool-tip-shadow, 70%);
+    visibility: hidden;
+    opacity: 0;
+    transition: all .3s ease-in-out;
+  }
+
+  &:after {
+    content: '';
+    opacity: 0;
+    visibility: hidden;
+    transition: all .3s ease-in-out;
+  }
+
+  &:hover:before, &:hover:after {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /*right*/
+  &.right:before {
+    right: 0;
+    top: 50%;
+    transform: translate(calc(100% + 8px), -50%);
+    box-sizing: border-box;
+    border-radius: 1px;
+  }
+
+  &.right:after {
+    border-width: 8px 8px 8px 0;
+    border-color: transparent rgba(10, 20, 30, 0.85) transparent transparent;
+    right: -8px;
+    top: 50%;
+    transform: translate(0, -50%);
+  }
+
+  /*top*/
+  &.top:before {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, calc(-100% - 8px));
+    box-sizing: border-box;
+    border-radius: 3px;
+  }
+
+  &.top:after {
+    border-width: 8px 8px 0 8px;
+    border-color: rgba(10, 20, 30, 0.85) transparent transparent transparent;
+    top: -8px;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  /*bottom*/
+  &.bottom:before {
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, calc(100% + 8px));
+    box-sizing: border-box;
+    border-radius: 3px;
+  }
+
+  &tip.bottom:after {
+    border-width: 0 8px 8px 8px;
+    border-color: transparent transparent rgba(10, 20, 30, 0.85) transparent;
+    bottom: -8px;
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  /*left*/
+  &.left:before {
+    left: 0;
+    top: 50%;
+    transform: translate(calc(-100% - 8px), -50%);
+    box-sizing: border-box;
+    border-radius: 3px;
+  }
+
+  &.left:after {
+    border-width: 8px 0 8px 8px;
+    border-color: transparent transparent transparent rgba(10, 20, 30, 0.85);
+    left: -8px;
+    top: 50%;
+    transform: translate(0, -50%);
+  }
+}
+
