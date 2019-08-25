@@ -8,8 +8,8 @@
 // Fixed sizes. Change here if something default
 // size needs to be changed. Javascript uses these
 // values.
-@title-height: 25px;
-@menu-height: 60px;
+@title-height: 28px; // 25 + 3 pixels for spacing below
+@menu-height: 83px;
 @toolbar-width: 30px;
 @tab-width: 20px;
 @status-height: 15px;
@@ -52,10 +52,11 @@
 @tool-height: @tool-width;
 
 // Menu Bar
-@menu-items-height: 18px;
+@menu-items-height: 20px;
 @menu-progress-bar-height: 1px;
-@menu-icons-first-row: (@menu-height - @menu-items-height - @menu-progress-bar-height) / 2;
-@menu-icons-second-row: auto;
+@menu-text-to-tool-margin: 6px;
+@menu-icons-first-row: (@menu-height - @menu-items-height - @menu-text-to-tool-margin - @menu-progress-bar-height) / 2;
+@menu-icons-second-row: @menu-icons-first-row;
 @menu-toolbar-width: auto;
 @widget-area-first-column: 150px;
 @widget-area-second-column: 150px;

@@ -5,19 +5,13 @@
 
 'use strict';
 
-let grid = require("../scripts/window-grid/grid");
 
-let resizer = require("../scripts/utils/util_resizer");
-let listeners = require("../scripts/utils/util_listeners");
+let utilListeners = require('../utils/util_listeners');
+let utilResizer = require('../utils/util_resizer');
 
-const VERTICAL = 1;
-const HORIZONTAL = 2;
-const RIGHT = 4;
-const LEFT = 8;
-const TOP = 16;
-const BOTTOM = 32;
+let GridWindow = {};
 
-grid.window = function(container, handle) {
+GridWindow = function(container, handle) {
     this.container = document.querySelector(container);
     this.resizeHandles = document.querySelectorAll(handle);
     this.gridName = null;
@@ -31,7 +25,16 @@ grid.window = function(container, handle) {
     this.registerHandles();
 };
 
-grid.window.prototype.getAreaMap = function() {
+GridWindow.constants = {
+    VERTICAL: 1,
+    HORIZONTAL: 2,
+    RIGHT: 4,
+    LEFT: 8,
+    TOP: 16,
+    BOTTOM: 32,
+};
+
+GridWindow.prototype.getAreaMap = function() {
     let computedStyle = getComputedStyle(this.container);
     this.gridTemplateAreas = computedStyle.gridTemplateAreas;
     let rows = this.gridTemplateAreas.match(/"([^"]+)"/g);
@@ -41,7 +44,7 @@ grid.window.prototype.getAreaMap = function() {
     });
 };
 
-grid.window.prototype.getGridIndex = function(name, row=true) {
+GridWindow.prototype.getGridIndex = function(name, row=true) {
     let key = name + "-" + row;
     if(this.gridIndexes[key]) {
         return this.gridIndexes[key];
@@ -71,7 +74,7 @@ grid.window.prototype.getGridIndex = function(name, row=true) {
     return gridIndex;
 };
 
-grid.window.prototype.getAreaValues = function(rows=true) {
+GridWindow.prototype.getAreaValues = function(rows=true) {
     let computedStyle = getComputedStyle(this.container);
     /**
      * Get the measurements of cols or rows as declared with
@@ -84,38 +87,38 @@ grid.window.prototype.getAreaValues = function(rows=true) {
     }
 };
 
-grid.window.prototype.registerHandles = function() {
+GridWindow.prototype.registerHandles = function() {
     // Pull all the elements with resizeHandle and register mousedown/touchdown eventlistener.
     for (let i=0; i<= this.resizeHandles.length-1; i++){
-        listeners.addRemoveListener("mousedown", this.startResizing.bind(this), false, this.resizeHandles[i]);
+        utilListeners.addRemoveListener("mousedown", this.startResizing.bind(this), false, this.resizeHandles[i]);
     }
 
     // Register a callback for each element whose min/max size needs to be considered or gets effected
-    resizer.onResize((e) => {
+    utilResizer.onResize((e) => {
         this.updateCellSize("main-content", false, window.innerWidth, null, true);
         this.updateCellSize("main-content", true, window.innerHeight, null, true);
     });
 };
 
-grid.window.prototype.startResizing = function(event) {
+GridWindow.prototype.startResizing = function(event) {
     let column = event.target;
     for (let i=0; i<= this.resizeHandles.length-1; i++){
         if (column === this.resizeHandles[i]){
-            this.axis = (this.resizeHandles[i].parentNode.className.includes("vertical"))?
-                            VERTICAL : HORIZONTAL;
+            this.axis = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.VERTICAL"))?
+                            GridWindow.constants.VERTICAL : GridWindow.constants.HORIZONTAL;
             let computedStyle = getComputedStyle(this.resizeHandles[i].parentElement);
-            if(this.axis === VERTICAL) {
-                this.direction = (this.resizeHandles[i].parentNode.className.includes("left"))?
-                    LEFT : RIGHT;
-                if(this.direction === LEFT) {
+            if(this.axis === GridWindow.constants.VERTICAL) {
+                this.direction = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.LEFT"))?
+                    GridWindow.constants.LEFT : GridWindow.constants.RIGHT;
+                if(this.direction === GridWindow.constants.LEFT) {
                     this.gridName = computedStyle.gridColumnStart;
                 } else {
                     this.gridName = computedStyle.gridColumnEnd;
                 }
             } else {
-                this.direction = (this.resizeHandles[i].parentNode.className.includes("top"))?
-                    TOP : BOTTOM;
-                if(this.direction === TOP) {
+                this.direction = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.TOP"))?
+                    GridWindow.constants.TOP : GridWindow.constants.BOTTOM;
+                if(this.direction === GridWindow.constants.TOP) {
                     this.gridName = computedStyle.gridRowStart;
                 } else {
                     this.gridName = computedStyle.gridRowEnd;
@@ -124,11 +127,11 @@ grid.window.prototype.startResizing = function(event) {
         }
     }
 
-    listeners.addRemoveListener( "mousemove", this.resizeColumn.bind(this));
-    listeners.addRemoveListener("mouseup", this.finishResizing.bind(this));
+    utilListeners.addRemoveListener( "mousemove", this.resizeColumn.bind(this));
+    utilListeners.addRemoveListener("mouseup", this.finishResizing.bind(this));
 };
 
-grid.window.prototype.getMinMax = function(name, row=true) {
+GridWindow.prototype.getMinMax = function(name, row=true) {
     let minSize, maxSize;
     let targetElementCS = getComputedStyle(document.querySelector("#" + name));
     if(row) {
@@ -141,7 +144,7 @@ grid.window.prototype.getMinMax = function(name, row=true) {
     return {minSize: minSize, maxSize: maxSize};
 };
 
-grid.window.prototype.updateNewAreaValues = function(gridSizeArray, rows=true) {
+GridWindow.prototype.updateNewAreaValues = function(gridSizeArray, rows=true) {
     /**
      * Update the setting with the calculated value.
      */
@@ -152,12 +155,12 @@ grid.window.prototype.updateNewAreaValues = function(gridSizeArray, rows=true) {
     }
 };
 
-grid.window.prototype.resizeColumn = function(event) {
+GridWindow.prototype.resizeColumn = function(event) {
     /**
      * Mouse position in pixels
      */
-    let mousePosition =  (this.axis === VERTICAL)? event.clientX : event.clientY;
-    let isHorizontal = this.axis === HORIZONTAL;
+    let isHorizontal = this.axis === GridWindow.constants.HORIZONTAL;
+    let mousePosition =  (isHorizontal)? event.clientY : event.clientX;
     let minMax = this.getMinMax(this.gridName, isHorizontal);
     let gridIndex = this.getGridIndex(this.gridName, isHorizontal);
     let gridSizeArray = this.getAreaValues(isHorizontal);
@@ -169,7 +172,7 @@ grid.window.prototype.resizeColumn = function(event) {
      * the element/cell, then the total size of cells including the current
      * cell is taken.
      */
-    let includeCurrentCell = (this.direction === RIGHT || this.direction === BOTTOM)? 1 : 0;
+    let includeCurrentCell = (this.direction === GridWindow.constants.RIGHT || this.direction === GridWindow.constants.BOTTOM)? 1 : 0;
 
     for (let i = 0; i < (gridIndex + includeCurrentCell); i++) {
         spaceBefore += parseInt(gridSizeArray[i]);
@@ -183,7 +186,7 @@ grid.window.prototype.resizeColumn = function(event) {
     let nextElementSize = parseInt(gridSizeArray[gridIndex+1]);
 
     /**
-     * Calculate the different from the current mouseposition to the
+     * Calculate the different from the current mouse position to the
      * total space calculated before the current cell. If the value
      * is negative, the mouse is moving in the opposite direction.
      * (current cell size increases if resizer is at start of the cell
@@ -192,7 +195,7 @@ grid.window.prototype.resizeColumn = function(event) {
     let pixelDifference = mousePosition - spaceBefore;
 
 
-    if(this.direction === LEFT || this.direction === TOP) {
+    if(this.direction === GridWindow.constants.LEFT || this.direction === GridWindow.constants.TOP) {
         gridSizeArray[gridIndex] = (crntElementSize - pixelDifference) + "px";
         gridSizeArray[gridIndex - 1] = (prevElementSize + pixelDifference) + "px";
     } else {
@@ -216,15 +219,15 @@ grid.window.prototype.resizeColumn = function(event) {
     this.updateNewAreaValues(gridSizeArray, isHorizontal);
 };
 
-grid.window.prototype.finishResizing = function() {
-    listeners.addRemoveListener("mousemove", null, true);
+GridWindow.prototype.finishResizing = function() {
+    utilListeners.addRemoveListener("mousemove", null, true);
 };
 
-grid.window.prototype.hideCell = function(element, row=true, expand=LEFT) {
+GridWindow.prototype.hideCell = function(element, row=true, expand=GridWindow.constants.LEFT) {
     this.updateCellSize(element, row, 0, expand);
 };
 
-grid.window.prototype.updateCellSize = function(element, row, newSize, expand, calculateSize=false) {
+GridWindow.prototype.updateCellSize = function(element, row, newSize, expand, calculateSize=false) {
     let gridIndex = this.getGridIndex(element, row);
     let gridSizeArray = this.getAreaValues(row);
     let crntElementSize = parseInt(gridSizeArray[gridIndex]);
@@ -238,7 +241,7 @@ grid.window.prototype.updateCellSize = function(element, row, newSize, expand, c
 
 
     if((typeof expand !== "undefined") && expand !== null) {
-        let expandIndex = (expand === LEFT || expand === TOP)? gridIndex - 1 : gridIndex + 1;
+        let expandIndex = (expand === GridWindow.constants.LEFT || expand === GridWindow.constants.TOP)? gridIndex - 1 : gridIndex + 1;
         /**
          * Get the adjacent cell widths/heights including current cell
          */
@@ -258,7 +261,4 @@ grid.window.prototype.updateCellSize = function(element, row, newSize, expand, c
     }
 };
 
-let gridWindow = new grid.window("#grid-container", "#grid-container .resize-handle");
-gridWindow.hideCell("toolbar-tab-content", false, RIGHT);
-gridWindow.hideCell("right-tab-content", false, LEFT);
-gridWindow.hideCell("bottom-tab-content", true, TOP);
+module.exports = GridWindow;

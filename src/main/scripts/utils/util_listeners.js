@@ -3,13 +3,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-let util = require("./util");
+'use strict';
 
-util.Listeners = function() {
+let UtilListeners = function() {
     this.boundListeners = [];
 };
 
-util.Listeners.prototype.addRemoveListener = function(on, fn, remove=false, element=window) {
+UtilListeners.prototype.addRemoveListener = function(on, fn, remove=false, element=window) {
     let listeners = [];
 
     switch(on) {
@@ -30,6 +30,7 @@ util.Listeners.prototype.addRemoveListener = function(on, fn, remove=false, elem
             break;
 
     }
+
     listeners.forEach(listener => {
         if(remove) {
             element.removeEventListener(listener, this.boundListeners[listener]);
@@ -40,5 +41,4 @@ util.Listeners.prototype.addRemoveListener = function(on, fn, remove=false, elem
     });
 };
 
-let listeners = new util.Listeners();
-module.exports = listeners;
+module.exports = new UtilListeners();

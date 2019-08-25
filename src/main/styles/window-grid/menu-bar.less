@@ -1,20 +1,31 @@
 #menu-bar {
   border-bottom: 1px solid @menu-bar-border;
   display: grid;
-  grid-template-rows: @menu-items-height @menu-icons-first-row @menu-icons-second-row @menu-progress-bar;
+  grid-template-rows: (@menu-items-height + @menu-text-to-tool-margin) @menu-icons-first-row @menu-icons-second-row @menu-progress-bar-height;
   grid-template-columns: @menu-toolbar-width @widget-area-first-column @widget-area-second-column;
   grid-template-areas:  "menu-items widget-area widget-area"
                         "icons-first-row widget-area widget-area"
                         "icons-second-row widget-area widget-area"
                         "menu-progress-bar menu-progress-bar menu-progress-bar";
 
-  #menu-items, #icons-first-row, #icons-second-row {
+  #menu-items {
+    box-sizing: content-box;
     display: flex;
     flex-direction: row;
+    height: @menu-items-height;
   }
 
+  #icons-first-row, #icons-second-row {
+    box-sizing: border-box;
+    .icon-group {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: row;
+    }
+  }
   #menu-items {
     grid-area: menu-items;
+    margin-bottom: @menu-text-to-tool-margin;
 
     .text {
       padding: 2px 8px;
@@ -27,6 +38,11 @@
       color: @menu-text;
     }
 
+    .active {
+      border-bottom: 2px solid @menu-text;
+      //background: @menu-text-hover;
+    }
+
     :hover {
       background: @menu-text-hover;
     }
@@ -34,37 +50,57 @@
 
   #icons-first-row {
     grid-area: icons-first-row;
+    .icon-group {
+      height: @menu-icons-first-row;
+    }
   }
 
   #icons-second-row {
     grid-area: icons-second-row;
+    .icon-group {
+      height: @menu-icons-second-row;
+    }
   }
 
   #icons-first-row, #icons-second-row {
-    .tool {
-      padding: 2px 8px;
-      font-size: 10px;
-      line-height: 15px;
-      color: @menu-icon;
+    .icon-group {
+      width: 100%;
+      padding: 2px;
 
-      input {
-        background: @menu-input-background;
-        border: 1px solid @menu-input-background;
+      .tool {
+        padding: 2px 8px;
+        font-size: 10px;
+        line-height: 19px;
+        color: @menu-icon;
+
+        input {
+          background: @menu-input-background;
+          border: 1px solid @menu-input-background;
+        }
       }
-    }
-    :hover {
-      background: @menu-icon-hover-background;
-      color: @menu-icon-hover;
-    }
 
-    .spacer {
-      color: fade(@menu-spacer, 15%);
-      font-size: 0.8em;
-      line-height: 1.8em;
+      :hover {
+        background: @menu-icon-hover-background;
+        color: @menu-icon-hover;
+      }
+
+      .spacer {
+        color: fade(@menu-spacer, 15%);
+        font-size: 0.8em;
+        line-height: 1.8em;
+      }
     }
   }
 
+  #widget-area {
+    grid-area: widget-area;
+    display: flex;
+    flex-direction: row-reverse;
+    padding: 0 0 1px 1px;
+  }
+
   #menu-progress-bar {
+    box-sizing: border-box;
     grid-area: menu-progress-bar;
     min-height: @menu-progress-bar-height;
     max-height: @menu-progress-bar-height;

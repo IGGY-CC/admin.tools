@@ -3,33 +3,33 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-let plugin = {};
-const toolbar = "#tool-bar";
+'use strict';
 
-plugin.binding.Register = function() {
-  this.name = name;
-  this.menu = true;
-  this.toolbar = true;
-  this.statusbar = true;
-  this.toolbarContent = true;
-  this.bottombar = true;
-  this.rightbar = true;
-};
+let gridToolbar = require('../window-grid/toolbar-content');
+let gridMenubar = require('../window-grid/menu-bar');
 
-plugin.binding.ToolBar = function() {
-    this.toolbar = document.querySelector(toolbar);
-
-};
-
-plugin.binding.Register.getMenu = function() {
-  let setTool = (callback) => {
-      callback();
-  };
-};
-
-plugin.binding.Register.prototype.setMenu = function(name, callback) {
+let PluginRegister = function(pluginName) {
+    this.name = pluginName;
     this.menu = true;
-    this.name = name;
-    callback(this.getMenu);
+    this.toolbar = gridToolbar;
+    this.menubar = gridMenubar;
 };
 
+PluginRegister.prototype.setTool = function(tool) {
+    this.toolbar.setTool(tool);
+};
+
+PluginRegister.prototype.setMenuItem = function(menuItem) {
+    this.menubar.setMenuItem(menuItem);
+};
+
+PluginRegister.prototype.setMenuIcon = function(menuIcon) {
+    this.menubar.setupIcon(menuIcon);
+};
+
+PluginRegister.prototype.Start = function() {
+    console.error("This method shall be overridden by the plugin, which is not the case!");
+    console.error("Please report to respective Plugin author", this.name);
+};
+
+module.exports = PluginRegister;

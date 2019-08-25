@@ -1,46 +1,39 @@
-// SOURCE FILE: admin.tools/src/main/scripts/window-grid/window-grid.js
+// SOURCE FILE: admin.tools/src/main/scripts/window-grid/toolbar-content.js
 // Copyright (c) 2019 "Aditya Naga Sanjeevi, Yellapu". All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 'use strict';
 
-let grid = require("./grid");
+let UtilsUI = require("../utils/util_dom");
 
-const toolbar = "#tool-bar";
+const toolbar_id = "#tool-bar";
 
-grid.Toolbar = function () {
-  this.toolbar = document.querySelector(toolbar);
-  this.tools = {};
+let GridToolbar = function () {
+  this.toolbar = document.querySelector(toolbar_id);
+  this.tools = new Map();
 };
 
-grid.Toolbar.prototype.addTool = function (name, id, tooltip, icon, callback, color, hcolor) {
+GridToolbar.prototype.setTool = function(tool) {
     if(this.tools.has(name)) {
         console.error("The tool is already registered. Not adding.");
         return;
     }
-    let tool = {};
-    tool.name = name;
-    tool.id = id;
-    tool.tooltip = tooltip;
-    tool.icon = icon;
-    tool.callback = callback;
-    tool.color = color || null;
-    tool.hcolor = hcolor || null;
-    tool.element = null;
 
-    this.tools[name] = tool;
+    this.tools[name] = tool.name;
     this.setupUI(tool);
 };
 
-grid.Toolbar.prototype.setupUI = function(tool) {
-    tool.element = util.UI.wrapIconInNewElement('div', this.toolbar, id, "tool", tool.icon, tool.callback);
+GridToolbar.prototype.setupUI = function(tool) {
+    let wrapper = UtilsUI.wrapIconInNewElement('div', this.toolbar, tool.id, "tool", tool.icon, tool.callback, true);
+    tool.element = wrapper.wrapper;
+    tool.iconElement = wrapper.icon;
+    UtilsUI.setToolTip(tool.element, tool.tooltip, tool.ttdirection);
 };
 
-grid.Toolbar.prototype.removeTool = function(tool) {
-    util.UI.removeElement(tool.element, this.toolbar);
+GridToolbar.prototype.removeTool = function(tool) {
+    UtilsUI.removeElement(tool.element, this.toolbar);
 };
 
-
-
+module.exports = new GridToolbar();
 

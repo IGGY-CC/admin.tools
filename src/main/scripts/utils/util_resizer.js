@@ -3,9 +3,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-let util = require("./util");
+'use strict';
 
-util.Resizer = function () {
+let UtilsResizer = {};
+
+UtilsResizer = function () {
     this.callbacks = [];
     window.onresize = this.execCallbacks.bind(this);
     this.resizeObserver = new ResizeObserver(entries => {
@@ -15,31 +17,29 @@ util.Resizer = function () {
     });
 };
 
-util.Resizer.prototype.onResize = function(callback) {
+UtilsResizer.prototype.onResize = function(callback) {
     this.callbacks.push(callback);
 };
 
-util.Resizer.prototype.execCallbacks = function(e) {
+UtilsResizer.prototype.execCallbacks = function(e) {
     this.callbacks.forEach(callback => callback(e))
 };
 
-util.Resizer.prototype.observe = function (element) {
+UtilsResizer.prototype.observe = function (element) {
     this.resizeObserver.observe(this.getElement(element));
 };
 
-util.Resizer.prototype.handleResize = function (element, fn) {
+UtilsResizer.prototype.handleResize = function (element, fn) {
     this.getElement(element).handleResize = (e) => {
         fn(e);
     };
 };
 
-util.Resizer.prototype.getElement = function(element) {
+UtilsResizer.prototype.getElement = function(element) {
     if(typeof element === "string") {
         element = document.querySelector("#" + element);
     }
     return element;
 };
 
-let resizer = new util.Resizer();
-module.exports = resizer;
-
+module.exports = new UtilsResizer();
