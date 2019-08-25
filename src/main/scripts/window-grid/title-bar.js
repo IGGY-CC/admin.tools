@@ -5,8 +5,6 @@
 
 'use strict';
 
-// let grid = require("./grid");
-
 (function () {
     const window = require('electron').remote.getCurrentWindow();
 

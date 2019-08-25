@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="../styles/main.css"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
-    <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
+    <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
@@ -23,9 +23,6 @@
             dumpLineNumbers: "comments",
         };
     </script>
-    <script type="text/javascript" defer src="../scripts/window-grid/window-grid.js"></script>
-    <script type="text/javascript" defer src="../scripts/window-grid/title-bar.js"></script>
-    <script type="text/javascript" defer src="../scripts/utils/util_dom.js"></script>
 
     <!-- external scripts -->
     <script type="text/javascript" src="../../plugins/less/less.js"></script>
@@ -43,35 +40,38 @@
     </div>
     <div id="menu-bar">
         <div id="menu-items">
-            <div class="text">File</div>
+            <!-- div class="text active">File</div>
             <div class="text">Edit</div>
             <div class="text">OS</div>
             <div class="text">Network</div>
             <div class="text">VM</div>
-            <div class="text">Editor</div>
+            <div class="text">Editor</div -->
         </div>
         <div id="icons-first-row">
-            <div class="tool"><span class="fa fa-terminal"></span></div>
-            <div class="tool"><span class="fa fa-user-shield"></span></div>
-            <div class="spacer"><span class="fa fa-grip-lines-vertical"></span></div>
-            <div class="tool"><span class="far fa-edit"></span></div>
-            <div class="tool"><span class="fa fa-network-wired"></span></div>
-            <div class="tool"><span class="fas fa-globe"></span></div>
-            <div class="tool"><span class="far fa-list-alt"></span></div>
+            <!--div id="file-menu-group-first" class="icon-group">
+                <div class="tool"><span class="fa fa-terminal"></span></div>
+                <div class="tool"><span class="fa fa-user-shield"></span></div>
+                <div class="spacer"><span class="fa fa-grip-lines-vertical"></span></div>
+                <div class="tool"><span class="far fa-edit"></span></div>
+                <div class="tool"><span class="fa fa-network-wired"></span></div>
+                <div class="tool"><span class="fas fa-globe"></span></div>
+                <div class="tool"><span class="far fa-list-alt"></span></div>
+            </div -->
         </div>
         <div id="icons-second-row">
-            <div class="tool"><input type="text"></input></div>
-            <div class="tool"><span class="fa fa-user-shield"></span></div>
-            <div class="tool"><span class="far fa-edit"></span></div>
-            <div class="tool"><span class="fa fa-network-wired"></span></div>
-            <div class="tool"><span class="fas fa-globe"></span></div>
-            <div class="tool"><span class="far fa-list-alt"></span></div>
+            <!-- div id="file-menu-group-second" class="icon-group">
+                <div class="tool"><input type="text"></input></div>
+                <div class="tool"><span class="fa fa-user-shield"></span></div>
+                <div class="tool"><span class="far fa-edit"></span></div>
+                <div class="tool"><span class="fa fa-network-wired"></span></div>
+                <div class="tool"><span class="fas fa-globe"></span></div>
+                <div class="tool"><span class="far fa-list-alt"></span></div>
+            </div -->
         </div>
         <div id="widget-area"></div>
         <div id="menu-progress-bar"></div>
     </div>
     <div id="tool-bar">
-        <div class="tool tip right" data-tip="Terminal"><span class="fa fa-terminal"></span></div>
         <div class="tool tip right" data-tip="Password Manager"><span class="fa fa-user-shield"></span></div>
         <div class="tool tip right" data-tip="Code Editor"><span class="far fa-edit"></span></div>
         <div class="tool tip right" data-tip="Network Tools"><span class="fa fa-network-wired"></span></div>
@@ -79,50 +79,60 @@
         <div class="tool tip right" data-tip="2FA"><span class="far fa-list-alt"></span></div>
     </div>
     <div id="toolbar-tab-content" class="resize-container vertical-right">
-        <div id="toolbar-content"> </div>
+        <div id="toolbar-content"></div>
         <div class="resize-handle resize-vertical"></div>
     </div>
     <div id="main-content">
         <div id="main-tabs">
             <div class="tab active">
-                <div class="icon"><span class="fa fa-terminal" /></div>
+                <div class="icon"><span class="fa fa-terminal"/></div>
                 <div class="text">SYS INFO</div>
-                <div class="close"><span class="fa fa-times" /></div>
+                <div class="close"><span class="fa fa-times"/></div>
             </div>
             <div class="tab">
-                <div class="icon"><span class="fa fa-edit" /></div>
+                <div class="icon"><span class="fa fa-edit"/></div>
                 <div class="text">SYS INFO 1233</div>
-                <div class="close"><span class="fa fa-times" /></div>
+                <div class="close"><span class="fa fa-times"/></div>
             </div>
         </div>
-        <div id="main-tab-content"></div>
+        <div id="main-tab-content">
+            <div id="main-container">
+                <div id="main-content-left" class="resize-container vertical-right">
+                    <div id="tab-default-content">hello, world!</div>
+                    <div class="resize-handle resize-vertical"></div>
+                </div>
+                <div id="main-content-right" class="nothing">
+                    <div id="tabr-default-content">hello, world!</div>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="right-tab-content" class="resize-container vertical-left">
-        <div id="right-content"> </div>
+        <div id="right-content"></div>
         <div class="resize-handle resize-vertical"></div>
     </div>
     <div id="right-tab-bar">
         <div class="tab active">
-            <div class="icon"><span class="fa fa-cogs" /></div>
+            <div class="icon"><span class="fa fa-cogs"/></div>
             <div class="text">SYS INFO</div>
         </div>
         <div class="tab">
-            <div class="icon"><span class="fa fa-cogs" /></div>
-            <div class="text">SYS INFO  asdas</div>
+            <div class="icon"><span class="fa fa-cogs"/></div>
+            <div class="text">SYS INFO asdas</div>
         </div>
     </div>
     <div id="bottom-tab-content" class="resize-container horizontal-top">
         <div class="resize-handle resize-horizontal"></div>
-        <div id="bottom-content"> </div>
+        <div id="bottom-content"></div>
     </div>
     <div id="bottom-tab-bar">
         <div class="tab">
-            <div class="icon"><span class="fa fa-cogs" /></div>
+            <div class="icon"><span class="fa fa-cogs"/></div>
             <div class="text">SYS INFO</div>
         </div>
         <div class="tab active">
-            <div class="icon"><span class="fa fa-cogs" /></div>
-            <div class="text">SYS INFO asdad adasdad asdassdad </div>
+            <div class="icon"><span class="fa fa-cogs"/></div>
+            <div class="text">SYS INFO asdad adasdad asdassdad</div>
         </div>
     </div>
     <div id="status-bar">
@@ -130,5 +140,15 @@
         <div class="right"></div>
     </div>
 </div>
+<script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+    // Init the process with default on load logic
+    require("../scripts/globals");
+
+    // Add minimize, maximize and close functionality to window
+    require("../scripts/window-grid/title-bar");
+
+    // Search and load any plugins
+    require("../scripts/plugins/plugin");
+</script>
 </body>
 </html>

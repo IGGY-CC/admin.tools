@@ -3,9 +3,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-let util = require("./util");
+'use strict';
 
-util.loadHTML = function(element, url, parseScripts=false) {
+let UtilsHTML = function() {};
+
+UtilsHTML.prototype.loadHTML = function(element, url, parseScripts=false) {
     let html = new XMLHttpRequest();
     html.onreadystatechange = function() {
         if (html.readyState === XMLHttpRequest.DONE) {
@@ -26,3 +28,22 @@ util.loadHTML = function(element, url, parseScripts=false) {
     html.open("GET", url, true);
     html.send();
 };
+
+UtilsHTML.prototype.loadJS = function(url) {
+    let script = document.createElement('script');
+    script.async = false;
+    script.src = url;
+    script.type = "text/javascript";
+    script.defer = true;
+    document.head.appendChild(script);
+};
+
+UtilsHTML.prototype.loadCSS = function(url) {
+    let css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.type = "text/css";
+    css.href = url;
+    document.head.appendChild(css);
+};
+
+module.exports = new UtilsHTML();

@@ -3,12 +3,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+'use strict';
+
 const path = require('path');
 const fs = require('fs');
 
-let util = require("./util");
-
-util.randomFile = function (dir, full_path = false) {
+module.exports = function (dir, full_path = false) {
     return  new Promise((resolve, reject) => {
         fs.readdir(dir, (err, files) => {
             if (err) return reject(err);
@@ -36,5 +36,3 @@ util.randomFile = function (dir, full_path = false) {
         });
     });
 };
-
-module.exports =  util.randomFile;

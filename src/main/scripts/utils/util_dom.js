@@ -5,22 +5,21 @@
 
 'use strict';
 
-let util = require("../scripts/utils/util");
+let UtilsUI = {};
 
-util.UI = {};
-
-util.UI.createNewElement = function(type, parent, id, className, onClick, text, placeholder) {
+UtilsUI.createNewElement = function(type, parent, id, className, onClick, text, placeholder) {
     let element = document.createElement(type);
-    if(util.UI.checkParam(parent)) parent.appendChild(element);
-    if(util.UI.checkParam(id)) element.id = id;
-    if(util.UI.checkParam(className)) element.className = className;
-    if(util.UI.checkParam(text)) element.innerHTML = text;
-    if(util.UI.checkParam(placeholder)) element.placeholder = placeholder;
+    if(UtilsUI.checkParam(parent)) parent.appendChild(element);
+    if(UtilsUI.checkParam(id)) element.id = id;
+    if(UtilsUI.checkParam(className)) element.className = className;
+    if(UtilsUI.checkParam(onClick)) element.onclick = onClick;
+    if(UtilsUI.checkParam(text)) element.innerHTML = text;
+    if(UtilsUI.checkParam(placeholder)) element.placeholder = placeholder;
 
     return element;
 };
 
-util.UI.removeElement = function(element, parent, cleanUp=true) {
+UtilsUI.removeElement = function(element, parent, cleanUp=true) {
     let removeChild = (child, parent) => {
         let c = child.lastElementChild;
         if(c) {
@@ -40,23 +39,30 @@ util.UI.removeElement = function(element, parent, cleanUp=true) {
     }
 };
 
-util.UI.wrapIconInNewElement = function(type, parent, id, className, iconClass, onClick, isSpan=false) {
-    let wrapper = util.UI.createNewElement(type, parent, id, className, onClick);
+UtilsUI.wrapIconInNewElement = function(type, parent, id, className, iconClass, onClick, isSpan=false) {
+    let wrapper = UtilsUI.createNewElement(type, parent, id, className, onClick);
     let icon;
     if(isSpan) {
-        icon = util.UI.createNewElement("span", wrapper, null, iconClass, onClick);
+        icon = UtilsUI.createNewElement("span", wrapper, null, iconClass);
     } else {
-        icon = util.UI.createNewElement("i", wrapper, null, iconClass, onClick);
+        icon = UtilsUI.createNewElement("i", wrapper, null, iconClass);
     }
     return { wrapper: wrapper, icon: icon };
 };
 
-util.UI.addIconToInput = function(id, iconClass, parent) {
+UtilsUI.addIconToInput = function(id, iconClass, parent) {
     let icon = this.createNewElement("i", parent, id);
     icon.className = "fa fa-lg fa-fw " + iconClass;
     icon.ariaHidden = true;
 };
 
-util.UI.checkParam = function(param) {
+UtilsUI.checkParam = function(param) {
     return (param !== "" && typeof param !== "undefined" && param !== null);
 };
+
+UtilsUI.setToolTip = function(element, text, direction) {
+    element.setAttribute('data-tip', text);
+    element.className = element.className + " tip " + direction.toLowerCase();
+};
+
+module.exports = UtilsUI;

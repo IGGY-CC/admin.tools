@@ -1,4 +1,5 @@
 #main-content {
+  box-sizing: border-box;
   display: grid;
   grid-template-rows: @main-cont-tab-height auto;
   grid-template-columns: 1fr;
@@ -81,5 +82,18 @@
 
   #main-tab-content {
     grid-area: main-tab-content;
+    #main-container {
+      display: grid;
+      grid-template-rows: auto;
+      grid-template-columns: 1fr 1fr;
+
+      #main-content-left {
+        background: #0b97c4;
+      }
+
+      #main-content-right {
+        background: #3e999f;
+      }
+    }
   }
 }
