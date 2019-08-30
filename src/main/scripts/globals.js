@@ -20,7 +20,7 @@ Globals.OnLoad = function() {
 };
 
 Globals.OnLoad.prototype.InitMainGrid = function() {
-    let gridWindow_ = new GridWindow("#grid-container", "#grid-container .resize-handle");
+    let gridWindow_ = new GridWindow("#grid-container", "#grid-container > div > .resize-handle");
     gridWindow_.hideCell("toolbar-tab-content", false, GridWindow.constants.RIGHT);
     gridWindow_.hideCell("right-tab-content", false, GridWindow.constants.LEFT);
     gridWindow_.hideCell("bottom-tab-content", true, GridWindow.constants.TOP);

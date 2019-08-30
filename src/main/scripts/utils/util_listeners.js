@@ -36,7 +36,7 @@ UtilListeners.prototype.addRemoveListener = function(on, fn, remove=false, eleme
             element.removeEventListener(listener, this.boundListeners[listener]);
         } else {
             this.boundListeners[listener] = fn;
-            element.addEventListener(listener, fn);
+            element.addEventListener(listener, fn, {passive: true});
         }
     });
 };
