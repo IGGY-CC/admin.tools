@@ -104,11 +104,11 @@ GridWindow.prototype.startResizing = function(event) {
     let column = event.target;
     for (let i=0; i<= this.resizeHandles.length-1; i++){
         if (column === this.resizeHandles[i]){
-            this.axis = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.VERTICAL"))?
+            this.axis = (this.resizeHandles[i].parentNode.className.includes("vertical"))?
                             GridWindow.constants.VERTICAL : GridWindow.constants.HORIZONTAL;
-            let computedStyle = getComputedStyle(this.resizeHandles[i].parentElement);
+            let computedStyle = Object.assign({}, getComputedStyle(this.resizeHandles[i].parentElement));
             if(this.axis === GridWindow.constants.VERTICAL) {
-                this.direction = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.LEFT"))?
+                this.direction = (this.resizeHandles[i].parentNode.className.includes("left"))?
                     GridWindow.constants.LEFT : GridWindow.constants.RIGHT;
                 if(this.direction === GridWindow.constants.LEFT) {
                     this.gridName = computedStyle.gridColumnStart;
@@ -116,7 +116,7 @@ GridWindow.prototype.startResizing = function(event) {
                     this.gridName = computedStyle.gridColumnEnd;
                 }
             } else {
-                this.direction = (this.resizeHandles[i].parentNode.className.includes("GridWindow.constants.TOP"))?
+                this.direction = (this.resizeHandles[i].parentNode.className.includes("top"))?
                     GridWindow.constants.TOP : GridWindow.constants.BOTTOM;
                 if(this.direction === GridWindow.constants.TOP) {
                     this.gridName = computedStyle.gridRowStart;

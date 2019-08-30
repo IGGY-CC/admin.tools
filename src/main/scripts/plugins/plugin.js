@@ -7,24 +7,35 @@
 
 let gridToolbar = require('../window-grid/toolbar-content');
 let gridMenubar = require('../window-grid/menu-bar');
+let gridManager = require('../window-grid/main-content');
 
 let PluginRegister = function(pluginName) {
     this.name = pluginName;
     this.menu = true;
-    this.toolbar = gridToolbar;
-    this.menubar = gridMenubar;
 };
 
 PluginRegister.prototype.setTool = function(tool) {
-    this.toolbar.setTool(tool);
+    gridToolbar.setTool(tool);
 };
 
 PluginRegister.prototype.setMenuItem = function(menuItem) {
-    this.menubar.setMenuItem(menuItem);
+    gridMenubar.setMenuItem(menuItem);
 };
 
 PluginRegister.prototype.setMenuIcon = function(menuIcon) {
-    this.menubar.setupIcon(menuIcon);
+    gridMenubar.setupIcon(menuIcon);
+};
+
+PluginRegister.prototype.split = function(isVertical) {
+    if(isVertical) {
+        gridManager.splitVertical();
+    } else {
+        gridManager.splitHorizontal();
+    }
+};
+
+PluginRegister.prototype.deleteActiveCell = function() {
+    gridManager.deleteActiveCell();
 };
 
 PluginRegister.prototype.Start = function() {

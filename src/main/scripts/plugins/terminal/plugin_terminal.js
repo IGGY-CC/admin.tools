@@ -28,7 +28,7 @@ Terminal.prototype.setupToolIcon = function() {
     this.tool  = {
         name: this.pluginName,
         id: "toolbar-terminal",
-        tooltip: "Terminal",
+        tooltip: "New Terminal",
         icon: "fa fa-terminal",
         callback: this.onIconClick.bind(this),
         color: "green",
@@ -43,8 +43,8 @@ Terminal.prototype.setupMenuItems = function() {
         name: this.pluginName,
         displayName: "Terminal",
         id: "menubar-terminal",
-        row: 2,
-        tooltip: "Terminal",
+        row: 1,
+        tooltip: "New Terminal",
         icon: "fa fa-terminal",
         callback: this.onIconClick.bind(this),
         color: "green",
@@ -53,6 +53,35 @@ Terminal.prototype.setupMenuItems = function() {
     };
     this.setMenuItem(this.menuItem);
     this.setMenuIcon(this.menuItem);
+
+    let splitVertical = Object.assign({}, this.menuItem);
+    let splitHorizontal = Object.assign({}, this.menuItem);
+    let deleteCell = Object.assign({}, this.menuItem);
+
+    splitVertical.displayName = "Split Vertical";
+    splitVertical.id = "menubar-split-vertical";
+    splitVertical.tooltip = "Split Vertically";
+    splitVertical.icon = "fa fa-columns";
+    splitVertical.callback = this.split.bind(this, true);
+    splitVertical.ttdirection = "bottom";
+
+    splitHorizontal.displayName = "Split Horizontal";
+    splitHorizontal.id = "menubar-split-horizontal";
+    splitHorizontal.tooltip = "Split Horizontally";
+    splitHorizontal.icon = "fa fa-window-maximize";
+    splitHorizontal.callback = this.split.bind(this, false);
+    splitHorizontal.ttdirection = "bottom";
+
+    deleteCell.displayName = "Delete Active";
+    deleteCell.id = "menubar-delete-active";
+    deleteCell.tooltip = "Delete Active";
+    deleteCell.icon = "fa fa-backspace";
+    deleteCell.callback = this.deleteActiveCell.bind(this, false);
+    deleteCell.ttdirection = "bottom";
+
+    this.setMenuIcon(splitVertical);
+    this.setMenuIcon(splitHorizontal);
+    this.setMenuIcon(deleteCell);
 };
 
 Terminal.prototype.onIconClick = function() {

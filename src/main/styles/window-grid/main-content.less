@@ -82,18 +82,40 @@
 
   #main-tab-content {
     grid-area: main-tab-content;
+    display: flex;
     #main-container {
-      display: grid;
-      grid-template-rows: auto;
-      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      height: 100%;
 
-      #main-content-left {
-        background: #0b97c4;
-      }
+      .resize-handle {
+        background: red;
 
-      #main-content-right {
-        background: #3e999f;
+        &.row {
+          cursor: row-resize;
+        }
+        &.col {
+          cursor: col-resize;
+        }
       }
+      //display: grid;
+      //grid-template-rows: 1fr;
+      //grid-template-columns: auto auto;
+      //grid-template-areas: "main-content-left main-content-right";
+      //
+      //#main-content-left {
+      //  grid-area: main-content-left;
+      //  background: #0b97c4;
+      //  height: 100%;
+      //  .resize-handle {
+      //    height: 100%;
+      //    background: red;
+      //  }
+      //}
+      //
+      //#main-content-right {
+      //  grid-area: main-content-right;
+      //  background: #3e999f;
+      //}
     }
   }
 }

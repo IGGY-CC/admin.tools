@@ -20,22 +20,40 @@ UtilsUI.createNewElement = function(type, parent, id, className, onClick, text, 
 };
 
 UtilsUI.removeElement = function(element, parent, cleanUp=true) {
-    let removeChild = (child, parent) => {
-        let c = child.lastElementChild;
-        if(c) {
-            removeChild(c, child);
-        }
-        while (c) {
-            parent.removeChild(child);
+    if(element === null && cleanUp === false) {
+        console.warn("REMOVING LAST CHILD FROM THE PARENT. IS IT INTENDED?");
+    }
+
+    let removeChildren = parent => {
+        if(parent === null || typeof parent === "undefined") return;
+        let c = parent.lastElementChild;
+        while(c) {
+            removeRecursive(c, parent);
             c = parent.lastElementChild;
         }
-        child = null;
     };
 
-    if(cleanUp) {
-        removeChild(element, parent);
+    let removeRecursive = (child, parent) => {
+        if(child !== null) {
+            removeChildren(child);
+            console.log("REMOVING: ", child);
+            parent.removeChild(child);
+        } else {
+            // Request is to remove all children from parent
+            removeChildren(parent);
+        }
+    };
+
+    if(cleanUp === true) {
+        if(element !== null && typeof element !== "undefined") {
+            removeChildren(element);
+            if(parent !== null && typeof parent !== "undefined") return parent.removeChild(element);
+        } else {
+            // Request is to remove all children from parent
+            removeChildren(parent);
+        }
     } else {
-        return parent.removeChild(element);
+        if(parent !== null && typeof parent !== "undefined") return parent.removeChild(element);
     }
 };
 

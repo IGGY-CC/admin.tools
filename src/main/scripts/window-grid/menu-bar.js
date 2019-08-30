@@ -92,10 +92,6 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
  * @param iconItem
  */
 GridMenubar.prototype.setupIcon = function(iconItem) {
-    /**
-     * Create the menu item icon
-     * @type {{icon, wrapper}}
-     */
     let row = (iconItem.row === 1)? this.firstGroupDiv[iconItem.name] : this.secondGroupDiv[iconItem.name];
     let wrapper = UtilsUI.wrapIconInNewElement(
         (typeof iconItem.type === "undefined")? 'div' : iconItem.type,

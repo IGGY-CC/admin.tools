@@ -26,6 +26,8 @@
 
     <!-- external scripts -->
     <script type="text/javascript" src="../../plugins/less/less.js"></script>
+    <script type="text/javascript" src="../../plugins/libdot/js/lib.js"></script>
+    <script type="text/javascript" src="../../plugins/libdot/js/lib_event.js"></script>
 </head>
 <body>
 <div id="grid-container">
@@ -83,7 +85,7 @@
         <div class="resize-handle resize-vertical"></div>
     </div>
     <div id="main-content">
-        <div id="main-tabs">
+        <div id="main-tabs" >
             <div class="tab active">
                 <div class="icon"><span class="fa fa-terminal"/></div>
                 <div class="text">SYS INFO</div>
@@ -96,15 +98,7 @@
             </div>
         </div>
         <div id="main-tab-content">
-            <div id="main-container">
-                <div id="main-content-left" class="resize-container vertical-right">
-                    <div id="tab-default-content">hello, world!</div>
-                    <div class="resize-handle resize-vertical"></div>
-                </div>
-                <div id="main-content-right" class="nothing">
-                    <div id="tabr-default-content">hello, world!</div>
-                </div>
-            </div>
+            <div id="main-container"></div>
         </div>
     </div>
     <div id="right-tab-content" class="resize-container vertical-left">
