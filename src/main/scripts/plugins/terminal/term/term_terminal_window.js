@@ -9,9 +9,10 @@
 
 'use strict';
 
-let term = require("./term");
-let terminalManager = require("./term_terminal_manager");
-let randomFile = require("../utils/util_random_file");
+const term = require("./term");
+const terminalManager = require("./term_terminal_manager");
+const randomFile = require("../../../utils/util_random_file");
+const Event = require("../term/term_event");
 
 /**
  * A window containing an instance of (currently) hterm.
@@ -30,7 +31,7 @@ term.TerminalWindow = function(parent) {
     /**
      * Event we invoke when async init is complete.
      */
-    this.onInit = new term.Event(this.onInit_.bind(this));
+    this.onInit = new Event(this.onInit_.bind(this));
 };
 
 term.TerminalWindow.prototype.defaultEnv = {TERM: 'xterm-256color'};
@@ -223,4 +224,4 @@ term.TerminalWindow.prototype.onResize_ = function() {
     this.contentNode_.style.height = (bodyRect.height - contentRect.top) + 'px';
 };
 
-let terminalWindow = new term.TerminalWindow("#first-terminal");
+module.exports = term.TerminalWindow;

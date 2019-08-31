@@ -4,12 +4,11 @@
 // found in the LICENSE file.
 
 'use strict';
-let path = require('path');
+const path = require('path');
+const PluginRegister = require(require.resolve('../plugin.js', { paths: [ '.' ] }));
+const TerminalWindow = require("./term/term_terminal_window");
 
 let Terminal = {};
-let PluginRegister = require(require.resolve('../plugin.js', { paths: [ '.' ] }));
-
-
 Terminal = function() {
     this.pluginName = "Terminal";
     // subclass of PluginRegister
@@ -85,7 +84,10 @@ Terminal.prototype.setupMenuItems = function() {
 };
 
 Terminal.prototype.onIconClick = function() {
-    console.log("TERMINAL ICON CLICKED");
+    let activeElement = this.getActiveElement();
+    if(activeElement !== null) {
+        let terminalWindow = new TerminalWindow("#" + activeElement.id);
+    }
 };
 
 // init logic

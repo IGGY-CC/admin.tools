@@ -5,13 +5,21 @@
 
 'use strict';
 
-let gridToolbar = require('../window-grid/toolbar-content');
-let gridMenubar = require('../window-grid/menu-bar');
-let gridManager = require('../window-grid/main-content');
+const gridToolbar = require('../window-grid/toolbar-content');
+const gridMenubar = require('../window-grid/menu-bar');
+const GridObject = require('../window-grid/grid-object');
+
+// let gridManager = require('../window-grid/main-content');
 
 let PluginRegister = function(pluginName) {
     this.name = pluginName;
     this.menu = true;
+    this.activeCell = null;
+
+    let updateActiveCell = activeCell => this.activeCell = activeCell;
+    let rootElement = document.querySelector("#main-container");
+    let computedStyle = Object.assign({}, getComputedStyle(rootElement));
+    this.gridObject = new GridObject("hello", updateActiveCell, null, rootElement, parseInt(computedStyle.width), parseInt(computedStyle.height));
 };
 
 PluginRegister.prototype.setTool = function(tool) {
@@ -27,15 +35,28 @@ PluginRegister.prototype.setMenuIcon = function(menuIcon) {
 };
 
 PluginRegister.prototype.split = function(isVertical) {
-    if(isVertical) {
-        gridManager.splitVertical();
+    if(this.activeCell === null) {
+        this.gridObject.doSplit(isVertical);
     } else {
-        gridManager.splitHorizontal();
+        this.activeCell.doSplit(isVertical);
     }
 };
 
 PluginRegister.prototype.deleteActiveCell = function() {
-    gridManager.deleteActiveCell();
+    if(this.activeCell === null) {
+        console.log("PLEASE SELECT A CELL TO DELETE.");
+    } else {
+        this.activeCell.deleteActiveCell();
+    }
+};
+
+PluginRegister.prototype.getActiveElement = function() {
+    if(this.activeCell === null) {
+        console.warn("NO ACTIVE CELL YET");
+        return null;
+    } else {
+        return this.activeCell.element;
+    }
 };
 
 PluginRegister.prototype.Start = function() {
