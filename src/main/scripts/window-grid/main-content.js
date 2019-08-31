@@ -5,7 +5,8 @@
 
 'use strict';
 
-let UtilsUI = require("../utils/util_dom");
+const UtilsUI = require("../utils/util_dom");
+const utilListeners = require("../utils/util_listeners");
 
 let GridManager = {};
 
@@ -50,6 +51,7 @@ GridManager = function () {
     this.minHeight = 75;
     this.resizerWidth = 2; // pixels
     this.currentFocussedCell = this.parent;
+    this.activeResizer = null;
 };
 
 GridManager.prototype.execCallbacks = function(e) {
@@ -115,7 +117,7 @@ GridManager.prototype.split = function(parent, name, isVertical) {
 
     /* Setup resizer in the first child */
     /* NOTE: This should be called as last (after setupChild) as the grid.width and height will not be recalculated) */
-    this.setupResizer(name, container, firstChild, size, altSize, isVertical, gridElement);
+    this.setupResizer(name, gridElement.child.first.element, firstChild, size, altSize, isVertical, gridElement);
 };
 
 GridManager.prototype.deleteActiveCell = function() {
@@ -123,13 +125,19 @@ GridManager.prototype.deleteActiveCell = function() {
         console.warn("EITHER WE REACHED ROOT CELL OR THERE IS NO CELL SELECTED TO DELETE!");
         return;
     }
-    let gridElement = this.registeredElements.get(this.currentFocussedCell.id);
+
+    this.resizeChildren(this.currentFocussedCell, 0, true);
+};
+
+GridManager.prototype.resizeChildren = function(element, size, _delete=false) {
+
+    let gridElement = this.registeredElements.get(element.id);
     let  gridParent, isContentNode = false;
     /**
      * If there is no registered gridElement, then the element must be a content element.
      */
     if(typeof gridElement === "undefined") {
-        gridParent = this.registeredContentElements.get(this.currentFocussedCell.id); // grid element
+        gridParent = this.registeredContentElements.get(element.id); // grid element
         isContentNode = true;
     } else {
         gridParent = this.registeredElements.get(gridElement.parent.id); // grid element
@@ -137,19 +145,25 @@ GridManager.prototype.deleteActiveCell = function() {
 
     console.log("GRID ELEMENT", gridParent, this.registeredElements, gridParent);
     if(typeof gridParent === "undefined") {
-        console.warn("CANNOT DELETE REQUESTED ELEMENT. EITHER THIS IS THE ROOT ELEMENT OR A REQUIRED PARENT ELEMENT IS MISSING.");
+        if(_delete === true) {
+            console.warn("CANNOT DELETE REQUESTED ELEMENT. EITHER THIS IS THE ROOT ELEMENT OR A REQUIRED PARENT ELEMENT IS MISSING.");
+        } else {
+            console.warn("COULDN'T RESIZE THE REQUESTED ELEMENT. REQUIRE PARENT ELEMENT IS MISSING");
+        }
         return;
     }
 
     console.log("PARENT IS: ", gridParent);
-    if(gridParent.childZeroed === true) {
-        /* This element is already zeroed (one child is made to zero). So switch to parent and re-run the delete cell */
-        this.currentFocussedCell = gridParent.parent;
-        console.log("DELETING FROM PARENT: ", parent);
-        return this.deleteActiveCell();
-    } else {
-        /* Set the childZeroed value to true, so that there won't be further zeroing on this element */
-        gridParent.childZeroed = true;
+    if(_delete === true) {
+        if (gridParent.childZeroed === true) {
+            /* This element is already zeroed (one child is made to zero). So switch to parent and re-run the delete cell */
+            this.currentFocussedCell = gridParent.parent;
+            console.log("DELETING FROM PARENT: ", parent);
+            return this.deleteActiveCell();
+        } else {
+            /* Set the childZeroed value to true, so that there won't be further zeroing on this element */
+            gridParent.childZeroed = true;
+        }
     }
 
     let computedStyle = Object.assign({}, getComputedStyle(gridParent.element));
@@ -162,73 +176,81 @@ GridManager.prototype.deleteActiveCell = function() {
     let firstChild = children[0]; // dom element
     let secondChild = children[1]; // dom element
 
+    /* Get gridElements of respective children */
+    let firstGridElement = this.registeredElements.get(firstChild.id); // grid element
+    let secondGridElement = this.registeredElements.get(secondChild.id); // grid element
+
+
     if(gridParent.direction === VERTICAL) {
         let cols = gridTemplateCols.split(" ");
-        let newWidth = parseInt(cols[0]) + parseInt(cols[1]);
+        let totalWidth = parseInt(cols[0]) + parseInt(cols[1]) + size;
 
-        if(isContentNode) { /* We have to delete content node + resizer */
-            /* first delete the selected node and resizer and cleanup their memories */
-            UtilsUI.removeElement(null, firstChild, true);
+        if(isContentNode) { /* We have to resize / delete content node + resizer */
+            /* if delete request, first delete the selected node and resizer and cleanup their memories */
+            if(_delete === true) UtilsUI.removeElement(null, firstChild, true);
+
+            /* Since we are in ContentNode, the request is for the LEFT element. */
+            let leftSize = _delete? 0 : cols[0] + (size/2);
+            let rightSize = _delete? totalWidth : cols[1] + (size/2);
+
             /* Adjust the parent's grid */
-            gridParent.element.style.gridTemplateColumns = "0px " + newWidth + "px";
-            firstChild.style.width = "0px";
-            firstChild.style.display = ""; // remove the grid related settings from this element.
-            firstChild.style.gridTemplateRows = "";
-            firstChild.style.gridTemplateColumns = "";
-            firstChild.style.gridTemplateAreas = "";
-            firstChild.onclick = "";
+            gridParent.element.style.gridTemplateColumns =  leftSize + "px " + rightSize + "px";
+            firstChild.style.width = leftSize + "px";
+            if(_delete === true) {
+                // remove the grid related settings from this element.
+                firstChild.style.display = "";
+                firstChild.style.gridTemplateRows = "";
+                firstChild.style.gridTemplateColumns = "";
+                firstChild.style.gridTemplateAreas = "";
+                firstChild.onclick = "";
+            } else {
+                if(firstChild.hasChildNodes()) {
 
-            secondChild.style.width = newWidth + "px";
+                }
+            }
+
+            secondChild.style.width = totalWidth + "px";
             // Update the respective grid's
-            let firstGridElement = this.registeredElements.get(firstChild.id);
             firstGridElement.width = 0;
-            let secondGridElement = this.registeredElements.get(secondChild.id);
-            secondGridElement.width = newWidth;
+            secondGridElement.width = totalWidth;
             // TODO CALL RESIZE FUNCTION HERE
         } else {
             // This is the RIGHT element
-            gridParent.element.style.gridTemplateColumns = newWidth + "px 0px";
-            firstChild.style.width = newWidth + "px";
+            gridParent.element.style.gridTemplateColumns = totalWidth + "px 0px";
+            firstChild.style.width = totalWidth + "px";
             secondChild.style.width = "0px";
             // Update the respective grid's
-            let firstGridElement = this.registeredElements.get(firstChild.id);
-            firstGridElement.width = newWidth;
-            let secondGridElement = this.registeredElements.get(secondChild.id);
+            firstGridElement.width = totalWidth;
             secondGridElement.width = 0;
             // TODO CALL RESIZE FUNCTION HERE
-
         }
     } else {
         let rows = gridTemplateRows.split(" ");
-        let newHeight = parseInt(rows[0]) + parseInt(rows[1]);
+        let totalHeight = parseInt(rows[0]) + parseInt(rows[1]);
 
         if(isContentNode) { /* We have to delete content node + resizer */
             /* first delete the selected node and resizer and cleanup their memories */
             UtilsUI.removeElement(null, firstChild, true);
             /* Adjust the parent's grid */
-            gridParent.element.style.gridTemplateRows = "0px " + newHeight + "px";
+            gridParent.element.style.gridTemplateRows = "0px " + totalHeight + "px";
             firstChild.style.height = "0px";
             firstChild.style.display = ""; // remove the grid related settings from this element.
             firstChild.style.gridTemplateRows = "";
             firstChild.style.gridTemplateColumns = "";
             firstChild.style.gridTemplateAreas = "";
 
-            secondChild.style.height = newHeight + "px";
+            secondChild.style.height = totalHeight + "px";
             // Update the respective grid's
-            let firstGridElement = this.registeredElements.get(firstChild.id);
             firstGridElement.height = 0;
-            let secondGridElement = this.registeredElements.get(secondChild.id);
-            secondGridElement.height = newHeight;
+            secondGridElement.height = totalHeight;
             // TODO CALL RESIZE RECURSIVE FUNCTION HERE
         } else {
             // This is the RIGHT element
-            gridParent.element.style.gridTemplateRows = newHeight + "px 0px";
-            firstChild.style.height = newHeight + "px";
+            gridParent.element.style.gridTemplateRows = totalHeight + "px 0px";
+            firstChild.style.height = totalHeight + "px";
             secondChild.style.height = "0px";
             // Update the respective grid's
-            let firstGridElement = this.registeredElements.get(firstChild.id);
-            firstGridElement.height = newHeight;
-            let secondGridElement = this.registeredElements.get(secondChild.id);
+            firstGridElement.height = totalHeight;
             secondGridElement.width = 0;
             // TODO CALL RESIZE FUNCTION HERE
 
@@ -245,7 +267,6 @@ GridManager.prototype.activateCell = function(element, e) {
         }
         e.stopPropagation();
     }
-    console.log("CLICKED ON: ", e.target, element);
 };
 
 GridManager.prototype.createBaseGridElement = function(element, isVertical, parent) {
@@ -273,6 +294,7 @@ GridManager.prototype.setupChild = function(element, sibling, size, altSize, isV
     let grid = Object.create(GridElement);
     grid.element = element;
     grid.sibling = sibling;
+    grid.direction = (isVertical)? VERTICAL : HORIZONTAL;
     grid.width = (isVertical) ? size : altSize;
     grid.height = (isVertical) ? altSize : size;
     grid.parent = parent;
@@ -281,12 +303,12 @@ GridManager.prototype.setupChild = function(element, sibling, size, altSize, isV
     /* Setup the element */
     element.style.width = grid.width + "px";
     element.style.height = grid.height + "px";
-    this.setupResizeListener(grid, element);
+    this.setupResizeListener(grid, element, null);
     this.setupCheckSizeListener(grid);
     return grid;
 };
 
-GridManager.prototype.setupResizer = function(name, grid, element, size, altSize, isVertical, gridElement) {
+GridManager.prototype.setupResizer = function(name, parentGrid, element, size, altSize, isVertical, gridElement) {
     // TODO: Need to look into this when client's (such as terminals) need exact pixel values.
     let sizeInPixels = (size - this.resizerWidth) + "px " + this.resizerWidth + "px";
     console.log("IS VERTICAL: ", isVertical);
@@ -304,33 +326,136 @@ GridManager.prototype.setupResizer = function(name, grid, element, size, altSize
     this.registeredContentElements.set(content.id, gridElement);
 
     if(isVertical) {
-        console.log("ISVERTICAL3: ", isVertical);
         content.style.width = (parseInt(element.style.width) - this.resizerWidth) + "px";
         content.style.height = element.style.height;
         resizer.style.width = this.resizerWidth + "px";
         resizer.style.height = content.style.height;
     } else {
-        console.log("ISVERTICAL4: ", isVertical);
         content.style.width = element.style.width;
         content.style.height = (parseInt(element.style.height) - this.resizerWidth) + "px";
-        console.log("SETTING HORIZONTAL RESIZER WIDTH AND HEIGHT TO: ", element.style.width, content.style.width, this.resizerWidth);
         resizer.style.width = content.style.width;
         resizer.style.height = this.resizerWidth + "px";
     }
+    /* Mouse Events */
+    /* If content element is clicked, mark it as active element */
     content.onclick = this.activateCell.bind(this, content);
-    this.setupResizeListener(grid, element, true);
+    /* Add mouse drag event listening to the resize handler */
+    this.addEventListener(resizer);
+    /* Add a callback to adjust element sizes on resize */
+    this.setupResizeListener(parentGrid, element, content);
 };
 
-GridManager.prototype.setupResizeListener = function(grid, element, isContentElement=false) {
-    this.onResize.addListener((diffSize, direction) => {
-        let fixResizer = (isContentElement)? -1 * this.resizerWidth : 0;
-        if (direction === VERTICAL) {
-            /* NOTE: isContentElement=true call must be called last */
-            if(!isContentElement) grid.width += diffSize;
-            element.style.width = grid.width + fixResizer + "px";
+GridManager.prototype.addEventListener = function(resizeHandleElement) {
+    utilListeners.addRemoveListener("mousedown", this.startResizing.bind(this), resizeHandleElement.id, false, resizeHandleElement);
+};
+
+GridManager.prototype.startResizing = function(event) {
+    console.log("CLICKED ON: ", event.target);
+    this.activeResizer = event.target;
+    utilListeners.addRemoveListener( "mousemove", this.resizeColumn.bind(this), event.target.id);
+    utilListeners.addRemoveListener("mouseup", this.finishResizing.bind(this), event.target.id);
+};
+
+GridManager.prototype.resizeColumn = function(event) {
+    if(this.activeResizer !== event.target) return;
+    const target = event.target;
+    const contentNode = target.previousSibling;
+    const grid = this.getGridElement(contentNode);
+    const isVertical = (grid.direction === VERTICAL);
+    const mouseOffset =  (isVertical)? event.movementX : event.movementY;
+    console.log("MOUSE OFFSET: ", mouseOffset);
+    // console.log("IN RESIZE: ", mouseOffset, event, getComputedStyle(grid.child.first.contentElement));
+    this.onResize(mouseOffset, isVertical, contentNode);
+};
+
+GridManager.prototype.finishResizing = function(event) {
+    utilListeners.addRemoveListener("mousemove", null, event.target.id,true);
+    this.activeResizer = null;
+};
+
+GridManager.prototype.getMinMax = function(name, row=true) {
+    let minSize, maxSize;
+    let targetElementCS = getComputedStyle(document.querySelector("#" + name));
+    if(row) {
+        minSize = targetElementCS.minHeight;
+        maxSize = targetElementCS.maxHeight;
+    } else {
+        minSize = targetElementCS.minWidth;
+        maxSize = targetElementCS.maxWidth;
+    }
+    return {minSize: minSize, maxSize: maxSize};
+};
+
+GridManager.prototype.getGridElement = function(element, switchToParent=true) {
+    let gridElement = this.registeredElements.get(element.id);
+    let isContentElement = false;
+    // TODO: Switch to parent
+    if(typeof gridElement === "undefined") {
+        /* This is a content element */
+        isContentElement = true;
+        gridElement = this.registeredContentElements.get(element.id);
+    }
+
+    if(typeof gridElement === "undefined") return null;
+
+    return { gridElement: gridElement, isContentElement: isContentElement };
+};
+
+GridManager.prototype.setGridArea = function(element, firstSize=0, secondSize=0, replaceFirst=false, replaceSecond=false, direction=VERTICAL) {
+    if(direction === VERTICAL) {
+        let cols = element.style.gridTemplateColumns;
+        let left = (replaceFirst)? firstSize : parseInt(cols[0]) + firstSize;
+        let right = (replaceSecond)? secondSize : parseInt(cols[1]) + secondSize;
+        element.style.gridTemplateColumns = left + "px " + right + "px";
+    } else {
+        let rows = element.style.gridTemplateRows;
+        let top = (replaceFirst)? firstSize : parseInt(rows[0]) + firstSize;
+        let bottom = (replaceSecond)? secondSize : parseInt(rows[1]) + secondSize;
+        element.style.gridTemplateRows = top + "px " + bottom + "px";
+    }
+};
+
+GridManager.prototype.setupResizeListener = function(grid, element, contentElement=null) {
+    this.onResize.addListener((offset, isVertical, resizedElement) => {
+        let isChildOf = (element) => {
+            console.log("ELEMENT, RESIZED_ELEMENT", element.id, resizedElement.id);
+            if(element.closest("#" + resizedElement.parentNode.id) !== null) return true;
+            let map = this.getGridElement(element);
+            if(map !== null) {
+                let parent = map.gridElement.parent;
+                if(parent !== null) {
+                    if(parent.id === resizedElement.id) return true;
+                    return isChildOf(parent);
+                }
+            }
+            return false;
+        };
+
+        if(!isChildOf(element)) return;
+
+        /**
+         * The element here is the main element (under which a content element could be present)
+         * The grid is the grid object of the element
+         * if isContentElement is true, the element has a content element as child.
+         **/
+
+        console.log("RESIZING FOR ELEMENT: ", element);
+        const fixResizer = (contentElement === null)? 0 : -1 * this.resizerWidth;
+        /* if offset is positive, then there is a reduction is size, else there is increase in size */
+        if (isVertical) {
+            grid.width -= offset;
+            element.style.width = grid.width + "px";
+            if(contentElement !== null) {
+                contentElement.style.width = grid.width + fixResizer + "px";
+                this.setGridArea(element, grid.width, 0, true, false, VERTICAL);
+            }
         } else {
-            if(!isContentElement) grid.height += diffSize;
-            element.style.height = grid.height + fixResizer + "px";
+            grid.height -= offset;
+            element.style.height = grid.height + "px";
+            if(contentElement !== null) {
+                contentElement.style.height = grid.height + fixResizer + "px";
+                this.setGridArea(element, grid.height, 0, true, false, HORIZONTAL);
+            }
         }
     });
 };

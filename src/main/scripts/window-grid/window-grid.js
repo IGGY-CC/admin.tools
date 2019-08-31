@@ -90,7 +90,8 @@ GridWindow.prototype.getAreaValues = function(rows=true) {
 GridWindow.prototype.registerHandles = function() {
     // Pull all the elements with resizeHandle and register mousedown/touchdown eventlistener.
     for (let i=0; i<= this.resizeHandles.length-1; i++){
-        utilListeners.addRemoveListener("mousedown", this.startResizing.bind(this), false, this.resizeHandles[i]);
+        let handle = this.resizeHandles[i];
+        utilListeners.addRemoveListener("mousedown", this.startResizing.bind(this), handle.id,false, handle);
     }
 
     // Register a callback for each element whose min/max size needs to be considered or gets effected
@@ -127,8 +128,8 @@ GridWindow.prototype.startResizing = function(event) {
         }
     }
 
-    utilListeners.addRemoveListener( "mousemove", this.resizeColumn.bind(this));
-    utilListeners.addRemoveListener("mouseup", this.finishResizing.bind(this));
+    utilListeners.addRemoveListener( "mousemove", this.resizeColumn.bind(this), event.target.id);
+    utilListeners.addRemoveListener("mouseup", this.finishResizing.bind(this), event.target.id);
 };
 
 GridWindow.prototype.getMinMax = function(name, row=true) {
@@ -219,8 +220,8 @@ GridWindow.prototype.resizeColumn = function(event) {
     this.updateNewAreaValues(gridSizeArray, isHorizontal);
 };
 
-GridWindow.prototype.finishResizing = function() {
-    utilListeners.addRemoveListener("mousemove", null, true);
+GridWindow.prototype.finishResizing = function(event) {
+    utilListeners.addRemoveListener("mousemove", null, event.target.id,true);
 };
 
 GridWindow.prototype.hideCell = function(element, row=true, expand=GridWindow.constants.LEFT) {

@@ -80,3 +80,5 @@ term.Event = function(opt_firstCallback, opt_finalCallback) {
 
     return ep;
 };
+
+module.exports = term.Event;

@@ -69,7 +69,7 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
     menu.innerHTML = menuItem.displayName;
 
     /* Activate mousetouch and mouseover */
-    utilListeners.addRemoveListener("mouseover", this.menuItemOnClick.bind(this, menuItem.name), false, this.menu);
+    utilListeners.addRemoveListener("mouseover", this.menuItemOnClick.bind(this, menuItem.name), this.menu.id, false, this.menu);
     if(menuItem.isActive) {
         this.menuItemOnClick(menuItem.name);
     }
