@@ -124,6 +124,7 @@ GridObject.prototype.updateElement = function() {
     console.log("SETTING W?H FOR ELE:", this.element.id, this.width, this.height);
     this.element.style.width = this.width + "px";
     this.element.style.height = this.height + "px";
+    this.element.style.position = "relative";
     /* Update Resizer size as well */
     if(this.resizer !== null) {
         if (this.isVertical) {
@@ -188,25 +189,6 @@ GridObject.prototype.deleteActiveCell = function() {
     }
     parent.resizer = null;
     parent.deleted = true;
-    // if(parent.first.element.id === this.element.id) {
-    //     parent.gridSecond += parent.gridFirst + RESIZER_SIZE;
-    //     parent.gridFirst = 0;
-    //     UtilsUI.removeElement(parent.first, parent.element, true);
-    //     parent.first = null;
-    // } else {
-    //     parent.gridFirst += parent.gridSecond + RESIZER_SIZE;
-    //     parent.gridSecond = 0;
-    //     UtilsUI.removeElement(parent.second, parent.element, true);
-    //     parent.second = null;
-    // }
-    //
-    // UtilsUI.removeElement(parent.resizer, parent.element, false);
-    // parent.gridResizer = 0;
-    // parent.resizer = null;
-    //
-    // let newSize = (parent.isVertical)? width : height;
-    // this.setGridDimensions(newSize, true);
-
 };
 
 GridObject.prototype.setupResizer = function(isVertical) {

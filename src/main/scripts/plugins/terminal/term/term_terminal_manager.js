@@ -2,7 +2,7 @@
 
 'use strict';
 
-let term = require("./term");
+const term = require("./term");
 
 
 term.TerminalManager = function() {
@@ -29,11 +29,16 @@ term.TerminalManager.Terminal = function(name, terminalManager) {
 };
 
 term.TerminalManager.Terminal.prototype.createTerminal = function(onComplete) {
-    window.addEventListener('load', this.onContentLoaded_.bind(this, onComplete));
+    if(document.readyState === "complete") {
+        this.onContentLoaded_.call(this, onComplete);
+    } else {
+        window.addEventListener('load', this.onContentLoaded_.bind(this, onComplete));
+    }
 };
 
 term.TerminalManager.Terminal.prototype.onContentLoaded_ = function(onComplete) {
     this.terminalWindow = document.querySelector(this.name);
+    console.log("NAME /  TERMINAL WINDOW", this.name, this.terminalWindow);
     onComplete(this.terminalWindow);
 };
 

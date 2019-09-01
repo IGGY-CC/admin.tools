@@ -13641,7 +13641,7 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
   link.id = 'font-styles';
   link.rel = 'stylesheet';
   link.type = 'text/css';
-  link.href = '../styles/fonts.css';
+  link.href = '../styles/fonts/fonts.css';
   link.media = 'all';
   link.nonce = 'ZXh0ZXJuYWwgc2NyaXB0cw==';
   this.document_.head.appendChild(link);
