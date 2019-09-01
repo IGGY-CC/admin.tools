@@ -13,6 +13,9 @@ const term = require("./term");
 const terminalManager = require("./term_terminal_manager");
 const randomFile = require("../../../utils/util_random_file");
 const Event = require("../term/term_event");
+const Termcap = require("../term/term_termcap");
+const ExecutionContext = require("../term/term_execution_context");
+const ReadLine = require("../term/term_readline");
 
 /**
  * A window containing an instance of (currently) hterm.
@@ -22,11 +25,12 @@ term.TerminalWindow = function(parent) {
     this.term = null;
     this.readline = null;
     this.inputHistory = [];
-    this.terminalWindow = terminalManager.createTerminal(parent, this.onTerminalCreated_.bind(this));
     this.contentNode_ = null;
     this.document_ = null;
     this.promptString_ = null;
     this.defaultPromptString_ = null;
+
+    this.terminalWindow = terminalManager.createTerminal(parent, this.onTerminalCreated_.bind(this));
     this.backgroundImage = true;
     /**
      * Event we invoke when async init is complete.
@@ -40,6 +44,7 @@ term.TerminalWindow.prototype.defaultEnv = {TERM: 'xterm-256color'};
  * Called when the platform app window is created.
  */
 term.TerminalWindow.prototype.onTerminalCreated_ = function(contentNode) {
+    console.log("TERMINAL CREATED", contentNode, arguments, contentNode.ownerDocument);
     this.contentNode_ = contentNode;
     this.document_ = contentNode.ownerDocument;
 
@@ -56,7 +61,7 @@ term.TerminalWindow.prototype.onTerminalCreated_ = function(contentNode) {
 };
 
 term.TerminalWindow.prototype.setPrompt = function(promptString) {
-    let tc_ = new term.Termcap();
+    let tc_ = new Termcap();
     if(this.defaultPromptString_ === null) {
         this.defaultPromptString_ = tc_.output('%set-attr(FG_BOLD, FG_CYAN)terminal #' + terminalManager.count() + '> %set-attr()');
         this.promptString_ = this.defaultPromptString_;
@@ -67,8 +72,10 @@ term.TerminalWindow.prototype.setPrompt = function(promptString) {
 };
 
 term.TerminalWindow.prototype.setupHterm = function() {
+    console.log("CONTENT NODE: ", this.contentNode_);
     hterm.defaultStorage = new lib.Storage.Memory();
     this.term = new hterm.Terminal('default');
+    console.log(this.term);
     this.setTerminalDefaults();
     this.term.onTerminalReady = this.onInit;
     this.term.decorate(this.contentNode_);
@@ -95,8 +102,8 @@ term.TerminalWindow.prototype.setTerminalDefaults = function() {
 
     // Disabled due to Content-Security-Policy rule
     if(this.backgroundImage) {
-        randomFile("./src/main/scripts/terminals/backgrounds/").then(file => {
-            this.term.prefs_.set('background-image', 'url(../scripts/terminals/backgrounds/' + file + ')');
+        randomFile("./src/main/scripts/plugins/terminal/term/backgrounds/").then(file => {
+            this.term.prefs_.set('background-image', 'url(../scripts/plugins/terminal/term/backgrounds/' + file + ')');
         }).catch(err => {
             this.term.prefs_.set('background-image', 'url(https://goo.gl/anedTK)');
         });
@@ -117,7 +124,7 @@ term.TerminalWindow.prototype.println = function(str) {
  * Terminal Window initialization is done.
  */
 term.TerminalWindow.prototype.onInit_ = function() {
-    this.executeContext = term.binding.ExecuteContext.createExecuteContext();
+    this.executeContext = ExecutionContext.createExecuteContext();
     this.executeContext.setEnvs(this.defaultEnv);
     this.executeContext.onClose.addListener(this.onExecuteClose_, this);
     this.executeContext.onStdOut.addListener(this.onStdOut_, this);
@@ -135,7 +142,7 @@ term.TerminalWindow.prototype.onInit_ = function() {
     });
 
     this.executeContext.arg = {promptString: this.promptString_, inputHistory: this.inputHistory};
-    this.readline = term.Readline.main(this.executeContext);
+    this.readline = ReadLine.main(this.executeContext);
     this.readline.onCursorReport(0, 0);
 };
 

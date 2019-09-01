@@ -8,11 +8,12 @@
 
 'use strict';
 
-let term = require("./term");
+const term = require("./term");
+const Ready = require("./term_state");
 
 term.binding.ExecuteContext = function() {
     // We're a 'subclass' of term.binding.Ready.
-    term.binding.Ready.call(this);
+    Ready.call(this);
 
     /**
      * Events sourced by this binding in addition to the inherited events from
@@ -46,7 +47,7 @@ term.binding.ExecuteContext = function() {
 };
 
 term.binding.ExecuteContext.prototype = Object.create(
-    term.binding.Ready.prototype);
+    Ready.prototype);
 
 /**
  * Create an execute context
@@ -246,3 +247,5 @@ term.binding.ExecuteContext.prototype.stdin = function(value) {
         this.onStdIn(value);
     }
 };
+
+module.exports = term.binding.ExecuteContext;

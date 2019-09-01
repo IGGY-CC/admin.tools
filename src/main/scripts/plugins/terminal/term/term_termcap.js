@@ -312,3 +312,5 @@ term.Termcap.modcsi = function(mod, seq) {
   // Others always have at least one parameter.
   return seq = seq.substr(0, seq.length - 1) + mod + seq.substr(seq.length - 1);
 };
+
+module.exports = term.Termcap;

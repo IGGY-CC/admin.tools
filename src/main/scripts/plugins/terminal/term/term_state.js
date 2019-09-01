@@ -103,3 +103,5 @@ term.binding.Ready.prototype.closeErrorValue = function(value) {
 term.binding.Ready.prototype.closeError = function(name, arg) {
     this.closeErrorValue(term.mkError(name, arg));
 };
+
+module.exports = term.binding.Ready;

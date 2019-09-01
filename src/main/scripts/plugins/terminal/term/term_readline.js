@@ -625,3 +625,5 @@ term.Readline.prototype.onComplete_ = function() {
   // if (this.executeContext.isOpen)
   //   this.executeContext.closeOk(this.line);
 };
+
+module.exports = term.Readline;
