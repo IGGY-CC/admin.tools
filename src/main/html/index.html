@@ -91,19 +91,8 @@
     </div>
     <div id="main-content">
         <div id="main-tabs" >
-            <div class="tab active">
-                <div class="icon"><span class="fa fa-terminal"/></div>
-                <div class="text">SYS INFO</div>
-                <div class="close"><span class="fa fa-times"/></div>
-            </div>
-            <div class="tab">
-                <div class="icon"><span class="fa fa-edit"/></div>
-                <div class="text">SYS INFO 1233</div>
-                <div class="close"><span class="fa fa-times"/></div>
-            </div>
         </div>
         <div id="main-tab-content">
-            <div id="main-container"></div>
         </div>
     </div>
     <div id="right-tab-content" class="resize-container vertical-left">
@@ -145,6 +134,9 @@
 
     // Add minimize, maximize and close functionality to window
     require("../scripts/window-grid/title-bar");
+
+    // Add the tab menu and container
+    require("../scripts/window-grid/tab-content");
 
     // Search and load any plugins
     require("../scripts/plugins/plugin");

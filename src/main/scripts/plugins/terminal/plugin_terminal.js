@@ -84,10 +84,8 @@ Terminal.prototype.setupMenuItems = function() {
 };
 
 Terminal.prototype.onIconClick = function() {
-    let activeElement = this.getActiveElement();
-    if(activeElement !== null) {
-        let terminalWindow = new TerminalWindow("#" + activeElement.id);
-    }
+    let terminalWindow = new TerminalWindow("#" + this.getActiveElement().id);
+    this.setActiveTabName("Terminal");
 };
 
 // init logic

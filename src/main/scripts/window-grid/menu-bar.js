@@ -27,6 +27,7 @@ let GridMenubar = function () {
     this.progressBar = document.querySelector(progressBar);
     this.firstGroupDiv = new Map();
     this.secondGroupDiv = new Map();
+    this.activeMenu = null;
 
     this.menuitems = new Map();
     this.menuicons = new Map();
@@ -37,18 +38,17 @@ let GridMenubar = function () {
  *     name: xxx
  *     displayName: xxx,
  *     onClick: onClick function
- *     isSelected: true,
+ *     isActive: true,
  * }
  * @param menuItem
  */
 GridMenubar.prototype.setMenuItem = function(menuItem) {
-    if(this.menuitems.has(name)) {
+    if(this.menuitems.has(menuItem.name)) {
         console.error("The Menu item is already added. Not adding.");
         return;
     }
 
-    this.menuitems[name] = menuItem.name;
-    this.setupMenuItemUI(menuItem);
+    this.menuitems.set(menuItem.name, this.setupMenuItemUI(menuItem));
 };
 
 GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
@@ -61,7 +61,7 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
         'div',
         this.menu,
         "menu-item-" + menuItem.name,
-        (menuItem.isActive) ? menuItemClass : menuItemActiveClass,
+        (menuItem.isActive) ? menuItemActiveClass : menuItemClass,
         this.menuItemOnClick.bind(this, menuItem.name)
     );
 
@@ -71,13 +71,16 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
     /* Activate mousetouch and mouseover */
     utilListeners.addRemoveListener("mouseover", this.menuItemOnClick.bind(this, menuItem.name), this.menu.id, false, this.menu);
     if(menuItem.isActive) {
-        this.menuItemOnClick(menuItem.name);
+        this.activeMenu = menuItem.name;
     }
+    // activate the active menu and disable all others.
+    this.menuItemOnClick(this.activeMenu);
+    return menu;
 };
 
 /**
  * icon : {
- *     name: xxx,
+ *     name: xxx, // plugin name
  *     row: 1 | 2,
  *     id: xxx,
  *     type: div | input | etc
@@ -92,7 +95,7 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
  * @param iconItem
  */
 GridMenubar.prototype.setupIcon = function(iconItem) {
-    let row = (iconItem.row === 1)? this.firstGroupDiv[iconItem.name] : this.secondGroupDiv[iconItem.name];
+    let row = (iconItem.row === 1)? this.firstGroupDiv.get(iconItem.name) : this.secondGroupDiv.get(iconItem.name);
     let wrapper = UtilsUI.wrapIconInNewElement(
         (typeof iconItem.type === "undefined")? 'div' : iconItem.type,
         row,
@@ -108,24 +111,25 @@ GridMenubar.prototype.setupIcon = function(iconItem) {
 
 GridMenubar.prototype.menuItemOnClick = function(name) {
     // Menu item activated. Turn off all groups excepting the current group
-    let turnOnOff = function(element) {
+    let turnOnOff = function(element, key) {
         element.forEach(element => {
-            if (element.id === name) {
+            if (element.id === name + key) {
                 element.style.display = "";
             } else {
                 element.style.display = "none";
             }
         });
     };
-    turnOnOff(this.firstGroupDiv);
-    turnOnOff(this.secondGroupDiv);
+    turnOnOff(this.firstGroupDiv, firstGroupKey);
+    turnOnOff(this.secondGroupDiv, secondGroupKey);
+    this.activeMenu = name;
 };
 
 GridMenubar.prototype.setupIconGroups = function(menuItem) {
     let firstDiv = UtilsUI.createNewElement('div', this.firstIconRow, menuItem.name + firstGroupKey, "icon-group");
     let secondDiv = UtilsUI.createNewElement('div', this.secondIconRow, menuItem.name + secondGroupKey, "icon-group");
-    this.firstGroupDiv[menuItem.name] = firstDiv;
-    this.secondGroupDiv[menuItem.name] = secondDiv;
+    this.firstGroupDiv.set(menuItem.name, firstDiv);
+    this.secondGroupDiv.set(menuItem.name, secondDiv);
 };
 
 GridMenubar.prototype.removeTool = function(tool) {

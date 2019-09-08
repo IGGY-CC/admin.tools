@@ -5,13 +5,13 @@
 
 'use strict';
 
-let GridWindow = require('./window-grid/window-grid');
+const GridWindow = require('./window-grid/window-grid');
 
 /**
  * All initial startup logic goes here.
  * @constructor
  */
-let Globals = {};
+const Globals = {};
 
 
 Globals.OnLoad = function() {

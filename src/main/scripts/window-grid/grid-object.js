@@ -1,3 +1,10 @@
+// SOURCE FILE: admin.tools/src/main/scripts/window-grid/grid-object.js
+// Copyright (c) 2019 "Aditya Naga Sanjeevi, Yellapu". All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+'use strict';
+
 const UtilsUI = require("../utils/util_dom");
 const utilListeners = require("../utils/util_listeners");
 const VERTICAL = 2;
@@ -5,8 +12,10 @@ const HORIZONTAL = 4;
 const RESIZER_SIZE = 2;
 let CHILD_COUNT = 1;
 
-GridObject = function(name, callback, element, parent, width, height, gridArea) {
+let GridObject = function(name, root, callback, element, parent, width, height, gridArea) {
+    console.warn("NEW GRID OBJECT CALLED: ", name);
     this.name = name;
+    this.root = root;
     this.isRoot = false;
     this.activeCellCallback = callback;
     this.parent = this.checkParent(parent);
@@ -121,7 +130,6 @@ GridObject.prototype.setupGrid = function () {
 };
 
 GridObject.prototype.updateElement = function() {
-    console.log("SETTING W?H FOR ELE:", this.element.id, this.width, this.height);
     this.element.style.width = this.width + "px";
     this.element.style.height = this.height + "px";
     this.element.style.position = "relative";
@@ -155,9 +163,9 @@ GridObject.prototype.doSplit = function(isVertical) {
     const width = (isVertical)? this.width/2 : this.width;
     const height = (isVertical)? this.height : this.height / 2;
 
-    this.first = new GridObject(this.name + "-1-" + CHILD_COUNT, this.activeCellCallback, null, this, width, height, "first");
+    this.first = new GridObject(this.root + "-1-" + CHILD_COUNT, this.root, this.activeCellCallback, null, this, width, height, "first");
     this.setupResizer(isVertical);
-    this.second = new GridObject(this.name + "-2-" + CHILD_COUNT, this.activeCellCallback, null, this, width, height, "second");
+    this.second = new GridObject(this.root + "-2-" + CHILD_COUNT, this.root, this.activeCellCallback, null, this, width, height, "second");
 
     console.log(this.first, this.second);
     this.isSplit = true;
@@ -226,6 +234,12 @@ GridObject.prototype.setupDefaults = function() {
     this.updateElement();
     if(this.gridArea !== null && typeof this.gridArea !== "undefined") this.element.style.gridArea = this.gridArea;
     this.element.onclick = this.onClick.bind(this);
+    if(this.isRoot) window.onresize = this.onResize.bind(this);
+};
+
+GridObject.prototype.onResize = function() {
+    let computedStyle = getComputedStyle(this.parent.element);
+    // this.setDimensions(parseInt(computedStyle.width), parseInt(computedStyle.height));
 };
 
 GridObject.prototype.onClick = function(event) {
@@ -234,4 +248,29 @@ GridObject.prototype.onClick = function(event) {
     }
 };
 
-module.exports = GridObject;
+const ROOT_CONTAINER = "#main-content";
+let GridsOnTabs = function () {
+    this.tabGrids = [];
+    this.activeGrid = null;
+    // this.createNewGrid(DEFAULT_CONTAINER, "start");
+};
+
+GridsOnTabs.prototype.createNewGrid = function (container, name) {
+    const updateActiveGrid = activeGrid => this.activeGrid = activeGrid;
+    const computedStyle = Object.assign({}, getComputedStyle(document.querySelector(ROOT_CONTAINER)));
+    const width = parseInt(computedStyle.width);
+    let height = parseInt(computedStyle.height);
+    let gridObject = new GridObject(name, name, updateActiveGrid, null, container, width, height);
+    console.log(gridObject);
+    this.tabGrids.push(gridObject);
+    this.activeGrid = gridObject;
+    return gridObject;
+};
+
+const gridOnTabs = new GridsOnTabs();
+
+module.exports = {
+    GridObject: GridObject,
+    gridOnTabs: gridOnTabs,
+    ROOT_CONTAINER: ROOT_CONTAINER,
+};
