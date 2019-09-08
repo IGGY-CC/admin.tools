@@ -21,6 +21,7 @@ LoadPlugins.prototype.setupPlugin = function(plugin_) {
 
     // utilsHTML.loadJS(plugin_);
     let Plugin = require(path.resolve(__dirname, PLUGIN_PATH_INT, plugin_));
+    console.log("SETTING UP PLUGIN: ", plugin_, Plugin);
     let pluginObject = new Plugin();
     pluginObject.Start();
 };

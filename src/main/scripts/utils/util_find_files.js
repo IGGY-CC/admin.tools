@@ -20,6 +20,8 @@ module.exports = async function (dir, callback, pattern=null) {
                 yield* readGivenDir(fullPath);
             } else {
                 yield entry;
+                /* Reset innerPath */
+                innerPath = "";
             }
         }
     }

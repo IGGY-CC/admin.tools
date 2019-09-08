@@ -7,59 +7,52 @@
 
 const gridToolbar = require('../window-grid/toolbar-content');
 const gridMenubar = require('../window-grid/menu-bar');
-const GridObject = require('../window-grid/grid-object');
+const GridObjectLib = require('../window-grid/grid-object');
+const tabObject = require('../window-grid/tab-content');
+
+const GridObject = GridObjectLib.GridObject;
+const gridOnTabs = GridObjectLib.gridOnTabs;
 
 // let gridManager = require('../window-grid/main-content');
 
-let PluginRegister = function(pluginName) {
+let PluginRegister = function (pluginName) {
     this.name = pluginName;
     this.menu = true;
-    this.activeCell = null;
-
-    let updateActiveCell = activeCell => this.activeCell = activeCell;
-    let rootElement = document.querySelector("#main-container");
-    let computedStyle = Object.assign({}, getComputedStyle(rootElement));
-    this.gridObject = new GridObject("hello", updateActiveCell, null, rootElement, parseInt(computedStyle.width), parseInt(computedStyle.height));
 };
 
-PluginRegister.prototype.setTool = function(tool) {
+PluginRegister.prototype.setTool = function (tool) {
     gridToolbar.setTool(tool);
 };
 
-PluginRegister.prototype.setMenuItem = function(menuItem) {
+PluginRegister.prototype.setMenuItem = function (menuItem) {
     gridMenubar.setMenuItem(menuItem);
 };
 
-PluginRegister.prototype.setMenuIcon = function(menuIcon) {
+PluginRegister.prototype.setMenuIcon = function (menuIcon) {
     gridMenubar.setupIcon(menuIcon);
 };
 
-PluginRegister.prototype.split = function(isVertical) {
-    if(this.activeCell === null) {
-        this.gridObject.doSplit(isVertical);
-    } else {
-        this.activeCell.doSplit(isVertical);
-    }
+PluginRegister.prototype.split = function (isVertical) {
+    gridOnTabs.activeGrid.doSplit(isVertical);
 };
 
-PluginRegister.prototype.deleteActiveCell = function() {
-    if(this.activeCell === null) {
-        console.log("PLEASE SELECT A CELL TO DELETE.");
-    } else {
-        this.activeCell.deleteActiveCell();
-    }
+PluginRegister.prototype.deleteActiveCell = function () {
+    gridOnTabs.activeGrid.deleteActiveCell();
 };
 
-PluginRegister.prototype.getActiveElement = function() {
-    if(this.activeCell === null) {
-        console.warn("NO ACTIVE CELL YET");
-        return null;
-    } else {
-        return this.activeCell.element;
-    }
+PluginRegister.prototype.getActiveElement = function () {
+    return gridOnTabs.activeGrid.element;
 };
 
-PluginRegister.prototype.Start = function() {
+PluginRegister.prototype.createNewTab = function() {
+    tabObject.createNewTab("Editor", "fa fa-file");
+};
+
+PluginRegister.prototype.setActiveTabName = function(name) {
+    tabObject.setActiveTabName(name);
+};
+
+PluginRegister.prototype.Start = function () {
     console.error("This method shall be overridden by the plugin, which is not the case!");
     console.error("Please report to respective Plugin author", this.name);
 };
