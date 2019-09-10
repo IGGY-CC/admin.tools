@@ -12,6 +12,7 @@ FileMenu = function() {
     this.pluginName = "File";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);
+    this.position = 1;
 };
 
 FileMenu.prototype = Object.create(PluginRegister.prototype);
@@ -23,7 +24,7 @@ FileMenu.prototype.Start = function() {
 
 FileMenu.prototype.setupMenuItems = function() {
     this.menuItem  = {
-        name: this.pluginName,
+        pluginName: this.pluginName,
         displayName: "File",
         id: "menubar-file",
         isActive: true,
@@ -32,7 +33,7 @@ FileMenu.prototype.setupMenuItems = function() {
     this.setMenuItem(this.menuItem);
 
     let iconItem = {
-        name: this.pluginName,
+        pluginName: this.pluginName,
         row: 1,
         id: "menubar-new-tab",
         tooltip: "New Tab",

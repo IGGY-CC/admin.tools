@@ -13,7 +13,6 @@ const GridWindow = require('./window-grid/window-grid');
  */
 const Globals = {};
 
-
 Globals.OnLoad = function() {
     this.InitMainGrid();
     this.InitPlugins();
@@ -27,7 +26,7 @@ Globals.OnLoad.prototype.InitMainGrid = function() {
 };
 
 Globals.OnLoad.prototype.InitPlugins = function() {
-    let loadPlugins = require('./utils/util_load_plugins');
+    const loadPlugins = require('./utils/util_load_plugins');
 };
 
 /* Init */

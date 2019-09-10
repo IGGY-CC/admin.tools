@@ -13,6 +13,7 @@ Terminal = function() {
     this.pluginName = "Terminal";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);
+    this.position = 2;
 };
 
 Terminal.prototype = Object.create(PluginRegister.prototype);
@@ -25,7 +26,7 @@ Terminal.prototype.Start = function() {
 
 Terminal.prototype.setupToolIcon = function() {
     this.tool  = {
-        name: this.pluginName,
+        pluginName: this.pluginName,
         id: "toolbar-terminal",
         tooltip: "New Terminal",
         icon: "fa fa-terminal",
@@ -39,7 +40,7 @@ Terminal.prototype.setupToolIcon = function() {
 
 Terminal.prototype.setupMenuItems = function() {
     this.menuItem  = {
-        name: this.pluginName,
+        pluginName: this.pluginName,
         displayName: "Terminal",
         id: "menubar-terminal",
         row: 1,

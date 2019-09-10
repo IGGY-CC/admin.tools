@@ -10,6 +10,7 @@
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
+    <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
 
     <script>
         less = {
@@ -24,15 +25,18 @@
         };
     </script>
 
-    <!-- external scripts -->
+    <!-- start external scripts -->
+    <!-- LESS: Remove in LIVE -->
     <script type="text/javascript" src="../../plugins/less/less.js"></script>
-<!--    <script type="text/javascript" src="../../plugins/libdot/js/lib.js"></script>-->
 
     <!-- hterm -->
-    <!--script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/hterm/dist/js/hterm_all.js"></script-->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/external-edited/hterm_all.js"></script>
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/libdot/third_party/punycode/lib_punycode.js"></script>
     <script type="text/javascript" src="../../plugins/libdot/js/lib_event.js"></script>
+
+    <!-- simplebar: scrollbar -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/simplebar/4.0.0/simplebar.min.js"></script>
+    <!-- end external scripts -->
 </head>
 <body>
 <div id="grid-container">
@@ -140,6 +144,10 @@
 
     // Search and load any plugins
     require("../scripts/plugins/plugin");
+
+    const PluginRegister = require('../scripts/plugins/plugin');
+    const FindFiles = require('../scripts/utils/util_find_files');
+
 </script>
 </body>
 </html>
