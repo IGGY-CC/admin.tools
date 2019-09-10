@@ -12,12 +12,17 @@ const tabObject = require('../window-grid/tab-content');
 
 const GridObject = GridObjectLib.GridObject;
 const gridOnTabs = GridObjectLib.gridOnTabs;
+const LAST_INDEX = 10000;
 
 // let gridManager = require('../window-grid/main-content');
 
 let PluginRegister = function (pluginName) {
     this.name = pluginName;
     this.menu = true;
+    /* The position/order of the menu item for the respective plugin */
+    this.position = LAST_INDEX;
+    /* Plugin Path */
+    this.pluginPath = null;
 };
 
 PluginRegister.prototype.setTool = function (tool) {
@@ -30,6 +35,10 @@ PluginRegister.prototype.setMenuItem = function (menuItem) {
 
 PluginRegister.prototype.setMenuIcon = function (menuIcon) {
     gridMenubar.setupIcon(menuIcon);
+};
+
+PluginRegister.prototype.setDropDown = function (menuIcon) {
+    gridMenubar.setupDropDown(menuIcon);
 };
 
 PluginRegister.prototype.split = function (isVertical) {

@@ -10,25 +10,23 @@ const fs = require('fs');
 const ReadDir = require('util').promisify(fs.readdir);
 
 module.exports = async function (dir, callback, pattern=null) {
-    let innerPath = "";
     async function* readGivenDir(dir) {
         const entries = await ReadDir(dir, {withFileTypes:true});
         for(let entry of entries) {
             const fullPath = path.join(dir, entry.name);
             if(entry.isDirectory()) {
-                innerPath = path.join(innerPath, entry.name);
                 yield* readGivenDir(fullPath);
             } else {
-                yield entry;
-                /* Reset innerPath */
-                innerPath = "";
+                yield {entry: entry, dir: dir};
             }
         }
     }
 
     for await (const map of readGivenDir(dir)) {
-        if(map.name.startsWith(pattern)) {
-            callback(path.join(innerPath, map.name));
+        if(map.entry.name.startsWith(pattern)) {
+            let localPath = path.join(".", dir);
+            let innerPath = map.dir.replace(localPath, "");
+            callback(path.join(innerPath, map.entry.name));
         }
     }
 };

@@ -13,7 +13,11 @@ const PLUGIN_PATH_EXT = "./src/main/scripts/plugins/";
 const PLUGIN_PATH_INT = "../plugins";
 
 let LoadPlugins = function() {
-    this.searchPlugins();
+    this.loadedPlugins = new Map();
+
+    this.searchPlugins().then(()=> {
+        this.startPlugins();
+    });
 };
 
 LoadPlugins.prototype.setupPlugin = function(plugin_) {
@@ -21,13 +25,18 @@ LoadPlugins.prototype.setupPlugin = function(plugin_) {
 
     // utilsHTML.loadJS(plugin_);
     let Plugin = require(path.resolve(__dirname, PLUGIN_PATH_INT, plugin_));
-    console.log("SETTING UP PLUGIN: ", plugin_, Plugin);
     let pluginObject = new Plugin();
-    pluginObject.Start();
+    pluginObject.pluginPath = path.join(__dirname, PLUGIN_PATH_INT);
+    let objArray = this.loadedPlugins.get(pluginObject.position);
+    if(typeof objArray === "undefined") {
+        this.loadedPlugins.set(pluginObject.position, [pluginObject]);
+    } else {
+        objArray.push(pluginObject);
+    }
 };
 
-LoadPlugins.prototype.searchPlugins = function() {
-    FindFiles(
+LoadPlugins.prototype.searchPlugins = async function() {
+    return FindFiles(
         PLUGIN_PATH_EXT,
         this.setupPlugin.bind(this), "plugin_"
     ).catch(
@@ -35,6 +44,15 @@ LoadPlugins.prototype.searchPlugins = function() {
             console.log("Error Finding/Initializing plugin: ", error);
         }
     );
+};
+
+LoadPlugins.prototype.startPlugins = function() {
+    let keys = [...this.loadedPlugins.keys()];
+    keys.sort((a,b) => {
+        return (a > b)? 1 : (a < b)? -1 : 0;
+    }).forEach(index => {
+       this.loadedPlugins.get(index).forEach(plugin => plugin.Start());
+    });
 };
 
 module.exports = new LoadPlugins();
