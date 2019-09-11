@@ -3,10 +3,7 @@
   display: grid;
   grid-template-rows: (@menu-items-height + @menu-text-to-tool-margin) @menu-icons-first-row @menu-icons-second-row @menu-progress-bar-height;
   grid-template-columns: @menu-toolbar-width @widget-area-first-column @widget-area-second-column;
-  grid-template-areas:  "menu-items widget-area widget-area"
-                        "icons-first-row widget-area widget-area"
-                        "icons-second-row widget-area widget-area"
-                        "menu-progress-bar menu-progress-bar menu-progress-bar";
+  grid-template-areas: "menu-items widget-area widget-area" "icons-first-row widget-area widget-area" "icons-second-row widget-area widget-area" "menu-progress-bar menu-progress-bar menu-progress-bar";
 
   #menu-items {
     box-sizing: content-box;
@@ -17,12 +14,14 @@
 
   #icons-first-row, #icons-second-row {
     box-sizing: border-box;
+
     .icon-group {
       box-sizing: border-box;
       display: flex;
       flex-direction: row;
     }
   }
+
   #menu-items {
     grid-area: menu-items;
     margin-bottom: @menu-text-to-tool-margin;
@@ -50,6 +49,7 @@
 
   #icons-first-row {
     grid-area: icons-first-row;
+
     .icon-group {
       height: @menu-icons-first-row;
     }
@@ -57,6 +57,7 @@
 
   #icons-second-row {
     grid-area: icons-second-row;
+
     .icon-group {
       height: @menu-icons-second-row;
     }
@@ -68,109 +69,66 @@
       padding: 2px;
 
       .tool {
-        padding: 2px 8px;
-        font-size: 10px;
-        line-height: 19px;
-        color: @menu-icon;
-
-        .dropdown {
-          box-sizing: border-box;
-          position: relative;
-          width: 18rem;
-          margin-top: 1vh;
+        &.font-icon {
+          padding: 2px 8px;
+          font-size: 10px;
+          line-height: 19px;
+          color: @menu-icon;
         }
 
-          .selected, .values {
-            box-sizing: border-box;
-            position: absolute;
-            top: 0;
-            width: 100px;
+        &.selected, &:hover {
+          background: @menu-icon-hover-background;
+          color: @menu-icon-hover;
+        }
+
+        &.icon-with-url {
+          padding: 4px;
+
+          img {
+            width: 12px;
+            height: 12px;
           }
-
-          .selected {
-            font-family: 'Anton';
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 9px;
-            padding: 1px;
-            background-color: @tooltip-background;
-            border: 3px solid transparent;
-            transition: .3s ease-in-out;
-            color: @tooltip-foreground;
-
-            &::-webkit-input-placeholder {
-              color: @tool-foreground;
-            }
-
-            &:hover {
-              background-color: #FF908B;
-              cursor: pointer;
-
-              &::-webkit-input-placeholder {
-                color: @tool-background;
-              }
-            }
-
-            &:focus,
-            &.open {
-              box-shadow: 0px 5px 8px 0px rgba(0, 0, 0, 0.2);
-              outline: 0;
-              background-color: #FF908B;
-              color: @tool-background;
-
-              &::-webkit-input-placeholder {
-                color: @tool-background;
-              }
-            }
-          }
-
-          .values {
-            list-style: none;
-            margin-top: 1.5rem;
-            box-shadow: 0px 5px 8px 0px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            max-height: 0;
-            transition: .3s ease-in-out;
-            z-index: 5;
-
-            &.open {
-              max-height: 150px;
-              overflow: auto;
-            }
-
-            li {
-              font-family: 'Anton';
-              text-transform: uppercase;
-              letter-spacing: 2px;
-              position: relative;
-              background-color: @tooltip-background;
-              padding: 2px 4px;
-              font-size: 9px;
-              display: flex;
-              align-items: center;
-              cursor: pointer;
-              transition: background-color .3s;
-              opacity: 1;
-
-              &:hover {
-                background-color: #FF908B;
-                color: @tooltip-background;
-              }
-
-              &.closed {
-                max-height: 0;
-                overflow: hidden;
-                padding: 0;
-                opacity: 0;
-              }
-            }
-
         }
       }
 
-      :hover {
-        background: @menu-icon-hover-background;
-        color: @menu-icon-hover;
+      .tool-with-label {
+        display: flex;
+        flex-direction: row;
+
+        .select-drop-down-label {
+          text-transform: uppercase;
+          font-size: 10px;
+          padding-right: 5px;
+          line-height: 20px;
+        }
+      }
+
+      .select-drop-down, .select-option-placeholder, .select-option {
+        margin-right: 5px;
+        width: 100px;
+        box-sizing: border-box;
+        font-family: 'Anton';
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        font-size: 9px;
+        border: 1px solid lighten(@darkest-border, 10%);
+        background-color: darken(@darkest, 3%);
+        //border: 1px solid transparent;
+        color: @darkest-foreground;
+        appearance: none;
+        //border-radius: 9px 9px 9px 9px;
+        //box-shadow: 0px 1px 2px @tooltip-background;
+        outline: none;
+
+        &:disabled {
+          background-color: @tooltip-background;
+          color: @tooltip-foreground;
+        }
+      }
+
+      .select-option {
+        font-size: 11px;
+        font-family: Oswald;
       }
 
       .spacer {

@@ -12,4 +12,6 @@ the same terminal.
 Dropdown on terminal: Use the golang package
 go-prompt. 
 
+ Ace editor: https://ace.c9.io/demo/keyboard_shortcuts.html
+ 
  

@@ -96,11 +96,17 @@ GridMenubar.prototype.setupMenuItemUI = function(menuItem) {
  */
 GridMenubar.prototype.setupIcon = function(iconItem) {
     let row = (iconItem.row === 1)? this.firstGroupDiv.get(iconItem.pluginName) : this.secondGroupDiv.get(iconItem.pluginName);
+    let baseClass = "tool";
+    if(iconItem.icon.includes("/") || iconItem.icon.includes("\\")) {
+        baseClass += " icon-with-url";
+    } else {
+        baseClass += " font-icon";
+    }
     let wrapper = UtilsUI.wrapIconInNewElement(
         (typeof iconItem.type === "undefined")? 'div' : iconItem.type,
         row,
         iconItem.id,
-        "tool",
+        baseClass,
         iconItem.icon,
         iconItem.callback, true);
 
@@ -109,98 +115,48 @@ GridMenubar.prototype.setupIcon = function(iconItem) {
     UtilsUI.setToolTip(iconItem.element, iconItem.tooltip, iconItem.ttdirection);
 };
 
+GridMenubar.prototype.addSpacer = function(pluginName, onRow, width) {
+    let row = (onRow === 1)? this.firstGroupDiv.get(pluginName) : this.secondGroupDiv.get(pluginName);
+    let wrapper = UtilsUI.createNewElement(
+        'div',
+        row,
+        "",
+        "spacer");
+    wrapper.style.width = width + "px";
+};
+
 GridMenubar.prototype.setupDropDown = function(iconItem) {
     let row = (iconItem.row === 1)? this.firstGroupDiv.get(iconItem.pluginName) : this.secondGroupDiv.get(iconItem.pluginName);
     let wrapper = UtilsUI.createNewElement(
         'div',
         row,
         iconItem.id,
-        "tool");
+        "tool-with-label");
+
+    // let label = UtilsUI.createNewElement('div', wrapper, iconItem.id + "-label", "select-drop-down-label");
+    // label.innerHTML = iconItem.placeholder;
 
     iconItem.element = wrapper;
-    let dropDown = UtilsUI.createNewElement('input', wrapper, iconItem.id + "-drop-down", "selected", "", "", "Theme");
-    dropDown.type = "text";
+    let dropDown = UtilsUI.createNewElement('select', wrapper, iconItem.id + "-drop-down", "select-drop-down");
+    if(typeof iconItem.width !== "undefined") {
+        dropDown.style.width = iconItem.width + "px";
+    }
 
-    let ul = UtilsUI.createNewElement('ul', wrapper, iconItem.id + "-drop-down-ul", "values");
+    dropDown.addEventListener('change', iconItem.ddcallback.bind(null, dropDown));
+
+    let defaultOption = UtilsUI.createNewElement('option', dropDown, iconItem.id + "-drop-down-default-option", "select-option-placeholder");
+    defaultOption.value = "";
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    defaultOption.innerHTML = iconItem.placeholder;
+
     iconItem.dropDownEntries.forEach(dropDownEntry => {
-        UtilsUI.createNewElement('li', ul, "", "", iconItem.ddcallback.bind(null, dropDownEntry), dropDownEntry);
+        let option = UtilsUI.createNewElement('option', dropDown, "", "select-option", iconItem.ddcallback.bind(null, dropDownEntry), dropDownEntry);
+        option.value = dropDownEntry;
+        option.innerHTML = dropDownEntry;
     });
-    new SimpleBar(ul);
 
     UtilsUI.setToolTip(iconItem.element, iconItem.tooltip, iconItem.ttdirection);
-    this.setupDropDownDefaults(iconItem);
-};
-
-GridMenubar.prototype.setupDropDownDefaults = function(iconItem) {
-    const inputField = document.querySelector('#' + iconItem.id + '-drop-down');
-    const dropdown = document.querySelector('#' + iconItem.id + '-drop-down-ul');
-    console.log("FINAL VALUES: ", '#' + iconItem.id + '-drop-down-ul', dropdown);
-    const dropdownArray = [...document.querySelectorAll('#' + iconItem.id + '-drop-down-ul' + ' li')];
-
-    dropdown.classList.add('open');
-    inputField.focus(); // Demo purposes only
-    let valueArray = [];
-    dropdownArray.forEach(item => {
-        valueArray.push(item.textContent);
-    });
-
-    console.log("VALUE ARRAY: ", valueArray);
-    const closeDropdown = () => {
-        dropdown.classList.remove('open');
-    };
-
-    inputField.addEventListener('input', () => {
-        dropdown.classList.add('open');
-        let inputValue = inputField.value.toLowerCase();
-        let valueSubstring;
-        if (inputValue.length > 0) {
-            for (let j = 0; j < valueArray.length; j++) {
-                if (!(inputValue.substring(0, inputValue.length) === valueArray[j].substring(0, inputValue.length).toLowerCase())) {
-                    console.log("NOT MATCHED: ", inputValue, valueArray[j]);
-                    dropdownArray[j].classList.add('closed');
-                } else {
-                    console.log("MATCHED: ", inputValue, valueArray[j]);
-                    dropdownArray[j].classList.remove('closed');
-                }
-            }
-        } else {
-            for (let i = 0; i < dropdownArray.length; i++) {
-                dropdownArray[i].classList.remove('closed');
-            }
-        }
-    });
-
-    dropdownArray.forEach(item => {
-        item.addEventListener('click', evt => {
-            inputField.value = item.textContent;
-            dropdownArray.forEach(dropdown => {
-                dropdown.classList.add('closed');
-            });
-        });
-    });
-
-    inputField.addEventListener('focus', () => {
-        inputField.placeholder = 'Type to filter';
-        dropdown.classList.add('open');
-        dropdownArray.forEach(dropdown => {
-            dropdown.classList.remove('closed');
-        });
-    });
-
-    inputField.addEventListener('blur', () => {
-        inputField.placeholder = 'Select Theme';
-        dropdown.classList.remove('open');
-    });
-
-    document.addEventListener('click', evt => {
-        const isDropdown = dropdown.contains(evt.target);
-        console.log("IS DROPDOWN: ", isDropdown);
-        const isInput = inputField.contains(evt.target);
-        console.log("IS INPUT: ", isInput);
-        if (!isDropdown && !isInput) {
-            dropdown.classList.remove('open');
-        }
-    });
 };
 
 GridMenubar.prototype.menuItemOnClick = function(name) {
