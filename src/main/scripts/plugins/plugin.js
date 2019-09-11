@@ -41,6 +41,10 @@ PluginRegister.prototype.setDropDown = function (menuIcon) {
     gridMenubar.setupDropDown(menuIcon);
 };
 
+PluginRegister.prototype.addSpacer = function(pluginName, onRow, width) {
+    gridMenubar.addSpacer(pluginName, onRow, width);
+};
+
 PluginRegister.prototype.split = function (isVertical) {
     gridOnTabs.activeGrid.doSplit(isVertical);
 };

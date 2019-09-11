@@ -57,13 +57,16 @@ UtilsUI.removeElement = function(element, parent, cleanUp=true) {
     }
 };
 
-UtilsUI.wrapIconInNewElement = function(type, parent, id, className, iconClass, onClick, isSpan=false) {
+UtilsUI.wrapIconInNewElement = function(type, parent, id, className, iconClassOrURL, onClick, isSpan=false) {
     let wrapper = UtilsUI.createNewElement(type, parent, id, className, onClick);
     let icon;
-    if(isSpan) {
-        icon = UtilsUI.createNewElement("span", wrapper, null, iconClass);
+    if(iconClassOrURL.includes("/") || iconClassOrURL.includes("\\")) {
+        icon = UtilsUI.createNewElement("img", wrapper);
+        icon.src = iconClassOrURL;
+    } else if(isSpan) {
+        icon = UtilsUI.createNewElement("span", wrapper, null, iconClassOrURL);
     } else {
-        icon = UtilsUI.createNewElement("i", wrapper, null, iconClass);
+        icon = UtilsUI.createNewElement("i", wrapper, null, iconClassOrURL);
     }
     return { wrapper: wrapper, icon: icon };
 };
