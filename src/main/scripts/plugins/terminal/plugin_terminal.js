@@ -5,11 +5,9 @@
 
 'use strict';
 const path = require('path');
-const PluginRegister = require(require.resolve('../plugin.js', { paths: [ '.' ] }));
 const TerminalWindow = require("./term/term_terminal_window");
 
-let Terminal = {};
-Terminal = function() {
+const Terminal = function() {
     this.pluginName = "Terminal";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);

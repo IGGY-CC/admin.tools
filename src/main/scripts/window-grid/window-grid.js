@@ -5,10 +5,6 @@
 
 'use strict';
 
-
-let utilListeners = require('../utils/util_listeners');
-let utilResizer = require('../utils/util_resizer');
-
 let GridWindow = {};
 
 GridWindow = function(container, handle) {

@@ -5,7 +5,6 @@
 
 'use strict';
 
-const UtilsUI = require("../utils/util_dom");
 const GridObjectLib = require('../window-grid/grid-object');
 const gridOnTabs = GridObjectLib.gridOnTabs;
 const ROOT_CONTAINER = GridObjectLib.ROOT_CONTAINER;

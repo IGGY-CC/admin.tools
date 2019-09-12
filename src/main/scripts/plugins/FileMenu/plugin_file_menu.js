@@ -5,7 +5,6 @@
 
 'use strict';
 const path = require('path');
-const PluginRegister = require(require.resolve('../plugin.js', { paths: [ '.' ] }));
 
 let FileMenu = {};
 FileMenu = function() {

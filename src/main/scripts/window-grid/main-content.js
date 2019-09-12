@@ -5,9 +5,6 @@
 
 'use strict';
 
-const UtilsUI = require("../utils/util_dom");
-const utilListeners = require("../utils/util_listeners");
-
 let GridManager = {};
 
 const TOP = 2;

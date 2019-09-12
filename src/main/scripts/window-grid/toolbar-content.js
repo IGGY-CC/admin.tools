@@ -5,8 +5,6 @@
 
 'use strict';
 
-let UtilsUI = require("../utils/util_dom");
-
 const toolbar_id = "#tool-bar";
 
 let GridToolbar = function () {

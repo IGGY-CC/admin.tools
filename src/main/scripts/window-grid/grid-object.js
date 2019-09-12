@@ -5,8 +5,6 @@
 
 'use strict';
 
-const UtilsUI = require("../utils/util_dom");
-const utilListeners = require("../utils/util_listeners");
 const VERTICAL = 2;
 const HORIZONTAL = 4;
 const RESIZER_SIZE = 2;
