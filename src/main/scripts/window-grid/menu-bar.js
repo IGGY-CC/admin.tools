@@ -5,9 +5,6 @@
 
 'use strict';
 
-let UtilsUI = require("../utils/util_dom");
-let utilListeners = require("../utils/util_listeners");
-
 const menu = "#menu-items";
 const firstIconRow = "#icons-first-row";
 const secondIconRow = "#icons-second-row";

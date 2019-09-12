@@ -6,8 +6,6 @@
 'use strict';
 
 let path = require("path");
-let FindFiles = require("./util_find_files");
-let utilsHTML = require( "./util_load_html");
 
 const PLUGIN_PATH_EXT = "./src/main/scripts/plugins/";
 const PLUGIN_PATH_INT = "../plugins";
@@ -41,7 +39,7 @@ LoadPlugins.prototype.searchPlugins = async function() {
         this.setupPlugin.bind(this), "plugin_"
     ).catch(
         error => {
-            console.log("Error Finding/Initializing plugin: ", error);
+            console.error("Error Finding/Initializing plugin: ", error);
         }
     );
 };
@@ -51,7 +49,10 @@ LoadPlugins.prototype.startPlugins = function() {
     keys.sort((a,b) => {
         return (a > b)? 1 : (a < b)? -1 : 0;
     }).forEach(index => {
-       this.loadedPlugins.get(index).forEach(plugin => plugin.Start());
+       this.loadedPlugins.get(index).forEach(plugin => {
+           plugin.Start();
+           console.log("<b>%s</b> plugin loaded!", plugin.pluginName);
+       });
     });
 };
 

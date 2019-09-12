@@ -87,3 +87,5 @@ releases.*.json
 db/
 db/*.db
 .db
+
+ignore log.txt

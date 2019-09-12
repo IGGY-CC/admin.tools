@@ -14,4 +14,11 @@ go-prompt.
 
  Ace editor: https://ace.c9.io/demo/keyboard_shortcuts.html
  
+ Serialize and save tabs and their content to the extent possible
+ 
+ Open a server with Apache and a grid window should open up with multiple
+ grids, each cell consisting up of document root, configuration directory,
+ system init scripts (or buttons to give status, start, stop, restart, 
+ with status button showing a green or red or orange color), apache conf
+ opened in the default editor, etc.
  

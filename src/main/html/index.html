@@ -6,12 +6,16 @@
     <link rel="stylesheet" href="../styles/main.css"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
+    <link rel="stylesheet/less" type="text/css" href="../styles/common/welcome-logs.less"/>
     <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
 
+    <!-- Local scripts -->
+    <script type="text/javascript" src="../scripts/utils/util_current_datetime.js"></script>
+    <script type="text/javascript" src="../scripts/utils/util_console.js"></script>
     <script>
         less = {
             env: "development",
@@ -133,6 +137,11 @@
     </div>
 </div>
 <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+    const FindFiles = require('../scripts/utils/util_find_files');
+    const UtilsUI = require("../scripts/utils/util_dom");
+    const utilListeners = require("../scripts/utils/util_listeners");
+    const utilResizer = require('../scripts/utils/util_resizer');
+
     // Init the process with default on load logic
     require("../scripts/globals");
 
@@ -146,7 +155,6 @@
     require("../scripts/plugins/plugin");
 
     const PluginRegister = require('../scripts/plugins/plugin');
-    const FindFiles = require('../scripts/utils/util_find_files');
 
 </script>
 </body>
