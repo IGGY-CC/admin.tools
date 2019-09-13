@@ -4,7 +4,8 @@
     "description": "A GUI with majority of system and server administration tools",
     "main": "src/main/scripts/main.js",
     "scripts": {
-        "start": "electron ."
+        "start": "electron .",
+        "test:bt": "mocha --watch src/test/**/*.js --timeout 2000 --reported spec --recursive test"
     },
     "repository": "https://github.com/the-admin-tools/admin.tools.git",
     "keywords": [
@@ -25,9 +26,15 @@
     "license": "MIT",
     "devDependencies": {
         "@doyensec/electronegativity": "^1.3.2",
-        "electron": "^6.0.2"
+        "chai": "^4.2.0",
+        "electron": "^6.0.2",
+        "mocha": "^6.2.0"
     },
     "dependencies2": {
+        "@types/mocha": "^5.2.7",
+        "chai-as-promised": "^7.1.1",
+        "electron-chromedriver": "^6.0.0",
+        "spectron": "^8.0.0",
         "dialogflow": "^0.10.3",
         "mstsc.js": "^0.2.4",
         "overlayscrollbars": "^1.8.0",
@@ -44,6 +51,7 @@
     "engineStrict": true,
     "dependencies": {
         "dialogflow": "^0.10.3",
+        "electron-reload": "^1.5.0",
         "jailed": "^0.3.1",
         "sweetalert": "^2.1.2",
         "uuid": "latest"

@@ -18,6 +18,7 @@ Welcome.prototype = Object.create(PluginRegister.prototype);
 // Start the plugin functionality
 Welcome.prototype.Start = function() {
     this.setupUI(document.querySelector("#grid-1-grid-1-1"));
+    this.setupSlideOut();
 };
 
 Welcome.prototype.setupUI = function(parent) {
@@ -25,6 +26,7 @@ Welcome.prototype.setupUI = function(parent) {
     const baseElement = UtilsUI.createNewElement('div', parent, "welcome-page", "welcome-grid-container");
 
     this.content = UtilsUI.createNewElement('div', baseElement, "welcome-page-content", "content-area");
+    this.mocha = UtilsUI.createNewElement('div', this.content, "mocha");
     const logsBG = UtilsUI.createNewElement('div', baseElement, "welcome-page-logs", "logs-area");
     this.logs = UtilsUI.createNewElement('div', logsBG, "", "message-background-holder");
     this.additional = UtilsUI.createNewElement('div', baseElement, "welcome-page-additional", "additional-data");
@@ -42,6 +44,32 @@ Welcome.prototype.addMessage = function(message, type) {
     const msgElem = UtilsUI.createNewElement('div', entry, "", "messages message-"+type);
     msgElem.innerHTML = message;
     this.logs.scrollTop = this.logs.scrollHeight;
+};
+
+Welcome.prototype.setupSlideOut = function() {
+    let containerObject = {
+        name: "Log Viewer",
+        icon: "fa fa-shipping-fast",
+        location: RIGHT,
+        isActive: true,
+        isContentFixed: true,
+        openCallback: this.getSlideOutContent.bind(this),
+        closeCallback: this.removeSlideOutContent.bind(this),
+        refreshCallback: null,
+        requireHeader: true,
+        maxSize: null,
+        minSize: null,
+        size: 200,
+    };
+    this.createSlideOutEntry(containerObject);
+};
+
+Welcome.prototype.getSlideOutContent = function(element) {
+    console.log("SETTING DEFAULT LOG CONTENT");
+};
+
+Welcome.prototype.removeSlideOutContent = function(element) {
+    console.log("REMOVING DEFAULT LOG CONTENT");
 };
 
 // init logic

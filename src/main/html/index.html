@@ -12,6 +12,7 @@
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../plugins/mocha/6.2.0/mocha.css" />
 
     <!-- Local scripts -->
     <script type="text/javascript" src="../scripts/utils/util_current_datetime.js"></script>
@@ -94,8 +95,8 @@
         <div class="tool tip right" data-tip="2FA"><span class="far fa-list-alt"></span></div>
     </div>
     <div id="toolbar-tab-content" class="resize-container vertical-right">
-        <div id="toolbar-content"></div>
-        <div class="resize-handle resize-vertical"></div>
+<!--        <div id="toolbar-content"><div id="mocha"></div></div>-->
+        <div id="toolbar-content-resize-handle" class="resize-handle resize-vertical"></div>
     </div>
     <div id="main-content">
         <div id="main-tabs" >
@@ -105,32 +106,14 @@
     </div>
     <div id="right-tab-content" class="resize-container vertical-left">
         <div id="right-content"></div>
-        <div class="resize-handle resize-vertical"></div>
+        <div id="right-content-resize-handle" class="resize-handle resize-vertical"></div>
     </div>
-    <div id="right-tab-bar">
-        <div class="tab active">
-            <div class="icon"><span class="fa fa-cogs"/></div>
-            <div class="text">SYS INFO</div>
-        </div>
-        <div class="tab">
-            <div class="icon"><span class="fa fa-cogs"/></div>
-            <div class="text">SYS INFO asdas</div>
-        </div>
-    </div>
+    <div id="right-tab-bar"></div>
     <div id="bottom-tab-content" class="resize-container horizontal-top">
-        <div class="resize-handle resize-horizontal"></div>
+        <div id="bottom-content-resize-handle" class="resize-handle resize-horizontal"></div>
         <div id="bottom-content"></div>
     </div>
-    <div id="bottom-tab-bar">
-        <div class="tab">
-            <div class="icon"><span class="fa fa-cogs"/></div>
-            <div class="text">SYS INFO</div>
-        </div>
-        <div class="tab active">
-            <div class="icon"><span class="fa fa-cogs"/></div>
-            <div class="text">SYS INFO asdad adasdad asdassdad</div>
-        </div>
-    </div>
+    <div id="bottom-tab-bar"></div>
     <div id="status-bar">
         <div class="left"></div>
         <div class="right"></div>
@@ -141,6 +124,23 @@
     const UtilsUI = require("../scripts/utils/util_dom");
     const utilListeners = require("../scripts/utils/util_listeners");
     const utilResizer = require('../scripts/utils/util_resizer');
+    const CSSGridManager = require('../scripts/utils/util_css_grid_manager');
+
+    const VERTICAL = 2;
+    const HORIZONTAL= 4;
+    const RIGHT = 8;
+    const LEFT = 16;
+    const TOP = 32;
+    const BOTTOM = 64;
+    const COLUMN = 128;
+    const ROW = 256;
+
+    let gridM = new CSSGridManager(document.querySelector("#grid-container"));
+
+    /* TODO: REMOVE THIS BLOCK FROM HERE SO THAT NOT EVERYONE HAS ACCESS TO GRIDWINDOW */
+    // let GridWindow = require('../scripts/window-grid/window-grid');
+    // const gridWindow_ = new GridWindow("#grid-container", "#grid-container > div > .resize-handle");
+    // GridWindow = null;
 
     // Init the process with default on load logic
     require("../scripts/globals");
@@ -156,6 +156,22 @@
 
     const PluginRegister = require('../scripts/plugins/plugin');
 
+</script>
+<!-- MOCHA -->
+<script type="text/javascript" src="../scripts/external-edited/mocha.js"></script>
+<script type="text/javascript" src="../../plugins/chai/4.2.0/chai.js"></script>
+<script type="module" class="mocha-init">
+    mocha.setup({
+        ui: 'bdd',
+        ignoreLeaks: false,
+        asyncOnly: true
+    });
+    mocha.checkLeaks();
+</script>
+<!--<script src="../../test/spec.js"></script>-->
+<script type="module" class="mocha-exec">
+    require("../../test/browser/test-util_css_grid_manager");
+    setTimeout(() => mocha.run(), 1000);
 </script>
 </body>
 </html>
