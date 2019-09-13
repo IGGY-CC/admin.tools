@@ -5,7 +5,6 @@
 
 'use strict';
 
-const GridWindow = require('./window-grid/window-grid');
 
 /**
  * All initial startup logic goes here.
@@ -19,10 +18,9 @@ Globals.OnLoad = function() {
 };
 
 Globals.OnLoad.prototype.InitMainGrid = function() {
-    let gridWindow_ = new GridWindow("#grid-container", "#grid-container > div > .resize-handle");
-    gridWindow_.hideCell("toolbar-tab-content", false, GridWindow.constants.RIGHT);
-    gridWindow_.hideCell("right-tab-content", false, GridWindow.constants.LEFT);
-    gridWindow_.hideCell("bottom-tab-content", true, GridWindow.constants.TOP);
+    // gridWindow_.hideCell("toolbar-tab-content", false, RIGHT);
+    // gridWindow_.hideCell("right-tab-content", false, LEFT);
+    // gridWindow_.hideCell("bottom-tab-content", true, TOP);
 };
 
 Globals.OnLoad.prototype.InitPlugins = function() {

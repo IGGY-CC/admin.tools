@@ -9,6 +9,7 @@ const gridToolbar = require('../window-grid/toolbar-content');
 const gridMenubar = require('../window-grid/menu-bar');
 const GridObjectLib = require('../window-grid/grid-object');
 const tabObject = require('../window-grid/tab-content');
+const slideOutObject = require('../window-grid/slideout-content');
 
 const GridObject = GridObjectLib.GridObject;
 const gridOnTabs = GridObjectLib.gridOnTabs;
@@ -63,6 +64,10 @@ PluginRegister.prototype.createNewTab = function() {
 
 PluginRegister.prototype.setActiveTabName = function(name) {
     tabObject.setActiveTabName(name);
+};
+
+PluginRegister.prototype.createSlideOutEntry = function(containerObject) {
+    slideOutObject.createNewEntry(containerObject);
 };
 
 PluginRegister.prototype.Start = function () {
