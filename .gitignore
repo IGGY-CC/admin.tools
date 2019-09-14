@@ -89,3 +89,5 @@ db/*.db
 .db
 
 ignore log.txt
+log.txt
+node_modules

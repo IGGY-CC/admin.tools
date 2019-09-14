@@ -26,6 +26,7 @@ Welcome.prototype.setupUI = function(parent) {
     const baseElement = UtilsUI.createNewElement('div', parent, "welcome-page", "welcome-grid-container");
 
     this.content = UtilsUI.createNewElement('div', baseElement, "welcome-page-content", "content-area");
+    this.content.style.overflow = "auto";
     this.mocha = UtilsUI.createNewElement('div', this.content, "mocha");
     const logsBG = UtilsUI.createNewElement('div', baseElement, "welcome-page-logs", "logs-area");
     this.logs = UtilsUI.createNewElement('div', logsBG, "", "message-background-holder");
