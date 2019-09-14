@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <title>Hello, World!</title>
     <link rel="stylesheet" href="../styles/main.css"/>
+    <link rel="stylesheet" href="../styles/common/common.css"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
-    <link rel="stylesheet/less" type="text/css" href="../styles/common/welcome-logs.less"/>
+    <link rel="stylesheet/less" type="text/css" href="../styles/plugins/Welcome/welcome-logs.less"/>
     <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
-    <link rel="stylesheet" type="text/css" href="../../plugins/simplebar/4.0.0/simplebar.min.css" />
     <link rel="stylesheet" type="text/css" href="../../plugins/mocha/6.2.0/mocha.css" />
 
     <!-- Local scripts -->
@@ -135,7 +135,7 @@
     const COLUMN = 128;
     const ROW = 256;
 
-    let gridM = new CSSGridManager(document.querySelector("#grid-container"));
+    // let gridManager = new CSSGridManager(document.querySelector("#grid-container"));
 
     /* TODO: REMOVE THIS BLOCK FROM HERE SO THAT NOT EVERYONE HAS ACCESS TO GRIDWINDOW */
     // let GridWindow = require('../scripts/window-grid/window-grid');
