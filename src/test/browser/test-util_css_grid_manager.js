@@ -13,14 +13,12 @@ describe('Check CSS Grid functionality', function () {
     it('total rows equals total width', (done) => {
         let size = root.gridColumns.reduce((a, b) => a + b, 0);
         assert.equal(root.width, Math.ceil(size));
-        assert.equal(root.width, Math.ceil(root.gridColumnSize));
         done();
     });
 
     it('total rows equals total height', (done) => {
         let size = root.gridRows.reduce((a, b) => a + b, 0);
         assert.equal(root.height, Math.ceil(size));
-        assert.equal(root.height, Math.ceil(root.gridRowSize));
         done();
     });
 
@@ -233,72 +231,6 @@ describe('Check CSSNode Siblings', function () {
 
 });
 
-describe('Check Size Changes on node and its effects on Siblings', function () {
-    const root = new CSSGrid(document.querySelector("#grid-container"));
-
-    /**
-     * 0: (5) ["title-bar", "title-bar", "title-bar", "title-bar", "title-bar"]
-     * 1: (5) ["menu-bar", "menu-bar", "menu-bar", "menu-bar", "menu-bar"]
-     * 2: (5) ["tool-bar", "toolbar-tab-content", "main-content", "right-tab-content", "right-tab-bar"]
-     * 3: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-content", "right-tab-content", "right-tab-bar"]
-     * 4: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-bar", "right-tab-content", "right-tab-bar"]
-     * 5: (5) ["status-bar", "status-bar", "status-bar", "status-bar", "status-bar"]
-     */
-    it('Size change on toolbar-tab-content, leftHandle should remain unchanged', (done) => {
-        let element = "toolbar-tab-content";
-        let node = root.childrenMap.get(element);
-        let currentWidth = node.width;
-
-        node.adjustSizeBy(150, true, true);
-
-        assert.equal(currentWidth, node.width);
-        done();
-    });
-
-    it('Size change on toolbar-tab-content, rightHandle should change sizes of main-content, bottom-tab-content & bottom-tab-bar', (done) => {
-        // this.skip();
-        let element = "toolbar-tab-content";
-        let node = root.childrenMap.get(element);
-
-        console.log(node);
-        /**
-         * element: div#toolbar-tab-content.resize-container.vertical-right
-         * gridColIndex: -1
-         * gridRowIndex: -1
-         * height: 328
-         * heightAffectedBottomSiblings: [CSSNode]
-         * heightAffectedTopSiblings: [CSSNode]
-         * index: 0
-         * isFixedHeight: false
-         * isFixedWidth: false
-         * maxHeight: 9007199254740991
-         * maxWidth: 9007199254740991
-         * minHeight: 0
-         * minWidth: 0
-         * width: 376.656
-         * widthAffectedLeftSiblings: [CSSNode]
-         * widthAffectedRightSiblings: (3) [CSSNode, CSSNode, CSSNode]
-         */
-        let mainContentNode = root.childrenMap.get("main-content");
-        let bottomTabContentNode = root.childrenMap.get("bottom-tab-content");
-        let bottomTabBarNode = root.childrenMap.get("bottom-tab-bar");
-
-        let currentWidth = node.width;
-        let mainContentWidth = mainContentNode.width;
-        let bottomTabContentWidth = bottomTabContentNode.width;
-        let bottomTabBarWidth = bottomTabBarNode.width;
-
-        let increaseBy = 150;
-        node.adjustSizeBy(increaseBy, true, false);
-
-        assert.equal((currentWidth + increaseBy), node.width);
-        assert.equal((mainContentWidth - increaseBy), mainContentNode.width);
-        assert.equal((bottomTabContentWidth - increaseBy), bottomTabContentNode.width);
-        assert.equal((bottomTabBarWidth - increaseBy), bottomTabBarNode.width);
-        done();
-    });
-});
-
 describe('Check each node respective grid locations', function () {
     const root = new CSSGrid(document.querySelector("#grid-container"));
 
@@ -417,6 +349,62 @@ describe('Check each node respective grid locations', function () {
         assert.equal(5, node.gridRowEnd);
         assert.equal(0, node.gridColumnStart);
         assert.equal(4, node.gridColumnEnd);
+        done();
+    });
+});
+
+describe('Check Size Changes on node and its effects on Siblings', function () {
+    const root = new CSSGrid(document.querySelector("#grid-container"));
+
+    /**
+     * 0: (5) ["title-bar", "title-bar", "title-bar", "title-bar", "title-bar"]
+     * 1: (5) ["menu-bar", "menu-bar", "menu-bar", "menu-bar", "menu-bar"]
+     * 2: (5) ["tool-bar", "toolbar-tab-content", "main-content", "right-tab-content", "right-tab-bar"]
+     * 3: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-content", "right-tab-content", "right-tab-bar"]
+     * 4: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-bar", "right-tab-content", "right-tab-bar"]
+     * 5: (5) ["status-bar", "status-bar", "status-bar", "status-bar", "status-bar"]
+     */
+    it('Size change on toolbar-tab-content, leftHandle should remain unchanged', (done) => {
+        let element = "toolbar-tab-content";
+        let node = root.childrenMap.get(element);
+        let currentWidth = node.width;
+
+        node.adjustSizeBy(150, true, true);
+
+        assert.equal(currentWidth, node.width);
+        done();
+    });
+
+    it('Size change on toolbar-tab-content, ' +
+        'rightHandle should change sizes of main-content, ' +
+        'bottom-tab-content & bottom-tab-bar and update Grid Sizes.', (done) => {
+        // this.skip();
+        let element = "toolbar-tab-content";
+        let node = root.childrenMap.get(element);
+        let leftGridSize = node.grid.gridColumns[1];
+        let rightGridSize = node.grid.gridColumns[2];
+
+        console.log("LEFT/RIGHT COL SIZES", leftGridSize, rightGridSize);
+
+        let mainContentNode = root.childrenMap.get("main-content");
+        let bottomTabContentNode = root.childrenMap.get("bottom-tab-content");
+        let bottomTabBarNode = root.childrenMap.get("bottom-tab-bar");
+
+        let currentWidth = node.width;
+        let mainContentWidth = mainContentNode.width;
+        let bottomTabContentWidth = bottomTabContentNode.width;
+        let bottomTabBarWidth = bottomTabBarNode.width;
+
+        let increaseBy = -550;
+        node.adjustSizeBy(increaseBy, true, false);
+
+        assert.equal((currentWidth + increaseBy), node.width);
+        assert.equal((mainContentWidth - increaseBy), mainContentNode.width);
+        assert.equal((bottomTabContentWidth - increaseBy), bottomTabContentNode.width);
+        assert.equal((bottomTabBarWidth - increaseBy), bottomTabBarNode.width);
+
+        assert.equal(leftGridSize + increaseBy, node.grid.gridColumns[1]);
+        assert.equal(rightGridSize - increaseBy, node.grid.gridColumns[2]);
         done();
     });
 });

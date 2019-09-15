@@ -16,8 +16,9 @@ class Util {
 }
 
 class CSSNode {
-    constructor(element) {
+    constructor(element, grid) {
         this.element = element;
+        this.grid = grid;
 
         this.index = 0;
         this.width = 0;
@@ -86,6 +87,97 @@ class CSSNode {
         }
     }
 
+    adjustSizeBy(size, isWidth, isLeftOrTopHandle) {
+        // assuming always that the size is the value to be added
+        let isOk = this.checkSetSize(size, isWidth);
+        if(!isOk) {
+            console.warn("Cannot perform resize as per min/max size restrictions.");
+            return;
+        }
+
+        if(isWidth) {
+            // left or right handle
+            if(isLeftOrTopHandle) {
+                isOk = this.adjustSizeForSiblings(isOk, this.widthAffectedLeftSiblings, size, isWidth, LEFT);
+            } else {
+                // right handle
+                isOk = this.adjustSizeForSiblings(isOk, this.widthAffectedRightSiblings, size, isWidth, RIGHT);
+            }
+        } else {
+            // top or bottom handle
+            if(isLeftOrTopHandle) {
+                isOk = this.adjustSizeForSiblings(isOk, this.heightAffectedTopSiblings, size, isWidth, TOP);
+            } else {
+                // bottom handle
+                isOk = this.adjustSizeForSiblings(isOk, this.heightAffectedBottomSiblings, size, isWidth, BOTTOM);
+            }
+        }
+
+        if(!isOk) {
+            console.warn("Cannot perform resize as per min/max size restrictions.")
+        }
+    }
+
+    adjustSizeForSiblings(isOk, theArray, size, isWidth, direction) {
+        // left/right/top/bottom siblings must reduce in size (if size is positive) otherwise, increase in size.
+        // so multiply size by -1.
+        isOk = this.checkForSizeChange(isOk, theArray, (size * -1), isWidth);
+        if(!isOk) return false;
+
+        // Here we are checkSize is successful, so we can proceed adjusting the sizes
+        this.setSize(size, isWidth, direction, true);
+        this.setSiblingSize(theArray, (size*-1), isWidth, direction);
+
+        // Once changes are done in all nodes, call the master grid to update itself.
+        this.updateGridSizes(direction, size);
+        this.grid.refreshGrid();
+        return true;
+    }
+
+    updateGridSizes(direction, size) {
+        switch(direction) {
+            case LEFT:
+                this.grid.updateGridSize(size, this.gridColumnStart, false);
+
+                if(this.gridColumnStart === 0) {
+                    console.error("Something is wrong. There cannot be resize handle on left for first element");
+                } else {
+                    // update the previous cell
+                    this.grid.updateGridSize((size * -1), (this.gridColumnStart - 1), false);
+                }
+                break;
+            case RIGHT:
+                this.grid.updateGridSize(size, this.gridColumnEnd, false);
+
+                if(this.gridColumnEnd === this.grid.gridColumns.length - 1) {
+                    console.error("Something is wrong. There cannot be resize handle on right of last element");
+                } else {
+                    // update the next cell
+                    this.grid.updateGridSize((size * -1), (this.gridColumnEnd + 1), false);
+                }
+                break;
+            case TOP:
+                this.grid.updateGridSize(size, this.gridRowStart, true);
+
+                if(this.gridRowStart === 0) {
+                    console.error("Something is wrong. There cannot be resize handle on top of first element");
+                } else {
+                    // update the previous cell
+                    this.grid.updateGridSize((size * -1), (this.gridRowStart - 1), true);
+                }
+                break;
+            case BOTTOM:
+                this.grid.updateGridSize(size, this.gridRowEnd, true);
+
+                if(this.gridRowEnd === this.grid.gridRows.length - 1) {
+                    console.error("Something is wrong. There cannot be resize handle on bottom of last element");
+                } else {
+                    // update the next cell
+                    this.grid.updateGridSize((size * -1), (this.gridRowEnd + 1), true);
+                }
+        }
+    }
+
     checkSetSize(size, isWidth) {
         if(isWidth) {
             return this.checkMinMaxSize(this.width + size, this.minWidth, this.maxWidth);
@@ -98,7 +190,7 @@ class CSSNode {
         return (finalSize > min && finalSize < max);
     }
 
-    setSize(size, isWidth) {
+    setSize(size, isWidth, direction, isCaller) {
         if(!this.checkSetSize(size, isWidth)) return false;
         if(isWidth) {
             this.width += size;
@@ -107,49 +199,6 @@ class CSSNode {
         }
         this.refreshSize();
     };
-
-    adjustSizeBy(size, isWidth, isLeftOrTopHandle) {
-        // assuming always that the size is the value to be added
-        let isOk = this.checkSetSize(size, isWidth);
-        if(!isOk) {
-            console.warn("Cannot perform resize as per min/max size restrictions.");
-            return;
-        }
-
-        if(isWidth) {
-            // left or right handle
-            if(isLeftOrTopHandle) {
-                isOk = this.adjustSizeForSiblings(isOk, this.widthAffectedLeftSiblings, size, isWidth);
-            } else {
-                // right handle
-                isOk = this.adjustSizeForSiblings(isOk, this.widthAffectedRightSiblings, size, isWidth);
-            }
-        } else {
-            // top or bottom handle
-            if(isLeftOrTopHandle) {
-                isOk = this.adjustSizeForSiblings(isOk, this.heightAffectedTopSiblings, size, isWidth);
-            } else {
-                // bottom handle
-                isOk = this.adjustSizeForSiblings(isOk, this.heightAffectedBottomSiblings, size, isWidth);
-            }
-        }
-
-        if(!isOk) {
-            console.warn("Cannot perform resize as per min/max size restrictions.")
-        }
-    }
-
-    adjustSizeForSiblings(isOk, theArray, size, isWidth) {
-        // left/right/top/bottom siblings must reduce in size (if size is positive) otherwise, increase in size.
-        // so multiply size by -1.
-        isOk = this.checkForSizeChange(isOk, theArray, (size * -1), isWidth);
-        if(!isOk) return false;
-
-        // Here we are checkSize is successful, so we can proceed adjusting the sizes
-        this.setSize(size, isWidth);
-        this.setSiblingSize(theArray, (size*-1), isWidth);
-        return true;
-    }
 
     checkForSizeChange(isOk, theArray, size, isWidth) {
         for(let index=0; index < theArray.length; index++) {
@@ -161,9 +210,9 @@ class CSSNode {
         return true;
     }
 
-    setSiblingSize(theArray, size, isWidth) {
+    setSiblingSize(theArray, size, isWidth, direction) {
         for(let index=0; index < theArray.length; index++) {
-            theArray[index].setSize(size, isWidth);
+            theArray[index].setSize(size, isWidth, direction, false);
         }
         return true;
     }
@@ -176,8 +225,6 @@ class CSSGrid {
         this.height = 0;
         this.gridColumns = [];
         this.gridRows = [];
-        this.gridRowSize = 0;
-        this.gridColumnSize = 0;
         this.grid = [];
         this.gridUnique = [];
         this.childrenMap = new Map();
@@ -205,9 +252,7 @@ class CSSGrid {
         let gridTemplateRows = this.computedStyle.gridTemplateRows;
 
         gridTemplateRows.split(" ").forEach(row => {
-            let cellSize = Util.stripPx(row);
-            this.gridRowSize += cellSize;
-            this.gridRows.push(cellSize);
+            this.gridRows.push(Util.stripPx(row));
         });
     }
 
@@ -215,9 +260,7 @@ class CSSGrid {
         let gridTemplateColumns = this.computedStyle.gridTemplateColumns;
 
         gridTemplateColumns.split(" ").forEach(column => {
-            let cellSize = Util.stripPx(column);
-            this.gridColumnSize += cellSize;
-            this.gridColumns.push(cellSize);
+            this.gridColumns.push(Util.stripPx(column));
         });
     }
 
@@ -235,7 +278,7 @@ class CSSGrid {
     setupElements() {
         let elements = this.root.children;
         for (let index = 0; index < elements.length; index++) {
-            const node = new CSSNode(elements[index]);
+            const node = new CSSNode(elements[index], this);
             this.childrenMap.set(elements[index].id, node);
         }
     }
@@ -365,6 +408,31 @@ class CSSGrid {
         } else {
             map.set(entry, count+1);
         }
+    }
+
+    updateGridSize(size, index, isRow) {
+        if(isRow) {
+            console.log("SETTING ROW %s to size: %d", index, size, this.gridRows[index] + size);
+            this.gridRows[index] = this.gridRows[index] + size;
+        } else {
+            console.log("SETTING COLUMN %s to size: %d", index, size, this.gridColumns[index] + size);
+            this.gridColumns[index] = this.gridColumns[index] + size;
+        }
+    }
+
+    refreshGrid() {
+        let gridTemplateRows = "";
+        for(let index = 0; index < this.gridRows.length; index++) {
+            gridTemplateRows += this.gridRows[index] + "px ";
+        }
+
+        let gridTemplateColumns = "";
+        for(let index = 0; index < this.gridColumns.length; index++) {
+            gridTemplateColumns += this.gridColumns[index] + "px ";
+        }
+
+        this.root.style.gridTemplateRows = gridTemplateRows;
+        this.root.style.gridTemplateColumns = gridTemplateColumns;
     }
 }
 
