@@ -37,17 +37,19 @@ class CSSNode {
         this.widthAffectedLeftSiblings = [];
         this.widthAffectedRightSiblings = [];
 
-        this.gridColIndex = -1;
-        this.gridRowIndex = -1;
+        this.gridRowStart = -1;
+        this.gridRowEnd = -1;
+        this.gridColumnStart = -1;
+        this.gridColumnEnd = -1;
 
         this.init();
     }
 
     init() {
-        this.refreshSize();
+        this.refreshSizeByDOM();
     }
 
-    refreshSize() {
+    refreshSizeByDOM() {
         this.computedStyle = Util.getComputedStyle(this.element.id);
         this.width = Util.stripPx(this.computedStyle.width);
         this.height = Util.stripPx(this.computedStyle.height);
@@ -61,6 +63,11 @@ class CSSNode {
         this.isFixedWidth = (this.minWidth === this.maxWidth);
         this.isFixedHeight = (this.minHeight === this.maxHeight);
     }
+
+    refreshSize() {
+        this.element.style.width = this.width + "px";
+        this.element.style.height = this.height + "px";
+    };
 
     getMinMax(property, isMin) {
         let prop = (isMin) ? "min" + property.charAt(0).toUpperCase() + property.slice(1).toLowerCase() :
@@ -95,11 +102,10 @@ class CSSNode {
         if(!this.checkSetSize(size, isWidth)) return false;
         if(isWidth) {
             this.width += size;
-            this.element.style.width = this.width + "px";
         } else {
             this.height += size;
-            this.element.style.height = this.height + "px";
         }
+        this.refreshSize();
     };
 
     adjustSizeBy(size, isWidth, isLeftOrTopHandle) {
@@ -186,6 +192,7 @@ class CSSGrid {
         this.setupGridMatrix();
         this.setupElements();
         this.setupSiblings();
+        this.setupGridPlaceHolders();
     }
 
     refreshSize() {
@@ -304,6 +311,59 @@ class CSSGrid {
     setUnique(_array, element) {
         if (!_array.includes(element)) {
             _array.push(element);
+        }
+    }
+
+    setupGridPlaceHolders() {
+        let matrix = [];
+
+        for(let row = 0; row < this.grid.length; row++) {
+            matrix[row] = [];
+
+            for(let col = 0; col < this.grid[row].length; col++) {
+                let id = this.grid[row][col];
+                let node = this.childrenMap.get(id);
+                matrix[row][col] = node;
+
+                if(row === 0) {
+                    node.gridRowStart = row;
+                } else {
+                    let previousRow = matrix[row-1][col];
+                    if(node !== previousRow) {
+                        // this is a new node on fresh row
+                        node.gridRowStart = row;
+                        //set the row end of node on previous row's column
+                        previousRow.gridRowEnd = row -1;
+                    }
+                    if(row === this.grid.length - 1) {
+                        node.gridRowEnd = row;
+                    }
+                }
+
+                if(col === 0) {
+                    node.gridColumnStart = col;
+                } else {
+                    let previousCol = matrix[row][col-1];
+                    if(node !== previousCol) {
+                        // this is a new node on fresh column
+                        node.gridColumnStart = col;
+                        // set the col end of node on previous column
+                        previousCol.gridColumnEnd = col-1;
+                    }
+                    if(col === this.grid[row].length - 1) {
+                        node.gridColumnEnd = col;
+                    }
+                }
+            }
+        }
+    }
+
+    checkMapAndSet(map, entry) {
+        let count = map.get(entry);
+        if(typeof count === "undefined") {
+            map.set(entry, 1);
+        } else {
+            map.set(entry, count+1);
         }
     }
 }

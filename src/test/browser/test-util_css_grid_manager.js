@@ -288,12 +288,135 @@ describe('Check Size Changes on node and its effects on Siblings', function () {
         let bottomTabContentWidth = bottomTabContentNode.width;
         let bottomTabBarWidth = bottomTabBarNode.width;
 
-        node.adjustSizeBy(150, true, false);
-        assert.equal(currentWidth + 150, node.width);
-        assert.equal(mainContentWidth - 150, mainContentNode.width);
-        assert.equal(bottomTabContentWidth - 150, bottomTabContentNode.width);
-        assert.equal(bottomTabBarWidth - 150, bottomTabBarNode.width);
-        console.log(root.childrenMap);
+        let increaseBy = 150;
+        node.adjustSizeBy(increaseBy, true, false);
+
+        assert.equal((currentWidth + increaseBy), node.width);
+        assert.equal((mainContentWidth - increaseBy), mainContentNode.width);
+        assert.equal((bottomTabContentWidth - increaseBy), bottomTabContentNode.width);
+        assert.equal((bottomTabBarWidth - increaseBy), bottomTabBarNode.width);
+        done();
+    });
+});
+
+describe('Check each node respective grid locations', function () {
+    const root = new CSSGrid(document.querySelector("#grid-container"));
+
+    /**
+     * 0: (5) ["title-bar", "title-bar", "title-bar", "title-bar", "title-bar"]
+     * 1: (5) ["menu-bar", "menu-bar", "menu-bar", "menu-bar", "menu-bar"]
+     * 2: (5) ["tool-bar", "toolbar-tab-content", "main-content", "right-tab-content", "right-tab-bar"]
+     * 3: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-content", "right-tab-content", "right-tab-bar"]
+     * 4: (5) ["tool-bar", "toolbar-tab-content", "bottom-tab-bar", "right-tab-content", "right-tab-bar"]
+     * 5: (5) ["status-bar", "status-bar", "status-bar", "status-bar", "status-bar"]
+     */
+    it('title-bar should have row-column start-end as 0-0 0-4', (done) => {
+        let element = "title-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(0, node.gridRowStart);
+        assert.equal(0, node.gridRowEnd);
+        assert.equal(0, node.gridColumnStart);
+        assert.equal(4, node.gridColumnEnd);
+        done();
+    });
+
+    it('menu-bar should have row-column start-end as 1-1 0-4', (done) => {
+        let element = "menu-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(1, node.gridRowStart);
+        assert.equal(1, node.gridRowEnd);
+        assert.equal(0, node.gridColumnStart);
+        assert.equal(4, node.gridColumnEnd);
+        done();
+    });
+
+    it('tool-bar should have row-column start-end as 2-4 0-0', (done) => {
+        let element = "tool-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(2, node.gridRowStart);
+        assert.equal(4, node.gridRowEnd);
+        assert.equal(0, node.gridColumnStart);
+        assert.equal(0, node.gridColumnEnd);
+        done();
+    });
+
+    it('toolbar-tab-content should have row-column start-end as 2-4 1-1', (done) => {
+        let element = "toolbar-tab-content";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(2, node.gridRowStart);
+        assert.equal(4, node.gridRowEnd);
+        assert.equal(1, node.gridColumnStart);
+        assert.equal(1, node.gridColumnEnd);
+        done();
+    });
+
+    it('main-content should have row-column start-end as 2-2 2-2', (done) => {
+        let element = "main-content";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(2, node.gridRowStart);
+        assert.equal(2, node.gridRowEnd);
+        assert.equal(2, node.gridColumnStart);
+        assert.equal(2, node.gridColumnEnd);
+        done();
+    });
+
+    it('bottom-tab-content should have row-column start-end as 3-3 2-2', (done) => {
+        let element = "bottom-tab-content";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(3, node.gridRowStart);
+        assert.equal(3, node.gridRowEnd);
+        assert.equal(2, node.gridColumnStart);
+        assert.equal(2, node.gridColumnEnd);
+        done();
+    });
+
+    it('bottom-tab-bar should have row-column start-end as 4-4 2-2', (done) => {
+        let element = "bottom-tab-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(4, node.gridRowStart);
+        assert.equal(4, node.gridRowEnd);
+        assert.equal(2, node.gridColumnStart);
+        assert.equal(2, node.gridColumnEnd);
+        done();
+    });
+
+    it('right-tab-content should have row-column start-end as 2-4 3-3', (done) => {
+        let element = "right-tab-content";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(2, node.gridRowStart);
+        assert.equal(4, node.gridRowEnd);
+        assert.equal(3, node.gridColumnStart);
+        assert.equal(3, node.gridColumnEnd);
+        done();
+    });
+
+    it('right-tab-bar should have row-column start-end as 2-4 4-4', (done) => {
+        let element = "right-tab-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(2, node.gridRowStart);
+        assert.equal(4, node.gridRowEnd);
+        assert.equal(4, node.gridColumnStart);
+        assert.equal(4, node.gridColumnEnd);
+        done();
+    });
+
+    it('status-bar should have row-column start-end as 5-5 0-4', (done) => {
+        let element = "status-bar";
+        let node = root.childrenMap.get(element);
+
+        assert.equal(5, node.gridRowStart);
+        assert.equal(5, node.gridRowEnd);
+        assert.equal(0, node.gridColumnStart);
+        assert.equal(4, node.gridColumnEnd);
         done();
     });
 });
