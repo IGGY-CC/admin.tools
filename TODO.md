@@ -22,3 +22,7 @@ go-prompt.
  with status button showing a green or red or orange color), apache conf
  opened in the default editor, etc.
  
+ - Bond multiple internet connections.
+ - Let a connection go over a particular internet connection
+ 
+ 

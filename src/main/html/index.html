@@ -125,6 +125,7 @@
     const utilListeners = require("../scripts/utils/util_listeners");
     const utilResizer = require('../scripts/utils/util_resizer');
     const CSSGridManager = require('../scripts/utils/util_css_grid_manager');
+    const Grid = require('../scripts/utils/util_grid');
 
     const VERTICAL = 2;
     const HORIZONTAL= 4;
@@ -143,18 +144,18 @@
     // GridWindow = null;
 
     // Init the process with default on load logic
-    require("../scripts/globals");
+    // == require("../scripts/globals");
 
     // Add minimize, maximize and close functionality to window
-    require("../scripts/window-grid/title-bar");
+    // == require("../scripts/window-grid/title-bar");
 
     // Add the tab menu and container
-    require("../scripts/window-grid/tab-content");
+    // == require("../scripts/window-grid/tab-content");
 
     // Search and load any plugins
-    require("../scripts/plugins/plugin");
+    // == require("../scripts/plugins/plugin");
 
-    const PluginRegister = require('../scripts/plugins/plugin');
+    // == const PluginRegister = require('../scripts/plugins/plugin');
 
 </script>
 <!-- MOCHA -->
@@ -170,7 +171,8 @@
 </script>
 <!--<script src="../../test/spec.js"></script>-->
 <script type="module" class="mocha-exec">
-    require("../../test/browser/test-util_css_grid_manager");
+    // require("../../test/browser/test-util_css_grid_manager");
+    require("../../test/browser/util/test-util_grid");
     setTimeout(() => mocha.run(), 1000);
 </script>
 </body>
