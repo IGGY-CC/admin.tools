@@ -13,6 +13,28 @@ class Util {
     static stripPx(value) {
         return value.replace("px", "") * 1;
     }
+
+    static floatRound(value, decimals=2) {
+        return Math.round(value * 10 * decimals) / (10 * decimals)
+    }
+
+    static getStyles(id) {
+        const styles = new Map();
+        let i = false;
+        const ignoreList = ["#mocha", ".fa-"];
+        for (let index = 0; index < document.styleSheets.length; index++) {
+            const sheet = document.styleSheets[index];
+            for (let ruleID = 0; ruleID < sheet.rules.length; ruleID++) {
+                const rule = sheet.rules[ruleID];
+                if(new RegExp(ignoreList.join("|")).test(rule.selectorText)) {
+                    break;
+                }
+                if (rule.selectorText === id) {
+                    return rule.style;
+                }
+            }
+        }
+    }
 }
 
 class CSSNode {
@@ -65,6 +87,21 @@ class CSSNode {
         this.isFixedHeight = (this.minHeight === this.maxHeight);
     }
 
+    setupGridFixedSize() {
+        if(this.isFixedWidth) {
+            // TODO: Only considering one case for now. In future need to add other cases.
+            if(this.gridColumnStart === this.gridColumnEnd) {
+                this.grid.fixedColumns[this.gridColumnStart] = true;
+            }
+        }
+        if(this.isFixedHeight) {
+            // TODO: Only considering one case for now. In future need to add other cases.
+            if(this.gridRowStart === this.gridRowEnd) {
+                this.grid.fixedRows[this.gridRowStart] = true;
+            }
+        }
+    };
+
     refreshSize() {
         this.element.style.width = this.width + "px";
         this.element.style.height = this.height + "px";
@@ -87,11 +124,19 @@ class CSSNode {
         }
     }
 
+    setSizeTo(size, isWidth, isLeftOrTopHandle) {
+        if(isWidth) {
+            this.adjustSizeBy(size - this.width, isWidth, isLeftOrTopHandle);
+        } else {
+            this.adjustSizeBy(size - this.height, isWidth, isLeftOrTopHandle);
+        }
+    };
+
     adjustSizeBy(size, isWidth, isLeftOrTopHandle) {
         // assuming always that the size is the value to be added
         let isOk = this.checkSetSize(size, isWidth);
         if(!isOk) {
-            console.warn("Cannot perform resize as per min/max size restrictions.");
+            console.warn("Cannot perform resize as per min/max size restrictions. Size / isWidth / minWidth / minHeight", size, isWidth, this.minWidth, this.minHeight);
             return;
         }
 
@@ -125,8 +170,8 @@ class CSSNode {
         if(!isOk) return false;
 
         // Here we are checkSize is successful, so we can proceed adjusting the sizes
-        this.setSize(size, isWidth, direction, true);
-        this.setSiblingSize(theArray, (size*-1), isWidth, direction);
+        this.setSize(size, isWidth);
+        this.setSiblingSize(theArray, (size*-1), isWidth);
 
         // Once changes are done in all nodes, call the master grid to update itself.
         this.updateGridSizes(direction, size);
@@ -187,13 +232,15 @@ class CSSNode {
     };
 
     checkMinMaxSize(finalSize, min, max) {
-        return (finalSize > min && finalSize < max);
+        return (finalSize >= min && finalSize <= max);
     }
 
-    setSize(size, isWidth, direction, isCaller) {
+    setSize(size, isWidth) {
         if(!this.checkSetSize(size, isWidth)) return false;
         if(isWidth) {
+            console.log("SETTING WIDTH TO %d with new size %d for %s", size, this.width + size, this.element.id);
             this.width += size;
+
         } else {
             this.height += size;
         }
@@ -210,9 +257,9 @@ class CSSNode {
         return true;
     }
 
-    setSiblingSize(theArray, size, isWidth, direction) {
+    setSiblingSize(theArray, size, isWidth) {
         for(let index=0; index < theArray.length; index++) {
-            theArray[index].setSize(size, isWidth, direction, false);
+            theArray[index].setSize(size, isWidth);
         }
         return true;
     }
@@ -223,16 +270,23 @@ class CSSGrid {
         this.root = root;
         this.width = 0;
         this.height = 0;
+        this.windowWidth = 0;
+        this.windowHeight = 0;
         this.gridColumns = [];
         this.gridRows = [];
         this.grid = [];
         this.gridUnique = [];
         this.childrenMap = new Map();
+        this.gridDefinition = null;
 
+        this.fixedRows = [];
+        this.fixedColumns = [];
         this.init();
     }
 
     init() {
+        this.gridDefinition = Util.getStyles("#" + this.root.id);
+        console.log("GRID DEFINITION: ", this.gridDefinition);
         this.refreshSize();
         this.setupRows();
         this.setupCols();
@@ -242,10 +296,42 @@ class CSSGrid {
         this.setupGridPlaceHolders();
     }
 
-    refreshSize() {
+    refreshSize(nodes=false) {
+        let oldWidth = null;
+        let oldHeight = null;
+
+        if(nodes) {
+            oldWidth = this.windowWidth;
+            oldHeight = this.windowHeight;
+        }
+
         this.computedStyle = Util.getComputedStyle(this.root.id);
         this.width = Util.stripPx(this.computedStyle.width);
         this.height = Util.stripPx(this.computedStyle.height);
+        this.windowWidth = window.innerWidth;
+        this.windowHeight = window.innerHeight;
+
+        if(nodes) {
+            let offsetWidth = Util.floatRound(this.windowWidth/oldWidth);
+            let offsetHeight = Util.floatRound(this.windowHeight/oldHeight);
+            this.gridRows = this.gridRows.map((value, key) => {
+                if(this.fixedRows[key]) Util.floatRound(value * offsetHeight)
+            });
+            this.gridColumns = this.gridColumns.map((value, key) => {
+                if(this.fixedColumns[key]) Util.floatRound(value * offsetWidth)
+            });
+
+            // this.childrenMap.forEach((node, key, map) => {
+            //     if(!node.isFixedWidth) {
+            //         node.width *= offsetWidth;
+            //     }
+            //     if(!node.isFixedHeight) {
+            //         node.height *= offsetHeight;
+            //     }
+            //     node.refreshSize();
+            // });
+            this.refreshGrid();
+        }
     }
 
     setupRows() {
@@ -358,6 +444,9 @@ class CSSGrid {
     }
 
     setupGridPlaceHolders() {
+        // gridRowStart, gridRowEnd, gridColumnStart, gridColumnEnd from getComputedStyle
+        // may not always be numbers. They can be with the names of the grid. Hence we
+        // calculate these manually.
         let matrix = [];
 
         for(let row = 0; row < this.grid.length; row++) {
@@ -399,6 +488,9 @@ class CSSGrid {
                 }
             }
         }
+
+        // Now that GridPlaceHolders are set, update the gridFixedSizes array.
+        this.childrenMap.forEach(node => node.setupGridFixedSize());
     }
 
     checkMapAndSet(map, entry) {
