@@ -1,9 +1,11 @@
-const Grid = require("../../../main/scripts/utils/util_grid");
+const { Grid, GridUtil } = require("../../../main/scripts/utils/util_grid");
 const {assert, expect} = require('chai');
 
 function deleteChild(element) {
     let child = element.lastElementChild;
     while (child) {
+        deleteChild(child);
+        console.log("removing child: ", child.id, "from", element.id);
         element.removeChild(child);
         child = element.lastElementChild;
     }
@@ -26,15 +28,20 @@ describe('Check Grid defaults', function () {
     let height = window.innerHeight;
 
     it('check the defaults', (done) => {
-        grid.setDefaults();
-        console.log("CALLING FIRST TEST", grid.width, grid.height);
         assert.equal(width, grid.width);
         assert.equal(height, grid.height);
         assert.equal("grid", grid.root.style.display);
         done();
     });
+});
+
+describe('Check Grid Element creation', function () {
+    deleteChild(root);
+    const mocha = UtilsUI.createNewElement('div', root, "mocha");
+    mocha.style.width = "500px";
 
     it('check the new element at grid 0,0 spanning two rows and two columns', (done) => {
+        grid.clear();
         const gridElement = grid.addElement(0, 0, 2, 2);
         assert.equal(GRID_ID + "-0-0", gridElement.id);
         assert.equal(gridElement, grid.elementMatrix[0][0]);
@@ -65,12 +72,22 @@ describe('Check Grid defaults', function () {
         );
         done();
     });
+});
+
+describe('Check GridElement dimensional constraints', function () {
+    deleteChild(root);
+    const mocha = UtilsUI.createNewElement('div', root, "mocha");
+    mocha.style.width = "500px";
+    // create a default element
+    grid.addElement(0, 0, 2, 2);
 
     it('check to add a fixedWidth and fixedHeight element before setting width or height', (done) => {
         const gridElement = grid.addElement(2, 0, 1, 2);
+        gridElement.width = -1;
         expect(() => gridElement.setFixed(true, false)).to.throw(
             "Cannot mark the element as fixed width element, when there is no width set on it."
         );
+        gridElement.height = -1;
         expect(() => gridElement.setFixed(false, true)).to.throw(
             "Cannot mark the element as fixed height element, when there is no height set on it."
         );
@@ -98,6 +115,19 @@ describe('Check Grid defaults', function () {
         assert.equal(50, gridElement.height);
         done();
     });
+});
+
+describe('Check clear Grid', function () {
+    deleteChild(root);
+    const mocha = UtilsUI.createNewElement('div', root, "mocha");
+    mocha.style.width = "500px";
+
+    grid.clear();
+    // create some elements
+    grid.addElement(0, 0, 2, 2);
+    grid.addElement(2, 0, 1, 2);
+    grid.addElement(2, 2, 1, 1);
+    grid.addElement(0, 3, 1, 1);
 
     it('grid.clear must clear all the children and their references created', (done) => {
         const gridElement = grid.elementMatrix[2][2];
@@ -108,6 +138,12 @@ describe('Check Grid defaults', function () {
         assert.equal(0, grid.elementMatrix.length);
         done();
     });
+});
+
+describe('Check GridElement siblings: left-top-bottom-right', function () {
+    deleteChild(root);
+    const mocha = UtilsUI.createNewElement('div', root, "mocha");
+    mocha.style.width = "500px";
 
     it('check the left-right-top-left siblings', (done) => {
         const gridElement = grid.addElement(0, 0, 3, 3);
@@ -163,7 +199,9 @@ describe('Check Grid defaults', function () {
 
     it('Check for element dimensions of gridElement', (done) => {
         let gridElement = grid.elementMatrix[0][3];
-        assert.equal("", gridElement.element.style.width);
+        let width = window.innerWidth;
+
+        // assert.equal((width*gridElement.columns/grid.numColumns) + "px", gridElement.element.style.width);
         gridElement.setDimensions(120, 50);
         assert.equal(gridElement.width + "px", gridElement.element.style.width);
         assert.equal("120px", gridElement.element.style.width);
@@ -171,4 +209,42 @@ describe('Check Grid defaults', function () {
         assert.equal("50px", gridElement.element.style.height);
         done();
     });
+});
+
+describe.only('Check GridElement dimensions on addition of each element', function () {
+    deleteChild(root);
+    root.className = "mocha-overflow";
+    const mocha = UtilsUI.createNewElement('div', root, "mocha");
+    mocha.style.width = "500px";
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    it('check the left-right-top-left siblings', (done) => {
+        grid.clear();
+
+        const gridElement = grid.addElement(0, 0, 3, 3);
+        assert.equal(width + "px", gridElement.element.style.width);
+        assert.equal(height + "px", gridElement.element.style.height);
+
+        const gridElement2 = grid.addElement(3, 2, 3, 3);
+        assert.equal(height/2 + "px", gridElement.element.style.height);
+        assert.equal(width*3/5 + "px", gridElement.element.style.width);
+
+        assert.equal(height/2 + "px", gridElement2.element.style.height);
+        assert.equal(width*3/5 + "px", gridElement2.element.style.width);
+        console.log(grid);
+        //
+        // const gridElement3 = grid.addElement(6, 0, 2, 6);
+        // assert.equal(height*3/8 + "px", gridElement.element.style.height);
+        // assert.equal(width/2 + "px", gridElement.element.style.width);
+        //
+        // assert.equal(height*3/8 + "px", gridElement2.element.style.height);
+        // assert.equal(width/2 + "px", gridElement2.element.style.width);
+        //
+        // assert.equal(GridUtil.floatRound(height*2/8, 3) + "px", gridElement3.element.style.height);
+        // assert.equal(width + "px", gridElement3.element.style.width);
+
+        done();
+    });
+
 });

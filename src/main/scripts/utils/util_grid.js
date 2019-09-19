@@ -8,7 +8,27 @@ class GridUtil {
     }
 
     static floatRound(value, decimals=2) {
-        return Math.round(value * 10 * decimals) / (10 * decimals)
+        return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    }
+
+    static deleteFromArray(array, elementOrIndex, isIndex=false, callback) {
+        let newIndex = 0;
+        for (let index = 0, length = array.length; index < length; length++) {
+            if(isIndex) {
+                if(index !== elementOrIndex) {
+                    array[newIndex++] = array[index];
+                }
+            } else {
+                if (array[index] !== elementOrIndex) {
+                    array[newIndex++] = array[index];
+                } else {
+                    if(typeof callback !== "undefined") {
+                        callback(index);
+                    }
+                }
+            }
+        }
+        array.length = newIndex;
     }
 }
 
@@ -140,6 +160,8 @@ class Grid {
         this.gridTemplateRows = null;
         this.gridTemplateColumns = null;
         this.gridTemplateAreas = null;
+
+        this.setDefaults();
     }
 
     setWidth(width, resize=true) {
@@ -185,8 +207,9 @@ class Grid {
                 "but the current grid ends at column " + this.numColumns);
         }
 
-        if(typeof this.elementMatrix[rowStart] !== "undefined" && typeof this.elementMatrix[rowStart][columnStart] !== "undefined") {
-            throw new Error("Failed adding element! There already is an element present at " + rowStart + ", " + columnStart);
+        let indexArray = [];
+        if(!this.checkExistingElementAtPosition(rowStart, rowStart+rows, columnStart, columnStart+columns, indexArray)) {
+            throw new Error("Failed adding element! There already is an element present at " + indexArray[0] + ", " + indexArray[1]);
         }
 
         id = (typeof id === "undefined")? this.id + "-" + rowStart + "-" + columnStart : id;
@@ -194,6 +217,33 @@ class Grid {
         const gridElement = new GridElement(this, id, rowStart, columnStart, rows, columns);
         this.elements.push(gridElement);
 
+        for(let index = 0; index < this.rows.length; index++) {
+            
+        }
+
+        this.setupSiblings(gridElement, rowStart, columnStart, rows, columns);
+        console.log("CALLING REFRESH DIMENSIONS: ", gridElement.element.id, rowStart, columnStart, rows, columns, id);
+        this.refreshElementDimensions();
+
+        return gridElement;
+    }
+
+    checkExistingElementAtPosition(rowStart, rowEnd, columnStart, columnEnd, indexArray) {
+        for(let index = rowStart; index < rowEnd; index++) {
+            if(typeof this.elementMatrix[rowStart] !== "undefined") {
+                for(let colIndex = columnStart; colIndex < columnEnd; colIndex++) {
+                    if (typeof this.elementMatrix[index][colIndex] !== "undefined") {
+                        indexArray[0] = index;
+                        indexArray[1] = colIndex;
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    };
+
+    setupSiblings(gridElement, rowStart, columnStart, rows, columns) {
         for(let rowIndex = 0; rowIndex < rows; rowIndex++) {
             let newRowStart = rowStart + rowIndex;
             if(newRowStart >= this.numRows) {
@@ -251,8 +301,87 @@ class Grid {
                 }
             }
         }
+    }
 
-        return gridElement;
+    refreshElementDimensions() {
+        for (let index = 0; index < this.elements.length; index++) {
+            let gridElement = this.elements[index];
+            gridElement.setDimensions(this.width * gridElement.columns / this.numColumns,
+                this.height * gridElement.rows / this.numRows);
+        }
+
+        this.setupGridDimensions();
+    }
+
+    setupGridDimensions() {
+        let prevRowNode = null;
+        this.rows = [];
+        this.columns = [];
+        let newRow = 0;
+        let newCol = 0;
+        for(let row = 0; row < this.numRows; row++) {
+            for(let col = 0; col < this.numColumns; col++) {
+                const node = this.elementMatrix[row][col];
+                if(prevRowNode) {
+                    if(prevRowNode === node) continue;
+                } else {
+                    prevRowNode = node;
+                }
+                if(typeof node === "undefined") {
+                    // there is a chance that, the current column is not hosting any element yet
+                    // so, we need to go further across the column, for now set the row value to -1
+                    if(typeof this.columns[newCol] === "undefined") {
+                        this.columns[newCol] = -1;
+                    }
+                } else {
+                    if(typeof this.columns[newCol] === "undefined" || this.columns[newCol] === -1) {
+                        this.columns[newCol] = node.width/node.columns;
+                    }
+                    if(typeof this.rows[newRow] === "undefined") {
+                        // only set the value if not already set
+                        console.log("SETTING ROW HEIGHT: ", node.height/node.rows, row, this.numRows);
+                        this.rows[newRow] = node.height/node.rows;
+                    }
+                }
+                newCol++;
+            }
+            newCol = 0;
+            newRow++;
+        }
+        this.setupGridCSS();
+    }
+
+    setupGridCSS() {
+        console.log("SETUP GRID CSS CALLED!");
+        let gridTemplateRows = "";
+        let gridTemplateColumns = "";
+        let gridTemplateAreas = "";
+
+        for(let rowIndex = 0; rowIndex < this.rows.length; rowIndex++) {
+            console.log("row: ", GridUtil.floatRound(this.rows[rowIndex], 3));
+            gridTemplateRows += " " + GridUtil.floatRound(this.rows[rowIndex], 3) + "px";
+        }
+        for(let colIndex = 0; colIndex < this.columns.length; colIndex++) {
+            gridTemplateColumns += " " + GridUtil.floatRound(this.columns[colIndex], 3) + "px";
+        }
+
+        for(let rowIndex = 0; rowIndex < this.elementMatrix.length; rowIndex++) {
+            gridTemplateAreas +="'";
+            for(let colIndex = 0; colIndex < this.elementMatrix[rowIndex].length; colIndex++) {
+                if(typeof this.elementMatrix[rowIndex][colIndex] !== "undefined") {
+                    gridTemplateAreas += " " + this.elementMatrix[rowIndex][colIndex].element.id;
+                } else {
+                    gridTemplateAreas += " no-element";
+                }
+            }
+            gridTemplateAreas +="' "
+        }
+
+        console.log("AREAS: ", gridTemplateAreas);
+        this.root.style.gridTemplateColumns = gridTemplateColumns;
+        this.root.style.gridTemplateRows = gridTemplateRows;
+        this.root.style.gridTemplateAreas = gridTemplateAreas;
+
     }
 
     resize() {
@@ -265,16 +394,61 @@ class Grid {
         return this;
     }
 
-    clear() {
-        for(let elementIndex = 0; elementIndex < this.elements; elementIndex++) {
-            let gridElement = this.elements[elementIndex];
-            this.root.removeChild(gridElement.element);
-            gridElement.element = null;
-            gridElement = null;
-            this.elements[elementIndex] = null;
+    deleteElement(gridElement) { // TODO: INCOMPLETE
+        GridUtil.deleteFromArray(this.elements, gridElement);
+        this.root.removeChild(gridElement.element);
+        gridElement.element = null;
+        for(let rowIndex = 0; rowIndex < this.elementMatrix.length; rowIndex++) {
+            GridUtil.deleteFromArray(this.elementMatrix[rowIndex], gridElement, false, (index) => {
+                let leftElement = this.elementMatrix[index - 1];
+                let currentElement = this.elementMatrix[index];
+                currentElement.columnStart = index;
+
+                if(typeof currentElement !== "undefined" && currentElement !== gridElement) {
+                    if (typeof leftElement !== "undefined") {
+                        leftElement.rightSiblings.delete(gridElement);
+                        leftElement.rightSiblings.add(currentElement);
+                        currentElement.leftSiblings.add(leftElement);
+                    }
+                    currentElement.leftSiblings.delete(gridElement);
+                }
+
+                const topElement = this.elementMatrix[rowIndex - 1];
+                const bottomElement = this.elementMatrix[rowIndex + 1];
+                if(typeof topElement !== "undefined") {
+                    topElement.bottomSiblings.delete(gridElement);
+                    topElement.bottomSiblings.add(currentElement);
+                    // update the top siblings since this element is moved by one, there can
+                    // be topSiblings that might have to be removed and no longer required.
+                    for(let tEIndex=0; tEIndex < currentElement.topSiblings.length; tEIndex++) {
+                        // TODO
+                    }
+                }
+            });
+
+            if(this.elementMatrix[rowIndex].length === 0) {
+                GridUtil.deleteFromArray(this.elementMatrix, rowIndex, true);
+                // update the rowStart for all the elements present at the newly deleted index.
+                if(typeof this.elementMatrix[rowIndex] !== "undefined") {
+                    for (let index = 0; index < this.elementMatrix[rowIndex].length; index++) {
+                        this.elementMatrix[rowIndex][index] = rowIndex;
+                    }
+                }
+            }
         }
+    }
+
+    clear() {
+        for(let elementIndex = 0; elementIndex < this.elements.length; elementIndex++) {
+            let gridElement = this.elements[elementIndex];
+            gridElement.element.remove();
+            gridElement.element = undefined;
+            this.elements[elementIndex] = undefined;
+        }
+
         this.elements.length = 0;
         this.elementMatrix.length = 0;
+        this.elementMatrix = [];
         this.rows.length = 0;
         this.columns.length = 0;
         this.fixedWidthElements.length = 0;
@@ -289,10 +463,9 @@ class Grid {
         this.gridTemplateRows = null;
         this.gridTemplateColumns = null;
         this.gridTemplateAreas = null;
-
     }
 }
 
 
 
-module.exports = Grid;
+module.exports = { Grid: Grid, GridUtil: GridUtil };

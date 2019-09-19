@@ -25,4 +25,8 @@ go-prompt.
  - Bond multiple internet connections.
  - Let a connection go over a particular internet connection
  
+ - Hardware Inforamtion: using lspci etc, get the hardware info
+ and show particular info from the direct vendor page.
+ - companies can show ads of their hardware in a different tab.
+ 
  
