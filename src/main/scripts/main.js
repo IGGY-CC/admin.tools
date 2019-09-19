@@ -44,7 +44,7 @@ function createWindow() {
         // in an array if our app supports multi windows, this is the time
         // when we should delete the corresponding element.
         mainWindow = null
-    })
+    });
 
     // Prevent user to initiate any navigation
     mainWindow.webContents.on("will-navigate", (evt, newURL) => {

@@ -95,7 +95,7 @@
         <div class="tool tip right" data-tip="2FA"><span class="far fa-list-alt"></span></div>
     </div>
     <div id="toolbar-tab-content" class="resize-container vertical-right">
-<!--        <div id="toolbar-content"><div id="mocha"></div></div>-->
+        <div id="toolbar-content" style="background: black;"><div id="mocha"></div></div>
         <div id="toolbar-content-resize-handle" class="resize-handle resize-vertical"></div>
     </div>
     <div id="main-content">
@@ -125,7 +125,8 @@
     const utilListeners = require("../scripts/utils/util_listeners");
     const utilResizer = require('../scripts/utils/util_resizer');
     const CSSGridManager = require('../scripts/utils/util_css_grid_manager');
-    const Grid = require('../scripts/utils/util_grid');
+    // const Grid = require('../scripts/utils/util_grid');
+    const Matrix = require('../scripts/utils/util_matrix');
 
     const VERTICAL = 2;
     const HORIZONTAL= 4;
@@ -165,14 +166,16 @@
     mocha.setup({
         ui: 'bdd',
         ignoreLeaks: false,
-        asyncOnly: true
+        asyncOnly: true,
+        globals: ['*']
     });
     mocha.checkLeaks();
 </script>
 <!--<script src="../../test/spec.js"></script>-->
 <script type="module" class="mocha-exec">
     // require("../../test/browser/test-util_css_grid_manager");
-    require("../../test/browser/util/test-util_grid");
+    // require("../../test/browser/util/test-util_grid");
+    require("../../test/browser/util/test-util_matrix");
     setTimeout(() => mocha.run(), 1000);
 </script>
 </body>

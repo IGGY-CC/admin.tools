@@ -19,3 +19,7 @@
      background-color: transparent;
      -webkit-border-radius: 6px;
  }
+
+.mocha-overflow {
+    overflow: scroll;
+}
