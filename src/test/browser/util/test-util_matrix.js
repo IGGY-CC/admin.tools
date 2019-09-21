@@ -2,42 +2,48 @@ const { Matrix, MatrixNode, MatrixUtil } = require("../../../main/scripts/utils/
 const {assert, expect} = require('chai');
 
 const container = document.querySelector("#grid-container");
+const computedStyle = getComputedStyle(container);
+const width = MatrixUtil.stripPx(computedStyle.width);
+const height = MatrixUtil.stripPx(computedStyle.height);
+
 
 describe('Check Matrix defaults', function () {
     it('check the defaults', (done) => {
-        let matrix = new Matrix(container, 3, 3, window.innerWidth, window.innerHeight);
+        let matrix = new Matrix(container, 3, 3, width, height);
         assert.equal(3, matrix.matrix[0].length);
         assert.equal(3, matrix.matrix.length);
 
         assert.isFalse(matrix.matrix[0][0]);
         assert.isFalse(matrix.matrix[1][1]);
         assert.isFalse(matrix.matrix[2][2]);
+        matrix = null;
         done();
     });
 
     it('fill matrix with empty objects', (done) => {
-        let matrix = new Matrix(container, 3, 3, 500, 500);
+        let matrix = new Matrix(container, 3, 3, width, height);
         matrix.fillMatrix(matrix.matrix, 1, 2, 1, 1, true);
-        matrix.printMatrix(null, true);
+        // matrix.printMatrix(null, true);
         assert.equal(true, matrix.matrix[1][1]);
         assert.isFalse(matrix.matrix[0][0]);
         assert.isFalse(matrix.matrix[1][0]);
         assert.isFalse(matrix.matrix[0][1]);
         assert.isTrue(matrix.matrix[2][1]);
         assert.isFalse(matrix.matrix[2][2]);
+        matrix = null;
         done();
     });
 });
 
 describe('Check Node creation', function () {
     it('check the node creation and addition to matrix', (done) => {
-        let matrix = new Matrix(container, 3, 3, 800, 600);
+        let matrix = new Matrix(container, 3, 3, width, height);
         let node = new MatrixNode(matrix, "hello", 100, 200, false, false, 0, 0, 2, 2);
         expect(() => matrix.addNode(node, true, true)).to.throw(
             "Cannot add node as its dimensions do not fall under the required boundaries."
         );
 
-        let node2 = new MatrixNode(matrix, "hello", MatrixUtil.floatRound(800 * 2 / 3), 400, false, false, 0, 0, 2, 2);
+        let node2 = new MatrixNode(matrix, "hello", MatrixUtil.floatRound(width * 2 / 3), MatrixUtil.floatRound(height * 2/3), false, false, 0, 0, 2, 2);
         assert.doesNotThrow(() => matrix.addNode(node2, true, true));
 
         let node3 = new MatrixNode(matrix, "hello", 300, 400, false, false, 1, 1, 3, 2);
@@ -53,13 +59,14 @@ describe('Check Node creation', function () {
         let node5 = new MatrixNode(matrix, "world", 100, 100, false, false, 2, 2, 1, 1);
         assert.doesNotThrow(() => matrix.addNode(node5, true, false));
 
+        matrix = null;
         done();
     });
 });
 
 describe('Check Nodes with fixed dimensions', function () {
     it('check the node addition to matrix -- exceptions', (done) => {
-        let matrix = new Matrix(container, 4, 4, 800, 600);
+        let matrix = new Matrix(container, 4, 4, width, height);
 
         // TODO: Fixed width nodes spanning multiple rows/columns test cases
         // let node = new MatrixNode(matrix, "hello", 100, 200, true, false, 0, 0, 2, 2);
@@ -75,24 +82,29 @@ describe('Check Nodes with fixed dimensions', function () {
     });
 
     it('check the node addition with fixed width/height to matrix', (done) => {
-        let matrix = new Matrix(container, 4, 4, 800, 600);
+        let matrix = new Matrix(container, 4, 4, width, height);
         let node3 = new MatrixNode(matrix, "hello3", 100, 200, false, false, 0, 0, 2, 2);
         let node4 = new MatrixNode(matrix, "hello4", 100, 200, true, false, 2, 0, 2, 1);
         let node5 = new MatrixNode(matrix, "hello5", 100, 200, false, true, 0, 2, 1, 2);
         matrix.addNode(node3);
         matrix.addNode(node4);
         matrix.addNode(node5);
-        console.log(matrix.columns);
-        console.log(matrix.columnTypes);
+        // console.log(matrix.columns);
+        // console.log(matrix.columnTypes);
         assert.equal(matrix.columns[0], 100);
         assert.equal(matrix.rows[0], 200);
+
+        matrix = null;
         done();
     });
 });
 
 describe('Check the dimensions of Node and Matrix', function () {
     it('check the dimensions of nodes', (done) => {
-        let matrix = new Matrix(container, 3, 4, 800, 600);
+        let matrix = new Matrix(container, 3, 4, width, height);
+        let rowHeight = MatrixUtil.floatRound(height/3);
+        let colWidth = MatrixUtil.floatRound(width/4);
+
         let node = new MatrixNode(matrix, "hello", 400, 400, false, false, 0, 0, 2, 2);
         let node2 = new MatrixNode(matrix, "hello2", 200, 200, false, false, 0, 2, 1, 1);
         let node3 = new MatrixNode(matrix, "hello3", 200, 200, false, false, 1, 2, 1, 1);
@@ -107,17 +119,22 @@ describe('Check the dimensions of Node and Matrix', function () {
         matrix.addNode(node5);
         matrix.addNode(node6);
 
-        assert.deepEqual([200, 200, 200, 200], matrix.columns);
+        assert.deepEqual([colWidth, colWidth, colWidth, colWidth], matrix.columns);
         assert.deepEqual(["auto", "auto", "auto", "auto"], matrix.columnTypes);
-        assert.deepEqual([200, 200, 200], matrix.rows);
+
+        assert.deepEqual([rowHeight, rowHeight, rowHeight], matrix.rows);
         assert.deepEqual(["auto", "auto", "auto"], matrix.rowTypes);
 
-        matrix.printMatrix(null, true);
+        // matrix.printMatrix(null, true);
+        matrix = null;
         done();
     });
 
     it('check the dimensions of nodes with fixed constraints', (done) => {
-        let matrix = new Matrix(container, 3, 4, 800, 600);
+        let matrix = new Matrix(container, 3, 4, width, height);
+        let rowHeight = MatrixUtil.floatRound(height/3);
+        let colWidth = MatrixUtil.floatRound(width/4);
+
         let node = new MatrixNode(matrix, "hello", 400, 400, false, false, 0, 0, 2, 2);
         let node2 = new MatrixNode(matrix, "hello2", 200, 200, true, false, 0, 2, 1, 1);
         let node3 = new MatrixNode(matrix, "hello3", 200, 200, false, false, 1, 2, 1, 1); // doesn't work
@@ -165,22 +182,23 @@ describe('Check the dimensions of Node and Matrix', function () {
         );
         assert.doesNotThrow(() => matrix.addNode(node10));
 
-        console.log("ROW TYPES: ", matrix.rowTypes);
-        console.log("ROW TYPES: ", matrix.columnTypes);
-        assert.deepEqual([200, 200, 200, 200], matrix.columns);
+
+
+        assert.deepEqual([colWidth, colWidth, 200, colWidth], matrix.columns);
         assert.deepEqual(["auto", "auto", "fixed", "auto"], matrix.columnTypes);
-        assert.deepEqual([200, 200, 200], matrix.rows);
+        assert.deepEqual([rowHeight, rowHeight, 200], matrix.rows);
         assert.deepEqual(["auto", "auto", "fixed"], matrix.rowTypes);
 
-        matrix.printMatrix(null, true);
-        matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true);
+        // matrix.printMatrix(null, true, "width-height");
+        matrix = null;
         done();
     });
 });
 
 describe('Check resizing a non-fixed node within the matrix', function () {
 
-        let matrix = new Matrix(container, 3, 4, 800, 600);
+        let matrix = new Matrix(container, 3, 4, width, height);
         let node = new MatrixNode(matrix, "hello", 400, 400, false, false, 0, 0, 2, 2);
         let node2 = new MatrixNode(matrix, "hello2", 200, 200, false, false, 0, 2, 1, 1);
         let node3 = new MatrixNode(matrix, "hello3", 200, 200, false, false, 1, 2, 1, 1);
@@ -223,12 +241,13 @@ describe('Check resizing a non-fixed node within the matrix', function () {
         // matrix.printMatrix(null, true, "width-height");
         // matrix.printMatrix(null, true);
 
+        matrix = null;
         done();
     });
 
     it('Check for resizing height', (done) => {
-        matrix.printMatrix(null, true);
-        matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true);
+        // matrix.printMatrix(null, true, "width-height");
 
         node2.updateSize(60, false, true, BOTTOM);
         assert.equal(400, node.height);
@@ -261,47 +280,51 @@ describe('Check resizing a non-fixed node within the matrix', function () {
             "Cannot resize edges of the matrix!"
         );
 
-        console.log("A-ROWS", matrix.rows);
-        matrix.printMatrix(null, true, "width-height");
-        matrix.printMatrix(null, true);
+        // console.log("A-ROWS", matrix.rows);
+        // matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true);
 
+        matrix = null;
         done();
     });
 });
 
 describe('Check resizing a fixed node within the matrix', function () {
 
-    let matrix = new Matrix(container, 3, 4, 800, 600);
-    let node = new MatrixNode(matrix, "hello", 400, 400, false, false, 0, 0, 2, 2);
-    let node2 = new MatrixNode(matrix, "hello2", 200, 200, false, false, 0, 2, 1, 1);
-    let node3 = new MatrixNode(matrix, "hello3", 200, 200, false, true, 1, 2, 1, 1);
-    let node4 = new MatrixNode(matrix, "hello4", 400, 200, false, false, 2, 1, 1, 2);
-    let node5 = new MatrixNode(matrix, "hello5", 200, 200, true, false, 2, 0, 1, 1); // fixed width
-    let node6 = new MatrixNode(matrix, "hello6", 200, 600, false, true, 0, 3, 3, 1);
+    let matrix = new Matrix(container, 3, 4, width, height);
+    let rowHeight = MatrixUtil.floatRound(height/3);
+    let colWidth = MatrixUtil.floatRound(width/4);
 
-    matrix.addNode(node);
-    matrix.addNode(node2);
-    matrix.addNode(node3);
-    matrix.addNode(node4);
-    matrix.addNode(node5);
-    matrix.addNode(node6);
+    let node = new MatrixNode(matrix, "hello", colWidth*2, rowHeight*2, false, false, 0, 0, 2, 2);
+    let node2 = new MatrixNode(matrix, "hello2", colWidth, rowHeight, false, false, 0, 2, 1, 1);
+    let node3 = new MatrixNode(matrix, "hello3", colWidth, rowHeight, false, true, 1, 2, 1, 1);
+    let node4 = new MatrixNode(matrix, "hello4", colWidth*2, rowHeight, false, false, 2, 1, 1, 2);
+    let node5 = new MatrixNode(matrix, "hello5", colWidth, rowHeight, true, false, 2, 0, 1, 1); // fixed width
+    let node6 = new MatrixNode(matrix, "hello6", colWidth, height, false, true, 0, 3, 3, 1);
+
+    matrix.addNode(node, false, true);
+    matrix.addNode(node2, false, true);
+    matrix.addNode(node3, false, true);
+    matrix.addNode(node4, false, true);
+    matrix.addNode(node5, false, true);
+    matrix.addNode(node6, false, true);
 
     it('Check for resizing width of fixed node', (done) => {
         node2.updateSize(20, true, true, LEFT);
-        assert.equal(380, node.width);
-        assert.equal(220, node2.width);
-        assert.equal(220, node3.width);
-        assert.equal(400, node4.width); // no change
-        assert.equal(200, node5.width); // no change
-        assert.equal(200, node6.width); // no change
+        assert.equal(colWidth*2 - 20, node.width);
+        assert.equal(colWidth + 20, node2.width);
+        assert.equal(colWidth + 20, node3.width);
+        assert.equal(colWidth*2, node4.width); // no change
+        assert.equal(colWidth, node5.width); // no change
+        assert.equal(colWidth, node6.width); // no change
 
         node2.updateSize(60, true, true, RIGHT);
-        assert.equal(380, node.width);
-        assert.equal(280, node2.width);
-        assert.equal(280, node3.width);
-        assert.equal(460, node4.width); // no change
-        assert.equal(200, node5.width); // no change
-        assert.equal(140, node6.width); // no change
+        assert.equal(colWidth*2 - 20, node.width); // no change
+        assert.equal((colWidth + 20) + 60, node2.width);
+        assert.equal((colWidth + 20) + 60, node3.width);
+        assert.equal((colWidth*2) + 60, node4.width);
+        assert.equal(colWidth, node5.width); // no change
+        assert.equal(colWidth - 60, node6.width);
 
         expect(() => node.updateSize(60, true, true, LEFT)).to.throw(
             "Cannot resize edges of the matrix!"
@@ -313,6 +336,7 @@ describe('Check resizing a fixed node within the matrix', function () {
         expect(() => node4.updateSize(60, true, true, LEFT)).to.throw(
             "Cannot resize the column as its adjacent column is non resizeable!"
         );
+
         done();
     });
 
@@ -339,11 +363,61 @@ describe('Check resizing a fixed node within the matrix', function () {
         expect(() => node5.updateSize(60, false, true, TOP)).to.throw(
             "Cannot resize the row as its adjacent row is non resizeable!"
         );
+        // console.log("A-ROWS", matrix.rows);
+        // console.log("A-COLUMNS", matrix.columns);
+        // matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true);
+        done();
+    });
+
+    matrix = null;
+});
+
+describe('Check resizing window & its effects on matrix & its nodes', function () {
+    it('Check for resizing height of fixed node', (done) => {
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        let matrix = new Matrix(container, 3, 4, width, height);
+        console.log(width, height, matrix.rows, matrix.columns, matrix.width, matrix.height);
+        let rowHeight = MatrixUtil.floatRound(height/3);
+        let colWidth = MatrixUtil.floatRound(width/4);
+
+        let node = new MatrixNode(matrix, "hello", colWidth*2, rowHeight*2, false, false, 0, 0, 2, 2);
+        let node2 = new MatrixNode(matrix, "hello2", colWidth, rowHeight, false, false, 0, 2, 1, 1);
+        // fixed height
+        let node3 = new MatrixNode(matrix, "hello3", colWidth, rowHeight, false, true, 1, 2, 1, 1);
+        let node4 = new MatrixNode(matrix, "hello4", colWidth*2, rowHeight, false, false, 2, 1, 1, 2);
+        // fixed width
+        let node5 = new MatrixNode(matrix, "hello5", colWidth, rowHeight, true, false, 2, 0, 1, 1);
+        let node6 = new MatrixNode(matrix, "hello6", colWidth, height, false, true, 0, 3, 3, 1);
+
+        matrix.addNode(node, true, true);
+        matrix.addNode(node2, true, true);
+        matrix.addNode(node3, true, true);
+        matrix.addNode(node4, true, true);
+        matrix.addNode(node5, true, true);
+        matrix.addNode(node6, true, true);
+
         console.log("A-ROWS", matrix.rows);
-        console.log("A-ROWS", matrix.columns);
+        console.log("A-COLUMNS", matrix.columns);
         matrix.printMatrix(null, true, "width-height");
         matrix.printMatrix(null, true);
 
-        done();
+        node2.updateSize(60, true, true, RIGHT);
+        window.resizeBy(20, 15);
+        setTimeout(() => {
+            try {
+                let cs = getComputedStyle(container);
+                assert.equal(MatrixUtil.stripPx(cs.width), Math.round(matrix.columns.reduce((a, v) => a + v)));
+                assert.equal(MatrixUtil.stripPx(cs.height), Math.round(matrix.rows.reduce((a, v) => a + v)));
+                assert.equal(colWidth, matrix.matrix[2][0].width);
+                assert.equal(rowHeight, matrix.matrix[1][2].height);
+
+                done();
+            } catch (error) {
+                done(error);
+            }
+        }, 900);
     });
 });

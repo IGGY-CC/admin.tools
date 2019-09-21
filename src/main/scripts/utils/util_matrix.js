@@ -20,12 +20,18 @@ class MatrixUtil {
         }
     }
 
-    static floatRound(value, decimals=3) {
-        return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    static floatRound(value, decimals=3, round=ROUND) {
+        switch(round) {
+            case FLOOR:
+                return Math.floor(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+            case CEIL:
+                return Math.ceil(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+            default:
+                return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+        }
     }
 }
 
-const AUTO_SIZE = -1;
 class MatrixNode {
     constructor(root, id, width, height, isFixedWidth, isFixedHeight, rowStart, columnStart, numRows, numColumns) {
         this.root = MatrixUtil.isValidParam(root, "Matrix", Matrix);
@@ -36,28 +42,17 @@ class MatrixNode {
         this.isFixedHeight = MatrixUtil.isValidParam(isFixedHeight, "isFixedHeight", "boolean");
 
         this.rowStart = MatrixUtil.isValidParam(rowStart, "rowStart", "number");
-        this.columnStart = MatrixUtil.isValidParam(columnStart, "columnStart", "number");
+        this.columnStart = MatrixUtil.                                                                                isValidParam(columnStart, "columnStart", "number");
         this.numRows = MatrixUtil.isValidParam(numRows, "numRows", "number");
         this.numColumns = MatrixUtil.isValidParam(numColumns, "numColumns", "number");
+        this.element = null;
     }
 
     updateSize(size, isWidth=true, isDiff=false, direction) {
         if(!MatrixUtil.isValidParam(size, "width/height", "number")) {
             throw new Error("For size/width/height, only numbers are allowed");
         }
-        // if(isWidth) {
-        //     if(isDiff) {
-        //         this.width += size;
-        //     } else {
-        //         this.width = size;
-        //     }
-        // } else {
-        //     if(isDiff) {
-        //         this.height += size;
-        //     } else {
-        //         this.height = size;
-        //     }
-        // }
+
         this.root.nodeSizeUpdated(this, size, isWidth, isDiff, direction);
     }
 
@@ -93,21 +88,21 @@ class Matrix {
         this.connectedRows = [-1, 0, 1, 0]; // top, right, bottom, left
         this.connectedColumns = [0, 1, 0, -1];
 
-        this.calculateRowValues();
-        this.calculateColumnValues();
+        this.initRowValues();
+        this.initColumnValues();
         this.fillMatrix();
 
         window.onresize = this.resize.bind(this);
     }
 
-    calculateRowValues() {
+    initRowValues() {
         for(let index = 0; index < this.numRows; index++) {
             this.rows[index] = MatrixUtil.floatRound(this.height/this.numRows);
             this.rowTypes[index] = "auto";
         }
     }
 
-    calculateColumnValues() {
+    initColumnValues() {
         for(let index = 0; index < this.numColumns; index++) {
             this.columns[index] = MatrixUtil.floatRound(this.width/this.numColumns);
             this.columnTypes[index] = "auto";
@@ -455,9 +450,8 @@ class Matrix {
     }
 
     resize() {
-        this.printMatrix(null, true, "width-height");
-
-        console.log("OLD WIDTH/HEIGHT: ", this.width, this.height);
+        // this.printMatrix(null, true, "width-height");
+        // this.printMatrix(null, true);
 
         let computedStyle = getComputedStyle(this.root);
         const newWidth = MatrixUtil.stripPx(computedStyle.width);
@@ -467,27 +461,47 @@ class Matrix {
         const fixedRows = this.updateSumFixed(false);
         const fixedColumns = this.updateSumFixed(true);
 
-        console.log("NEW WIDTH/HEIGHT", newWidth, newHeight);
-        console.log("FIXED: ", fixedRows, fixedColumns);
-        const diffInWidth = MatrixUtil.floatRound((this.width - fixedColumns.sum - newWidth) / (this.numColumns - fixedColumns.count));
-        const diffInHeight = MatrixUtil.floatRound((this.height - fixedRows.sum - newHeight) / (this.numRows - fixedRows.count));
+        const diffInWidth = MatrixUtil.floatRound((newWidth - this.width) / (this.numColumns - fixedColumns.count), 3, FLOOR);
+        const diffInHeight = MatrixUtil.floatRound((newHeight - this.height) / (this.numRows - fixedRows.count), 3, FLOOR);
 
-        console.log("DIFF: ", diffInWidth, diffInHeight);
-        const visitedNodes = new Set();
-        for(let rowIndex = 0; rowIndex < this.rows.length; rowIndex++) {
-            for(let colIndex = 0; colIndex < this.columns.length; colIndex++) {
+        const visitedRowNodes = new Set();
+        const visitedColumnNodes = new Set();
+
+        const visitedRow = [];
+        const visitedColumn = [];
+        const rowIndices = new Set();
+        const columnIndices = new Set();
+
+        for(let rowIndex = 0; rowIndex < this.numRows; rowIndex++) {
+            visitedRow[rowIndex] = new Set();
+            for(let colIndex = 0; colIndex < this.numColumns; colIndex++) {
+                if(rowIndex === 0) {
+                    visitedColumn[colIndex] = new Set();
+                }
                 const node = this.matrix[rowIndex][colIndex];
-                if(visitedNodes.has(node)) continue;
-                if(this.rowTypes[rowIndex] !== "fixed") node.height += (diffInHeight * node.numRows);
-                if(this.columnTypes[colIndex] !== "fixed") node.width += (diffInWidth * node.numColumns);
-                visitedNodes.add(node);
+                if(!visitedRow[rowIndex].has(node) && this.rowTypes[rowIndex] !== "fixed") {
+                    node.height = MatrixUtil.floatRound(node.height + diffInHeight);
+                    if(!rowIndices.has(rowIndex)) {
+                        this.rows[rowIndex] = MatrixUtil.floatRound(this.rows[rowIndex] + diffInHeight);
+                        rowIndices.add(rowIndex);
+                    }
+                    visitedRow[rowIndex].add(node);
+                }
+                if(!visitedColumn[colIndex].has(node) && this.columnTypes[colIndex] !== "fixed") {
+                    node.width = MatrixUtil.floatRound(node.width + diffInWidth);
+                    if(!columnIndices.has(colIndex)) {
+                        this.columns[colIndex] = MatrixUtil.floatRound(this.columns[colIndex] + diffInWidth);
+                        columnIndices.add(colIndex);
+                    }
+                    visitedColumn[colIndex].add(node);
+                }
             }
         }
+
         this.width = newWidth;
         this.height = newHeight;
 
-        console.log("NEW HEIGHT/WIDTH: ", this.height, this.width);
-        this.printMatrix(null, true, "width-height");
+        // this.printMatrix(null, true, "width-height");
     }
 }
 
