@@ -20,6 +20,10 @@
      -webkit-border-radius: 6px;
  }
 
-.mocha-overflow {
-    overflow: scroll;
+.overflow-auto {
+    overflow: auto;
+}
+
+.resizable {
+    transition: all 0.25s ease-in-out;
 }

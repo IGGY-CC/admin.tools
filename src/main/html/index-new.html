@@ -44,15 +44,85 @@
     <!-- end external scripts -->
 </head>
 <body>
-
 <div id="grid-container" style="width: 100%; height: 100%">
+<!--    <div id="title-bar" sstyle="visibility: hidden;">-->
+<!--        <div class="resize-win"></div>-->
+<!--        <div class="at-win icon"><span class="fab fa-pagelines"></span></div>-->
+<!--        <div class="title">hello, world</div>-->
+<!--        <div class="notifications"></div>-->
+<!--        <div class="at-win" id="minimize"><span class="fa fa-window-minimize"></span></div>-->
+<!--        <div class="at-win" id="maximize"><span class="far fa-window-maximize"></span></div>-->
+<!--        <div class="at-win" id="close"><span class="fa fa-power-off"></span></div>-->
+<!--    </div>-->
+<!--    <div id="menu-bar">-->
+<!--        <div id="menu-items">-->
+<!--            &lt;!&ndash; div class="text active">File</div>-->
+<!--            <div class="text">Edit</div>-->
+<!--            <div class="text">OS</div>-->
+<!--            <div class="text">Network</div>-->
+<!--            <div class="text">VM</div>-->
+<!--            <div class="text">Editor</div &ndash;&gt;-->
+<!--        </div>-->
+<!--        <div id="icons-first-row">-->
+<!--            &lt;!&ndash;div id="file-menu-group-first" class="icon-group">-->
+<!--                <div class="tool"><span class="fa fa-terminal"></span></div>-->
+<!--                <div class="tool"><span class="fa fa-user-shield"></span></div>-->
+<!--                <div class="spacer"><span class="fa fa-grip-lines-vertical"></span></div>-->
+<!--                <div class="tool"><span class="far fa-edit"></span></div>-->
+<!--                <div class="tool"><span class="fa fa-network-wired"></span></div>-->
+<!--                <div class="tool"><span class="fas fa-globe"></span></div>-->
+<!--                <div class="tool"><span class="far fa-list-alt"></span></div>-->
+<!--            </div &ndash;&gt;-->
+<!--        </div>-->
+<!--        <div id="icons-second-row">-->
+<!--            &lt;!&ndash; div id="file-menu-group-second" class="icon-group">-->
+<!--                <div class="tool"><input type="text"></input></div>-->
+<!--                <div class="tool"><span class="fa fa-user-shield"></span></div>-->
+<!--                <div class="tool"><span class="far fa-edit"></span></div>-->
+<!--                <div class="tool"><span class="fa fa-network-wired"></span></div>-->
+<!--                <div class="tool"><span class="fas fa-globe"></span></div>-->
+<!--                <div class="tool"><span class="far fa-list-alt"></span></div>-->
+<!--            </div &ndash;&gt;-->
+<!--        </div>-->
+<!--        <div id="widget-area"></div>-->
+<!--        <div id="menu-progress-bar"></div>-->
+<!--    </div>-->
+<!--    <div id="tool-bar">-->
+<!--        <div class="tool tip right" data-tip="Password Manager"><span class="fa fa-user-shield"></span></div>-->
+<!--        <div class="tool tip right" data-tip="Code Editor"><span class="far fa-edit"></span></div>-->
+<!--        <div class="tool tip right" data-tip="Network Tools"><span class="fa fa-network-wired"></span></div>-->
+<!--        <div class="tool tip right" data-tip="Browser"><span class="fas fa-globe"></span></div>-->
+<!--        <div class="tool tip right" data-tip="2FA"><span class="far fa-list-alt"></span></div>-->
+<!--    </div>-->
+<!--    <div id="toolbar-tab-content" class="resize-container vertical-right">-->
+<!--        <div id="toolbar-content" style="background: black; overflow: auto;"><div id="mocha"></div></div>-->
+<!--        <div id="toolbar-content-resize-handle" class="resize-handle resize-vertical"></div>-->
+<!--    </div>-->
+<!--    <div id="main-content">-->
+<!--        <div id="main-tabs" >-->
+<!--        </div>-->
+<!--        <div id="main-tab-content">-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div id="right-tab-content" class="resize-container vertical-left">-->
+<!--        <div id="right-content"></div>-->
+<!--        <div id="right-content-resize-handle" class="resize-handle resize-vertical"></div>-->
+<!--    </div>-->
+<!--    <div id="right-tab-bar"></div>-->
+<!--    <div id="bottom-tab-content" class="resize-container horizontal-top">-->
+<!--        <div id="bottom-content-resize-handle" class="resize-handle resize-horizontal"></div>-->
+<!--        <div id="bottom-content"></div>-->
+<!--    </div>-->
+<!--    <div id="bottom-tab-bar"></div>-->
+<!--    <div id="status-bar">-->
+<!--        <div class="left"></div>-->
+<!--        <div class="right"></div>-->
+<!--    </div>-->
 </div>
-
 <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
     const FindFiles = require('../scripts/utils/util_find_files');
     const UtilsUI = require("../scripts/utils/util_dom");
     const utilListeners = require("../scripts/utils/util_listeners");
-    const Resize = require("../scripts/utils/util_resize");
     const utilResizer = require('../scripts/utils/util_resizer');
     // const CSSGridManager = require('../scripts/utils/util_css_grid_manager');
     const { Matrix, MatrixNode, MatrixUtil } = require('../scripts/utils/util_matrix');
@@ -69,9 +139,6 @@
     const FLOOR = 512;
     const CEIL = 1024;
     const ROUND = 2048;
-
-    // regular constants
-    const RESIZE_MARGIN = 4;
 
     // let gridManager = new CSSGridManager(document.querySelector("#grid-container"));
 

@@ -29,4 +29,7 @@ go-prompt.
  and show particular info from the direct vendor page.
  - companies can show ads of their hardware in a different tab.
  
+ - JSLint for editor: https://github.com/zz85/mrdoobapproves
+ - https://github.com/zz85/threejs-term with three-js js 3d library, https://github.com/zz85/crayon.js
+ - Disk space visualization: https://github.com/zz85/space-radar-electron/releases
  
