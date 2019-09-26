@@ -18,9 +18,7 @@ Globals.OnLoad = function() {
 };
 
 Globals.OnLoad.prototype.InitMainGrid = function() {
-    // gridWindow_.hideCell("toolbar-tab-content", false, RIGHT);
-    // gridWindow_.hideCell("right-tab-content", false, LEFT);
-    // gridWindow_.hideCell("bottom-tab-content", true, TOP);
+    const mainGrid = require('./window-grid/desktop');
 };
 
 Globals.OnLoad.prototype.InitPlugins = function() {

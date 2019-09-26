@@ -7,28 +7,24 @@ class Grid {
         this.columns = columns;
         this.width = width;
         this.height = height;
+        this.matrix = null;
 
         this.init();
     }
 
     init() {
         this.root.style.display = "grid";
-        this.matrix = new Matrix(this.root, this.rows, this.columns, this.width, this.height, this.matrixCallback.bind(this));
+        this.matrix = new Matrix(this.root, this.rows, this.columns, this.matrixCallback.bind(this));
     }
 
-    createNode(id, rowStart, columnStart, numRows, numColumns, width=-1,
-               height=-1, isFixedWidth=false, isFixedHeight=false) {
+    createNode(id, rowStart, columnStart, numRows, numColumns, fixedHeight=-1, fixedWidth=-1) {
 
-        width = (width === -1)? this.matrix.getWidth(columnStart, numColumns) : width;
-        height = (height === -1)? this.matrix.getHeight(rowStart, numRows) : height;
-
-        const node = new MatrixNode(this.matrix, id, width, height, isFixedWidth, isFixedHeight,
-            rowStart, columnStart, numRows, numColumns);
-
-        node.setElement(UtilsUI.createNewElement('div', this.root, id));
+        const node = new MatrixNode(this.matrix, id, rowStart, columnStart, numRows,
+                                    numColumns, fixedHeight, fixedWidth);
+        // node.setElement(UtilsUI.createNewElement('div', this.root, id));
         node.element.style.gridArea = id;
 
-        this.matrix.addNode(node, false, false);
+        this.matrix.addNode(node);
         this.updateGridArea();
         return node;
     }
@@ -57,20 +53,21 @@ class Grid {
         let gridTemplateRows = "";
         let gridTemplateColumns = "";
 
-        for(let rowIndex = 0; rowIndex < this.matrix.rows.length; rowIndex++) {
+        for(let rowIndex = 0; rowIndex < this.matrix.numRows; rowIndex++) {
             gridTemplateRows += " " + this.matrix.rows[rowIndex] + "px";
         }
 
-        for(let colIndex = 0; colIndex < this.matrix.columns.length; colIndex++) {
+        for(let colIndex = 0; colIndex < this.matrix.numColumns; colIndex++) {
             gridTemplateColumns += " " + this.matrix.columns[colIndex] + "px";
         }
 
         let gridTemplateAreas = this.matrix.printMatrix(null, false, null, false);
 
-        // console.log(gridTemplateColumns);
+        // console.log(gridTemplateAreas);
         this.root.style.gridTemplateColumns = gridTemplateColumns;
         this.root.style.gridTemplateRows = gridTemplateRows;
         this.root.style.gridTemplateAreas = gridTemplateAreas;
+        // this.root.style.gridGap = "2px";
 
     }
 

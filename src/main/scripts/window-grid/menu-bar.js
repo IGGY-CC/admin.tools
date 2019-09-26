@@ -5,7 +5,7 @@
 
 'use strict';
 
-const menu = "#menu-items";
+const menu = document.querySelector("#menu-bar");
 const firstIconRow = "#icons-first-row";
 const secondIconRow = "#icons-second-row";
 const widgetArea = "#widget-area";
@@ -17,11 +17,12 @@ const menuItemClass = "text";
 const menuItemActiveClass = "text active";
 
 let GridMenubar = function () {
-    this.menu = document.querySelector(menu);
-    this.firstIconRow = document.querySelector(firstIconRow);
-    this.secondIconRow = document.querySelector(secondIconRow);
-    this.widgetArea = document.querySelector(widgetArea);
-    this.progressBar = document.querySelector(progressBar);
+
+    this.menu = UtilsUI.createNewElement('div', menu, "menu-items");
+    this.firstIconRow = UtilsUI.createNewElement('div', menu, firstIconRow);
+    this.secondIconRow = UtilsUI.createNewElement('div', menu, secondIconRow);
+    this.widgetArea = UtilsUI.createNewElement('div', menu, widgetArea);
+    this.progressBar = UtilsUI.createNewElement('div', menu, progressBar);
     this.firstGroupDiv = new Map();
     this.secondGroupDiv = new Map();
     this.activeMenu = null;
@@ -179,8 +180,8 @@ GridMenubar.prototype.menuItemOnClick = function(name) {
 };
 
 GridMenubar.prototype.setupIconGroups = function(menuItem) {
-    let firstDiv = UtilsUI.createNewElement('div', this.firstIconRow, menuItem.pluginName + firstGroupKey, "icon-group");
-    let secondDiv = UtilsUI.createNewElement('div', this.secondIconRow, menuItem.pluginName + secondGroupKey, "icon-group");
+    let firstDiv = UtilsUI.createNewElement('div', this.firstIconRow, menuItem.pluginName.toLowerCase() + firstGroupKey, "icon-group");
+    let secondDiv = UtilsUI.createNewElement('div', this.secondIconRow, menuItem.pluginName.toLowerCase() + secondGroupKey, "icon-group");
     this.firstGroupDiv.set(menuItem.pluginName, firstDiv);
     this.secondGroupDiv.set(menuItem.pluginName, secondDiv);
 };

@@ -10,12 +10,18 @@ let path = require("path");
 const PLUGIN_PATH_EXT = "./src/main/scripts/plugins/";
 const PLUGIN_PATH_INT = "../plugins";
 
-let LoadPlugins = function() {
+let LoadPlugins = function(mainGridObservable) {
     this.loadedPlugins = new Map();
+    this.mainGridObservable = mainGridObservable;
 
     this.searchPlugins().then(()=> {
         this.startPlugins();
     });
+};
+
+LoadPlugins.prototype.addObserver = function(observer) {
+    console.log(this.mainGridObservable);
+    this.mainGridObservable.addObserver(observer);
 };
 
 LoadPlugins.prototype.setupPlugin = function(plugin_) {
@@ -25,6 +31,7 @@ LoadPlugins.prototype.setupPlugin = function(plugin_) {
     let Plugin = require(path.resolve(__dirname, PLUGIN_PATH_INT, plugin_));
     let pluginObject = new Plugin();
     pluginObject.pluginPath = path.join(__dirname, PLUGIN_PATH_INT);
+    pluginObject.observable = this.addObserver.bind(this);
     let objArray = this.loadedPlugins.get(pluginObject.position);
     if(typeof objArray === "undefined") {
         this.loadedPlugins.set(pluginObject.position, [pluginObject]);
@@ -56,4 +63,4 @@ LoadPlugins.prototype.startPlugins = function() {
     });
 };
 
-module.exports = new LoadPlugins();
+module.exports = LoadPlugins;

@@ -8,7 +8,7 @@
 const gridToolbar = require('../window-grid/toolbar-content');
 const gridMenubar = require('../window-grid/menu-bar');
 const GridObjectLib = require('../window-grid/grid-object');
-const tabObject = require('../window-grid/tab-content');
+// const tabObject = require('../window-grid/tab-content');
 const slideOutObject = require('../window-grid/slideout-content');
 
 const GridObject = GridObjectLib.GridObject;
@@ -24,6 +24,7 @@ let PluginRegister = function (pluginName) {
     this.position = LAST_INDEX;
     /* Plugin Path */
     this.pluginPath = null;
+    this.observable = null;
 };
 
 PluginRegister.prototype.setTool = function (tool) {
@@ -59,7 +60,8 @@ PluginRegister.prototype.getActiveElement = function () {
 };
 
 PluginRegister.prototype.createNewTab = function() {
-    tabObject.createNewTab("Editor", "fa fa-file");
+    const gridContainer = tabObject.createNewTab("Editor", "fa fa-file");
+    this.observable(gridContainer);
 };
 
 PluginRegister.prototype.setActiveTabName = function(name) {

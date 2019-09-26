@@ -5,6 +5,8 @@
 
 'use strict';
 
+// TODO: REMOVE THE BELOW PART???
+
 let GridManager = {};
 
 const TOP = 2;

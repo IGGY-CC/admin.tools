@@ -2,7 +2,7 @@ const CONSOLE_LISTENERS = [];
 const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
 
 (function() {
-    const OVERRIDE = false;
+    const OVERRIDE = true;
     const DEBUG = true;
     const FILE_DEBUG = true;
     const CONSOLE_DEBUG = false;
@@ -16,7 +16,7 @@ const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
     const _log = console.log;
     const _warn = console.warn;
     const _error = console.error;
-
+    
     const log = (object, type, args) => {
         const date = getDate(null);
         const message = date.toUpperCase() + " " + type + " " + util.format.apply(null, args) + '\n';

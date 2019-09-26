@@ -9,9 +9,11 @@ const VERTICAL = 2;
 const HORIZONTAL = 4;
 const RESIZER_SIZE = 2;
 let CHILD_COUNT = 1;
+const ROOT_CONTAINER = "#main-tab-content";
+const MAIN_TAB_HEIGHT = 20;
 
 let GridObject = function(name, root, callback, element, parent, width, height, gridArea) {
-    console.warn("NEW GRID OBJECT CALLED: ", name);
+    Observer.call(this);
     this.name = name;
     this.root = root;
     this.isRoot = false;
@@ -40,6 +42,17 @@ let GridObject = function(name, root, callback, element, parent, width, height, 
     this.gridArea = "";
     this.gridArea = gridArea;
     this.setupDefaults();
+};
+
+GridObject.prototype = Object.create(Observer.prototype);
+
+GridObject.prototype.notify = function(isWidth, size) {
+    if(isWidth) {
+        this.setDimensions(size);
+    } else {
+        size -= MAIN_TAB_HEIGHT;
+        this.setDimensions(null, size);
+    }
 };
 
 GridObject.prototype.checkParent = function(parent) {
@@ -130,7 +143,7 @@ GridObject.prototype.setupGrid = function () {
 GridObject.prototype.updateElement = function() {
     this.element.style.width = this.width + "px";
     this.element.style.height = this.height + "px";
-    this.element.style.position = "relative";
+    // this.element.style.position = "relative";
     /* Update Resizer size as well */
     if(this.resizer !== null) {
         if (this.isVertical) {
@@ -246,7 +259,6 @@ GridObject.prototype.onClick = function(event) {
     }
 };
 
-const ROOT_CONTAINER = "#main-content";
 let GridsOnTabs = function () {
     this.tabGrids = [];
     this.activeGrid = null;
@@ -259,7 +271,7 @@ GridsOnTabs.prototype.createNewGrid = function (container, name) {
     const width = parseInt(computedStyle.width);
     let height = parseInt(computedStyle.height);
     let gridObject = new GridObject(name, name, updateActiveGrid, null, container, width, height);
-    console.log(gridObject);
+
     this.tabGrids.push(gridObject);
     this.activeGrid = gridObject;
     return gridObject;

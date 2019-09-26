@@ -33,9 +33,6 @@ Welcome.prototype.setupUI = function(parent) {
     this.additional = UtilsUI.createNewElement('div', baseElement, "welcome-page-additional", "additional-data");
 
     ADD_CONSOLE(this.addMessage.bind(this));
-    console.log("hello, world!");
-    console.warn("test");
-    console.error("nothing really!");
 };
 
 Welcome.prototype.addMessage = function(message, type) {
@@ -66,11 +63,11 @@ Welcome.prototype.setupSlideOut = function() {
 };
 
 Welcome.prototype.getSlideOutContent = function(element) {
-    console.log("SETTING DEFAULT LOG CONTENT");
+    console.log("TODO: Setting default log content");
 };
 
 Welcome.prototype.removeSlideOutContent = function(element) {
-    console.log("REMOVING DEFAULT LOG CONTENT");
+    console.log("TODO: Removing default log content");
 };
 
 // init logic

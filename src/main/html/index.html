@@ -5,8 +5,8 @@
     <title>Hello, World!</title>
     <link rel="stylesheet" href="../styles/main.css"/>
     <link rel="stylesheet" href="../styles/common/common.css"/>
-<!--    <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>-->
-<!--    <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>-->
+    <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
+    <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/plugins/Welcome/welcome-logs.less"/>
     <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
@@ -49,12 +49,13 @@
 </div>
 
 <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+    const Observable = require('../scripts/utils/util_observable');
+    const Observer = require('../scripts/utils/util_observer');
     const FindFiles = require('../scripts/utils/util_find_files');
     const UtilsUI = require("../scripts/utils/util_dom");
     const utilListeners = require("../scripts/utils/util_listeners");
     const Resize = require("../scripts/utils/util_resize");
     const utilResizer = require('../scripts/utils/util_resizer');
-    // const CSSGridManager = require('../scripts/utils/util_css_grid_manager');
     const { Matrix, MatrixNode, MatrixUtil } = require('../scripts/utils/util_matrix');
     const Grid = require('../scripts/utils/util_grid');
 
@@ -73,7 +74,10 @@
     // regular constants
     const RESIZE_MARGIN = 4;
 
-    // let gridManager = new CSSGridManager(document.querySelector("#grid-container"));
+    // tabObject
+    let tabObject = null;
+
+    // let gridManager = new CSSGridManager.CSSGrid(document.querySelector("#grid-container"));
 
     /* TODO: REMOVE THIS BLOCK FROM HERE SO THAT NOT EVERYONE HAS ACCESS TO GRIDWINDOW */
     // let GridWindow = require('../scripts/window-grid/window-grid');
@@ -81,18 +85,13 @@
     // GridWindow = null;
 
     // Init the process with default on load logic
-    // == require("../scripts/globals");
+    // require("../scripts/globals");
+    require('../scripts/window-grid/desktop'); //create the desktop window
 
     // Add minimize, maximize and close functionality to window
-    // == require("../scripts/window-grid/title-bar");
+    require("../scripts/window-grid/title-bar");
 
-    // Add the tab menu and container
-    // == require("../scripts/window-grid/tab-content");
-
-    // Search and load any plugins
-    // == require("../scripts/plugins/plugin");
-
-    // == const PluginRegister = require('../scripts/plugins/plugin');
+    const PluginRegister = require('../scripts/plugins/plugin');
 
 </script>
 <!-- MOCHA -->
@@ -110,8 +109,8 @@
 <!--<script src="../../test/spec.js"></script>-->
 <script type="module" class="mocha-exec">
     // require("../../test/browser/test-util_css_grid_manager");
-    require("../../test/browser/util/test-util_matrix");
-    require("../../test/browser/util/test-util_grid");
+    // require("../../test/browser/util/test-util_matrix");
+    // require("../../test/browser/util/test-util_grid");
     setTimeout(() => mocha.run(), 1000);
 </script>
 </body>

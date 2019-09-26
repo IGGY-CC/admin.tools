@@ -12,9 +12,10 @@ const ROOT_CONTAINER = GridObjectLib.ROOT_CONTAINER;
 const TAB_CONTAINER = "main-tabs";
 const defTabID = "main-tab-";
 
-let TabObject = function() {
-    console.warn("NEW TAB CREATED");
+let TabObject = function(mainGridObservable) {
     this.container = document.querySelector("#" + TAB_CONTAINER);
+    this.mainGridObservable = mainGridObservable;
+
     this.tabCount = 0;
     this.tabs = [];
     this.containers = [];
@@ -33,7 +34,8 @@ TabObject.prototype.createDefaultTab = function() {
      *      <div class="close"><span class="fa fa-times"/></div>
      *  </div>
      */
-    this.createNewTab("Tab", "fa fa-terminal");
+    const gridContainer = this.createNewTab("Tab", "fa fa-terminal");
+    this.mainGridObservable.addObserver(gridContainer);
 };
 
 TabObject.prototype.createNewTab = function(text, icon) {
@@ -64,18 +66,19 @@ TabObject.prototype.createNewTab = function(text, icon) {
     let container = this.createNewGridObject();
     this.tabMap.set(newTabID, container);
     this.tabClicked(newTab.id);
+    return container.grid;
 };
 
 TabObject.prototype.tabClicked = function(tabID) {
     this.tabs.forEach(tab => {
         if(tab.id === tabID) {
             tab.className = "tab active";
-            let container = this.tabMap.get(tabID);
+            let container = this.tabMap.get(tabID).element;
             container.style.display = "";
             this.activeTab = tab;
         } else {
             tab.className = "tab";
-            let container = this.tabMap.get(tab.id);
+            let container = this.tabMap.get(tab.id).element;
             container.style.display = "none";
         }
     });
@@ -94,8 +97,9 @@ TabObject.prototype.closeTab = function() {
 TabObject.prototype.createNewGridObject = function(container, name) {
     let parentElement = document.querySelector(ROOT_CONTAINER);
     let contentTab = UtilsUI.createNewElement('div', parentElement, "main-container-" + this.tabCount, "grid-container");
-    gridOnTabs.createNewGrid(contentTab, "grid-" + this.tabCount);
-    return contentTab;
+    let gridObject = gridOnTabs.createNewGrid(contentTab, "grid-" + this.tabCount);
+
+    return { grid: gridObject, element: contentTab };
 };
 
 TabObject.prototype.setActiveTabName = function(name) {
@@ -103,4 +107,4 @@ TabObject.prototype.setActiveTabName = function(name) {
     element.innerHTML = name;
 };
 
-module.exports = new TabObject();
+module.exports = TabObject;

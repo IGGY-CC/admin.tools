@@ -1,7 +1,7 @@
 "use strict";
 
 class Resize {
-    constructor(node, direction=VERTICAL, margin=4) {
+    constructor(node, direction=LEFT, margin=4) {
         this.node = node;
         this.element = this.node.element;
         this.direction = direction;
@@ -42,15 +42,12 @@ class Resize {
         if(this.onLeftEdge) return LEFT;
 
     }
+
     setDimensions(width, height) {
         this.width = width;
         this.height = height;
-        const direction = this.getDirection();
-        this.node.updateSize(width, true, false, direction);
-        this.node.updateSize(height, false, false, direction);
-        // this.element.style.width = width + 'px';
-        // this.element.style.height = height + 'px';
-
+        this.node.updateSize(width, true, false, this.direction);
+        this.node.updateSize(height, false, false, this.direction);
     }
 
     hideHint() {
@@ -85,7 +82,6 @@ class Resize {
     }
 
     onMouseDown(e) {
-        console.log("MOUSE DOWN");
         this.doResize(e);
         e.preventDefault();
     }
@@ -107,7 +103,6 @@ class Resize {
             onRightEdge: this.onRightEdge,
             onBottomEdge: this.onBottomEdge
         };
-        console.log(this.clicked);
     }
 
     onMouseMove(e) {
@@ -121,13 +116,23 @@ class Resize {
         this.x = e.clientX - this.rect.left;
         this.y = e.clientY - this.rect.top;
 
-        this.onTopEdge = this.y < this.margin;
-        this.onLeftEdge = this.x < this.margin;
-        this.onRightEdge = this.x >= this.rect.width - this.margin;
-        this.onBottomEdge = this.y >= this.rect.height - this.margin;
+        switch(this.direction) {
+            case(TOP):
+                this.onTopEdge = this.y < this.margin;
+                break;
+            case(LEFT):
+                this.onLeftEdge = this.x < this.margin;
+                break;
+            case(RIGHT):
+                this.onRightEdge = this.x >= this.rect.width - this.margin;
+                break;
+            case(BOTTOM):
+                this.onBottomEdge = this.y >= this.rect.height - this.margin;
+                break;
+            default:
+                //
+        }
     }
-
-
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
@@ -137,25 +142,20 @@ class Resize {
         if (this.clicked && this.clicked.isResizing) {
             // if (this.clicked.onRightEdge) this.element.style.width = Math.max(this.x, this.minWidth) + 'px';
             // if (this.clicked.onBottomEdge) this.element.style.height = Math.max(this.y, this.minHeight) + 'px';
-            if (this.clicked.onRightEdge) this.node.updateSize(Math.max(this.x, this.minWidth), true,
-                                                                false, RIGHT);
-            if (this.clicked.onBottomEdge) this.node.updateSize(Math.max(this.y, this.minHeight), false,
-                                                                false, BOTTOM);
+            if (this.clicked.onRightEdge)
+                this.node.updateSize(Math.max(this.x, this.minWidth), true,false, RIGHT);
 
             if (this.clicked.onLeftEdge) {
                 const currentWidth = Math.max(this.clicked.cx - this.event.clientX + this.clicked.w, this.minWidth);
-                if (currentWidth > this.minWidth) {
-                    this.element.style.width = currentWidth + 'px';
-                    this.element.style.left = this.event.clientX + 'px';
-                }
+                this.node.updateSize(currentWidth, true, false, LEFT);
             }
 
+            if (this.clicked.onBottomEdge)
+                this.node.updateSize(Math.max(this.y, this.minHeight), false,false, BOTTOM);
+
             if (this.clicked.onTopEdge) {
-                const currentHeight = Math.max(this.clicked.cy - this.event.clientY + this.clicked.h, this.minHeight);
-                if (currentHeight > this.minHeight) {
-                    this.element.style.height = currentHeight + 'px';
-                    this.element.style.top = this.event.clientY + 'px';
-                }
+                const currentHeight = this.clicked.cy - this.event.clientY + this.clicked.h;
+                this.node.updateSize(currentHeight, false, false, TOP);
             }
 
             // this.rect = this.element.getBoundingClientRect();
