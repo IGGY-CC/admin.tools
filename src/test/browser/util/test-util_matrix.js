@@ -3,16 +3,16 @@ const {assert, expect} = require('chai');
 
 const GRID_ID = "grid-container";
 const container = document.querySelector("#" + GRID_ID);
-const mocha = UtilsUI.createNewElement('div', container, "mocha");
+
 const NUM_ROWS = 3;
 const NUM_COLS = 4;
 let computedStyle;
 let width;
 let height;
 
-container.classList.add("overflow-auto");
-
-mocha.style.width = "500px";
+// container.classList.add("overflow-auto");
+// const mocha = UtilsUI.createNewElement('div', container, "mocha");
+// mocha.style.width = "500px";
 
 beforeEach(() => {
     computedStyle = getComputedStyle(container);
@@ -42,7 +42,7 @@ describe('Check Matrix defaults', function () {
         let node = new MatrixNode(matrix, "hello", 1, 1, 2, 1);
         matrix.addNode(node);
 
-        matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true, "width-height");
         assert.equal(node, matrix.matrix[1][1]);
         assert.equal(node, matrix.matrix[2][1]);
 
@@ -293,7 +293,7 @@ describe('Check the dimensions of Node and Matrix', function () {
         assert.doesNotThrow(() => matrix.addNode(node5));
         assert.doesNotThrow(() => matrix.addNode(node6));
 
-        let matrixWidth = (matrix.width - 200) / 3;
+        let matrixWidth = fr((matrix.width - 200) / 3);
         assert.deepEqual([matrixWidth, matrixWidth, 200, matrixWidth], matrix.columns);
         assert.deepEqual([false, false, true, false], matrix.fixedColumns);
         assert.deepEqual([((matrix.height - 20)/2), ((matrix.height - 20)/2), 20], matrix.rows);
@@ -386,8 +386,8 @@ describe('Check resizing a non-fixed node within the matrix', function () {
         assert.closeTo(matrix.height, node6.height, 0.01); // no change
 
 
-        console.log("***************************");
-        matrix.printMatrix(matrix.matrix, true, "width-height", true);
+        // console.log("***************************");
+        // matrix.printMatrix(matrix.matrix, true, "width-height", true);
 
         let topHeight = node2.height;
         const MARGIN_SIZE = 4;
@@ -474,10 +474,10 @@ describe('Check resizing a fixed node within the matrix', function () {
         matrix.addNode(node5);
         matrix.addNode(node6);
 
-        console.log("***************************");
+        // console.log("***************************");
         node2.updateSize(20, true, true, LEFT);
-        matrix.printMatrix(matrix.matrix, true, "width-height", true);
-        console.log("***************************");
+        // matrix.printMatrix(matrix.matrix, true, "width-height", true);
+        // console.log("***************************");
 
         assert.equal(10, node5.height);
         assert.equal(10, node4.height);
@@ -603,17 +603,17 @@ describe('Check resizing window & its effects on matrix & its nodes', function (
         // matrix.printMatrix(null, true);
 
         node2.updateSize(60, true, true, RIGHT);
-        console.log("_______________________");
-        console.log(matrix.columns);
-        console.log(matrix.rows);
+        // console.log("_______________________");
+        // console.log(matrix.columns);
+        // console.log(matrix.rows);
 
         window.resizeBy(20, 15);
         setTimeout(() => {
             try {
                 let cs = getComputedStyle(container);
-                console.log("_______________________++++++");
-                console.log(matrix.columns);
-                console.log(matrix.rows);
+                // console.log("_______________________++++++");
+                // console.log(matrix.columns);
+                // console.log(matrix.rows);
                 assert.equal(MatrixUtil.stripPx(cs.width), Math.round(matrix.columns.reduce((a, v) => a + v)));
                 assert.equal(MatrixUtil.stripPx(cs.height), Math.round(matrix.rows.reduce((a, v) => a + v)));
                 assert.equal(colWidth, matrix.matrix[2][0].width);
@@ -633,7 +633,6 @@ describe('Check resizing nodes beyond their adjacent dimensions', function () {
         let height = window.innerHeight;
 
         let matrix = new Matrix(container, 3, 4);
-        console.log(width, height, matrix.rows, matrix.columns, matrix.width, matrix.height);
         let rowHeight = MatrixUtil.floatRound(height/3);
         let colWidth = MatrixUtil.floatRound(width/4);
 
@@ -653,19 +652,14 @@ describe('Check resizing nodes beyond their adjacent dimensions', function () {
         matrix.addNode(node5);
         matrix.addNode(node6);
 
-        console.log("A-ROWS", matrix.rows);
-        console.log("A-COLUMNS", matrix.columns);
-        matrix.printMatrix(null, true, "width-height");
-        matrix.printMatrix(null, true);
+        // matrix.printMatrix(null, true, "width-height");
+        // matrix.printMatrix(null, true);
 
         node2.updateSize(60, true, true, RIGHT);
         window.resizeBy(20, 15);
         setTimeout(() => {
             try {
                 let cs = getComputedStyle(container);
-                console.log(cs.width, "CONSOLE WIDTH");
-                console.log(matrix.rows, "ROWS");
-                console.log(matrix.columns, "COLUMNS");
                 assert.equal(MatrixUtil.stripPx(cs.width), Math.round(matrix.columns.reduce((a, v) => a + v)));
                 assert.equal(MatrixUtil.stripPx(cs.height), Math.round(matrix.rows.reduce((a, v) => a + v)));
                 assert.equal(colWidth, matrix.matrix[2][0].width);

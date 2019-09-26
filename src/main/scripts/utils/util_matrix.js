@@ -51,7 +51,7 @@ class MatrixNode {
         if(this.width === -1) this.width = 0;
         if(this.height === -1) this.height = 0;
 
-        this.element = null;
+        this.element = UtilsUI.createNewElement('div', this.root.root, this.id);
     }
 
     setElement(element) {
@@ -66,25 +66,27 @@ class MatrixNode {
         }
     }
 
+    setWidth(width) {
+        this.setSize(width, true);
+    }
+
+    setHeight(height) {
+        this.setSize(height, false);
+    }
+
     /* setSize is called when the change in size is initiated from the parent/root */
     setSize(size, isWidth) {
-        if(!MatrixUtil.isValidParam(size, "width/height", "number")) {
-            throw new Error("For size/width/height, only numbers are allowed");
-        }
-
         if(isWidth) {
             this.width = size;
         } else {
             this.height = size;
         }
+        this.setElementDimensions();
+        this.root.notifyObserverByID(isWidth, size, this.element);
     }
 
     /* updateSize is called when the change in size is initiated from the child/element */
     updateSize(size, isWidth=true, isDiff=false, direction) {
-        if(!MatrixUtil.isValidParam(size, "width/height", "number")) {
-            throw new Error("For size/width/height, only numbers are allowed");
-        }
-
         this.root.nodeSizeUpdated(this, size, isWidth, isDiff, direction);
     }
 
@@ -94,14 +96,15 @@ class MatrixNode {
 }
 
 
-class Matrix {
-    constructor(root, rows, columns, callback) {
+class Matrix extends Observable {
+    constructor(root, rows, columns, callback, resizeMargin=0) {
+        super();
         if(!root || !(root instanceof Element)) throw new Error("Root/Parent element is mandatory!");
         if(!rows || rows < 1) throw new Error("Number of rows should be greater than 0");
         if(!columns || columns < 1) throw new Error("Number of columns should be greater than 0");
 
         this.root = root;
-
+        this.resizeMargin = resizeMargin;
         this.numRows = rows;
         this.numColumns = columns;
 
@@ -143,6 +146,7 @@ class Matrix {
         /* In case there is a need to act on surrounding elements/nodes of a node in matrix */
         this.connectedRows = [-1, 0, 1, 0]; // top, right, bottom, left
         this.connectedColumns = [0, 1, 0, -1];
+        this.children = new Set();
 
         /* Initialize the matrix */
         this.init();
@@ -153,7 +157,6 @@ class Matrix {
         const computedStyle = getComputedStyle(this.root);
         this.width = MatrixUtil.stripPx(computedStyle.width);
         this.height = MatrixUtil.stripPx(computedStyle.height);
-
         /* create matrix and fill it with "false" */
         for(let rowIndex=0; rowIndex < this.numRows; rowIndex++) {
             this.matrix[rowIndex] = [];
@@ -178,7 +181,7 @@ class Matrix {
         this.fixedColumns = Array(this.numColumns).fill(false);
 
         /* Setup callbacks/event handlers */
-        window.onresize = this.resize.bind(this);
+        window.addEventListener("resize", this.resize.bind(this));
     }
 
     updateMatrixData(isRow, value, index, isFixed=false, isAuto=false) {
@@ -209,12 +212,12 @@ class Matrix {
         if(isRow) {
             for(let colIndex = 0; colIndex < this.numColumns; colIndex++) {
                 let node = this.matrix[index][colIndex];
-                if(node.numRows === 1) node.height = value;
+                if(node.numRows === 1) node.setHeight(value);
             }
         } else {
             for(let rowIndex = 0; rowIndex < this.numRows; rowIndex++) {
                 let node = this.matrix[rowIndex][index];
-                if(node.numColumns === 1) node.width = value;
+                if(node.numColumns === 1) node.setWidth(value);
             }
         }
     }
@@ -237,8 +240,11 @@ class Matrix {
             for (let index = 0; index < autoIndices.length; index++) {
                 let autoIndex = autoIndices[index];
                 let newWidth = (this.width - fixedPartialSum) * this.columns[autoIndex] / (totalSum - fixedPartialSum);
+                console.log("COLS: ", this.columns);
+                console.log("RESIZING: ", this.width, newWidth, autoIndex);
                 this.updateMatrixData(false, newWidth, autoIndex);
                 this.updateAutoNodes(false, autoIndex);
+                console.log("COLS: ", this.columns);
             }
         }
     }
@@ -293,6 +299,7 @@ class Matrix {
         let autoSum = 0;
         let totalSum = 0;
         if (this.isFixedElement || !this.isAutoMatrixData) {
+            console.log("NUM COLUMNS: ", this.numColumns);
             for (let colIndex = 0; colIndex < this.numColumns; colIndex++) {
                 if (this.fixedColumns[colIndex]) {
                     fixedPartialSum += this.columns[colIndex];
@@ -339,17 +346,19 @@ class Matrix {
     updateNodeSize(node, isRow) {
         if(isRow) {
             if (!node.isFixedHeight) {
-                node.height = 0;
+                let height = 0;
                 for (let rowIndex = node.rowStart; rowIndex < (node.rowStart + node.numRows); rowIndex++) {
-                    node.height += this.rows[rowIndex];
+                    height += this.rows[rowIndex];
                 }
+                node.setHeight(height);
             }
         } else {
             if(!node.isFixedWidth) {
-                node.width = 0;
+                let width = 0;
                 for(let colIndex = node.columnStart; colIndex < (node.columnStart + node.numColumns); colIndex++) {
-                    node.width += this.columns[colIndex];
+                    width += this.columns[colIndex];
                 }
+                node.setWidth(width);
             }
         }
     }
@@ -415,6 +424,7 @@ class Matrix {
                 /* Set node's dimensions */
                 this.updateNodeSize(node, true);
                 this.updateNodeSize(node, false);
+                this.children.add(node.id);
             } else {
                 throw new Error("The passed in nodes's suggested location is out of bounds for this grid!");
             }
@@ -438,8 +448,6 @@ class Matrix {
                 this.matrix[rowIndex][colIndex] = node;
             }
         }
-
-        this.refreshMatrixDataForNode(node);
     }
 
     hasEmptyColumns(rowIndex) {
@@ -480,27 +488,6 @@ class Matrix {
             }
         });
         return height;
-    }
-
-    refreshMatrixDataForNode(node) {
-        return;
-        // if(node.numRows === 1 && node.numColumns === 1) {
-        //     if(!this.hasEmptyRows(node.columnStart)) {
-        //         let currentHeight = this.matrixColumnHeight(node.columnStart);
-        //         if(currentHeight < this.height) {
-        //             node.height = this.height - currentHeight - node.height;
-        //         }
-        //     }
-        //
-        //     if(!this.hasEmptyColumns(node.rowStart)) {
-        //         let currentWidth = this.matrixRowWidth(node.rowStart);
-        //         if(currentWidth < this.width) {
-        //             node.width = this.width - currentWidth - node.width;
-        //         }
-        //     }
-        // } else {
-        //     console.error("NEED TO HANDLE THIS CASE!");
-        // }
     }
 
     isValidEntry(rowStart, colStart, numRows, numCols, checkOverlap=false) {
@@ -547,15 +534,13 @@ class Matrix {
             if(node === adjacentNode) continue;
 
             if(!visitedNodes.has(node)) {
-                node.width += size;
-                node.setElementDimensions();
+                node.setWidth(node.width + size);
             }
 
             // Since the fact that we are here, node is not equal to adjacent node
             // hence we can take the liberty to directly modify the size of adjacent node
             if(!visitedNodes.has(adjacentNode)) {
-                adjacentNode.width = MatrixUtil.floatRound(adjacentNode.width + (-1 * size));
-                adjacentNode.setElementDimensions();
+                adjacentNode.setWidth(MatrixUtil.floatRound(adjacentNode.width + (-1 * size)));
             }
 
             // marks the nodes as visited so that we do not change their sizes again
@@ -576,15 +561,13 @@ class Matrix {
             if(node === adjacentNode) continue;
 
             if(!visitedNodes.has(node)) {
-                node.height += size;
-                node.setElementDimensions();
+                node.setHeight(node.height + size);
             }
 
             // Since the fact that we are here, node is not equal to adjacent node
             // hence we can take the liberty to directly modify the size of adjacent node
             if(!visitedNodes.has(adjacentNode)) {
-                adjacentNode.height += (-1 * size);
-                node.setElementDimensions();
+                adjacentNode.setHeight(MatrixUtil.floatRound(adjacentNode.height + (-1 * size)));
             }
 
             // marks the nodes as visited so that we do not change their sizes again
@@ -623,7 +606,8 @@ class Matrix {
 
         // resizer/enlarge-reduction in size is from the left/right/top/bottom side. hence the
         // left/right/top/bottom attached element needs to update its size.
-        // this.adjustRowColumnArrays(isWidth, size, index, adjacentIndex);
+        this.adjustRowColumnArrays(isWidth, size, index, adjacentIndex);
+
         this.doResize(isWidth, index, adjacentIndex, size, direction);
 
         // finally update the calling node dimensions
@@ -635,30 +619,30 @@ class Matrix {
 
     checkResizeConstraints(node, isWidth, size, index, adjacentIndex) {
         if(isWidth) {
-            // if(size < 0 && ((size + this.columns[index]) < RESIZE_MARGIN)) {
-            if(size < 0 && ((size + node.width) < RESIZE_MARGIN)) {
+            // if(size < 0 && ((size + this.columns[index]) < this.resizeMargin)) {
+            if(size < 0 && ((size + node.width) < this.resizeMargin)) {
                 throw new Error("Cannot resize further")
             }
 
-            // if((size * -1) < 0 && (((size * -1) + this.columns[adjacentIndex]) < RESIZE_MARGIN)) {
+            // if((size * -1) < 0 && (((size * -1) + this.columns[adjacentIndex]) < this.resizeMargin)) {
             for(let rowIndex = 0; rowIndex < (node.rowStart + node.numRows); rowIndex++) {
                 let adjNode = this.matrix[rowIndex][adjacentIndex];
                 let finWidth = MatrixUtil.floatRound(Math.min(adjNode.width/adjNode.numColumns, this.columns[adjacentIndex]));
-                if ((size * -1) < 0 && (((size * -1) + finWidth) < RESIZE_MARGIN)) {
+                if ((size * -1) < 0 && (((size * -1) + finWidth) < this.resizeMargin)) {
                     throw new Error("Cannot resize further due to adjacent cell constraints!");
                 }
             }
         } else {
-            // if(size < 0 && ((size + this.rows[index]) < RESIZE_MARGIN)) {
-            if(size < 0 && ((size + node.height) < RESIZE_MARGIN)) {
+            // if(size < 0 && ((size + this.rows[index]) < this.resizeMargin)) {
+            if(size < 0 && ((size + node.height) < this.resizeMargin)) {
                 throw new Error("Cannot resize further")
             }
 
-            // if((size * -1) < 0 && (((size * -1) + this.rows[adjacentIndex]) < RESIZE_MARGIN)) {
+            // if((size * -1) < 0 && (((size * -1) + this.rows[adjacentIndex]) < this.resizeMargin)) {
             for(let colIndex = 0; colIndex < (node.columnStart + node.numColumns); colIndex++) {
                 let adjNode = this.matrix[adjacentIndex][colIndex];
                 let finHeight = Math.min(adjNode.height/adjNode.numRows, this.rows[adjacentIndex]);
-                if ((size * -1) < 0 && (((size * -1) + finHeight) < RESIZE_MARGIN)) {
+                if ((size * -1) < 0 && (((size * -1) + finHeight) < this.resizeMargin)) {
                     throw new Error("Cannot resize further due to adjacent cell constraints!");
                 }
             }
@@ -679,6 +663,18 @@ class Matrix {
             if(this.isFixed(adjacentIndex, isWidth)) {
                 throw new Error("Cannot resize the " + textDirection + " as its adjacent " + textDirection + " is non resizeable!");
             }
+        }
+    }
+
+    adjustRowColumnArrays(isWidth, size, index, adjacentIndex) {
+        // resizer/enlarge-reduction in size is from the left/right/top/bottom side. hence the
+        // left/right/top/bottom attached element needs to update its size.
+        if(isWidth) {
+            this.columns[index] += size;
+            this.columns[adjacentIndex] += (-1 * size);
+        } else {
+            this.rows[index] += size;
+            this.rows[adjacentIndex] += (-1 * size);
         }
     }
 
@@ -734,6 +730,7 @@ class Matrix {
 
     getFixedSum(isWidth) {
         let count = 0;
+        let zeroCount = 0;
         let sum = 0;
 
         if(isWidth) {
@@ -741,6 +738,10 @@ class Matrix {
                 if(this.fixedColumns[index]) {
                     sum += this.columns[index];
                     count++;
+                } else {
+                    if(this.columns[index] === 0) {
+                        zeroCount++;
+                    }
                 }
             }
         } else {
@@ -748,10 +749,14 @@ class Matrix {
                 if(this.fixedRows[index]) {
                     sum += this.rows[index];
                     count++;
+                } else {
+                    if(this.rows[index] === 0) {
+                        zeroCount++;
+                    }
                 }
             }
         }
-        return { count: count, sum: sum };
+        return { count: count, sum: sum, zeroCount: zeroCount };
     }
 
     // called on window resize event
@@ -768,8 +773,11 @@ class Matrix {
         const fixedRows = this.getFixedSum(false);
         const fixedColumns = this.getFixedSum(true);
 
-        const diffInWidth = MatrixUtil.floatRound((newWidth - this.width) / (this.numColumns - fixedColumns.count), 3, FLOOR);
-        const diffInHeight = MatrixUtil.floatRound((newHeight - this.height) / (this.numRows - fixedRows.count), 3, FLOOR);
+        const autoNonZeroColumns = (this.numColumns - fixedColumns.count - fixedColumns.zeroCount);
+        const autoNonZeroRows = (this.numColumns - fixedRows.count - fixedRows.zeroCount);
+
+        const diffInWidth = MatrixUtil.floatRound((newWidth - this.width) / autoNonZeroColumns, 3, FLOOR);
+        const diffInHeight = MatrixUtil.floatRound((newHeight - this.height) / autoNonZeroRows, 3, FLOOR);
 
         const visitedRowNodes = new Set();
         const visitedColumnNodes = new Set();
@@ -790,10 +798,10 @@ class Matrix {
                 if(!node || !node instanceof MatrixNode) return;
 
                 if(!visitedRow[rowIndex].has(node) && !this.fixedRows[rowIndex]) {
-                    // set the node dimensions
+                    if(node.height === 0) continue;
 
-                    node.height = MatrixUtil.floatRound(node.height + diffInHeight);
-                    node.setElementDimensions();
+                    // set the node dimensions
+                    node.setHeight(MatrixUtil.floatRound(node.height + diffInHeight));
 
                     // update this.rows array
                     if(!rowIndices.has(rowIndex)) {
@@ -806,10 +814,11 @@ class Matrix {
                 }
 
                 if(!visitedColumn[colIndex].has(node) && !this.fixedColumns[colIndex]) {
-                    // set the node dimensions
-                    node.width = MatrixUtil.floatRound(node.width + diffInWidth);
-                    node.setElementDimensions();
+                    if(this.columns[colIndex] === 0) continue;
 
+                    // set the node dimensions
+                    node.setWidth(MatrixUtil.floatRound(node.width + diffInWidth));
+                    console.log("Setting node width to ", MatrixUtil.floatRound(node.width + diffInWidth))
                     // update this.columns array
                     if(!columnIndices.has(colIndex)) {
                         this.columns[colIndex] = MatrixUtil.floatRound(this.columns[colIndex] + diffInWidth);

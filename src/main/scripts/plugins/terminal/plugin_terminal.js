@@ -83,7 +83,15 @@ Terminal.prototype.setupMenuItems = function() {
 };
 
 Terminal.prototype.onIconClick = function() {
-    let terminalWindow = new TerminalWindow("#" + this.getActiveElement().id);
+    let termContainerID = this.getActiveElement().id + "-term";
+    let termContainer = UtilsUI.createNewElement('div', this.getActiveElement(), termContainerID);
+    termContainer.style.position = "relative";
+    termContainer.style.maxHeight = "100%";
+    termContainer.style.maxWidth = "100%";
+    termContainer.style.boxSizing = "border-box";
+
+    // let terminalWindow = new TerminalWindow("#" + this.getActiveElement().id);
+    let terminalWindow = new TerminalWindow("#" + termContainerID);
     this.setActiveTabName("Terminal");
 };
 

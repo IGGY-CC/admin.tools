@@ -8,29 +8,9 @@
   user-select: text;
 }
 
-@toolbar-width-final: "minmax(" + @toolbar-width + ", " + @toolbar-width + ")";
-@right-tab-width-final: "minmax(" + @right-tab-width + ", " + @right-tab-width + ")";
-@title-height-final: "minmax(" + @title-height + ", " + @title-height + ")";
-@menu-height-final: "minmax(" + @menu-height + ", " + @menu-height + ")";
-@bottom-tab-height-final: "minmax(" + @bottom-tab-height + ", " + @bottom-tab-height + ")";
-@status-height-final: "minmax(" + @status-height + ", " + @status-height + ")";
-
-
-
-
 #grid-container {
   min-width: 100%;
   min-height: 100%;
-  display: grid;
-  grid-template-columns: minmax(@toolbar-width, @toolbar-width) @toolbar-content-width @content-width @right-content minmax(@right-tab-width, @right-tab-width);
-  grid-template-rows: minmax(@title-height, @title-height) minmax(@menu-height, @menu-height) @content-height @bottom-content-height minmax(@bottom-tab-height, @bottom-tab-height) minmax(@status-height, @status-height);
-  grid-template-areas: "title-bar title-bar title-bar title-bar title-bar"
-  "menu-bar menu-bar menu-bar menu-bar menu-bar"
-  "tool-bar toolbar-tab-content main-content right-tab-content right-tab-bar"
-  "tool-bar toolbar-tab-content bottom-tab-content right-tab-content right-tab-bar"
-  "tool-bar toolbar-tab-content bottom-tab-bar right-tab-content right-tab-bar"
-  "status-bar status-bar status-bar status-bar status-bar";
-  grid-gap: @grid-gap;
 }
 
 .base-container() {
@@ -51,14 +31,12 @@
 #title-bar {
   max-height: @title-height;
   min-height: @title-height;
-  grid-area: title-bar;
   .dark-container()
 }
 
 #menu-bar {
   max-height: @menu-height;
   min-height: @menu-height;
-  grid-area: menu-bar;
   //.base-container()
   .dark-container()
 }
@@ -66,18 +44,15 @@
 #tool-bar {
   max-width: @toolbar-width;
   min-width: @toolbar-width;
-  grid-area: tool-bar;
   .base-container();
   border-left: 1px solid darken($background, 5%);
 }
 
 #toolbar-tab-content {
-  grid-area: toolbar-tab-content;
   .light-container()
 }
 
 #main-content {
-  grid-area: main-content;
   .dark-container();
   background-color: darken($background, 5%);
 }
@@ -85,32 +60,27 @@
 #right-tab-content {
   //max-width: 350px;
   min-width: 100px;
-  grid-area: right-tab-content;
   .light-container()
 }
 
 #right-tab-bar {
-  grid-area: right-tab-bar;
   .base-container();
   border-right: 1px solid darken($background, 5%);
 }
 
 #bottom-tab-content {
-  grid-area: bottom-tab-content;
   .light-container();
 }
 
 #bottom-tab-bar {
   max-height: @bottom-tab-height;
   min-height: @bottom-tab-height;
-  grid-area: bottom-tab-bar;
   .base-container()
 }
 
 #status-bar {
   max-height: @status-height;
   min-height: @status-height;
-  grid-area: status-bar;
   background: lighten(@darkest, 2%);
   color: lighten(@darkest-foreground, 2%);
   border-bottom: 1px solid darken($background, 2%);
