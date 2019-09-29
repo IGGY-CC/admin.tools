@@ -35,7 +35,7 @@ Ace.prototype.setupToolIcon = function() {
         pluginName: this.pluginName,
         id: "toolbar-editor",
         tooltip: "New Editor",
-        icon: "fa fa-file",
+        icon: "fa fa-pen-nib",
         callback: this.onIconClick.bind(this),
         color: "green",
         hcolor: "white",

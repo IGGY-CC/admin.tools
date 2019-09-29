@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"../lib"
+	"net/url"
 
 	"bytes"
 	"encoding/json"
@@ -46,11 +47,21 @@ func (cr *ConnResources) Resize(cols int, rows int) (err error) {
 
 func (cr *ConnResources) UnmarshalParams(jsonString string) {
 	var connObject ConnectionParams
+	jsonSSHObject, err := url.QueryUnescape(jsonString)
+	jsonSSHObject = jsonSSHObject[1 : len(jsonSSHObject)-1]
 
-	err := json.Unmarshal([]byte(jsonString), &connObject)
 	if err != nil {
+		log.Fatal("ERROR decoding jsonString", jsonString, err)
 		return
 	}
+
+	err = json.Unmarshal([]byte(jsonSSHObject), &connObject)
+	if err != nil {
+		log.Fatal("ERROR Unmarshalling JSON", jsonSSHObject, err)
+		return
+	}
+
+	log.Print("DECODED OBJECT: ", connObject)
 
 	cr.connParams = &connObject
 }
@@ -94,12 +105,16 @@ func (cr *ConnResources) Connect(deferCallback func(connection *ssh.Client, sess
 		deferCallback(connection, nil)
 	}()
 
+	log.Print("Connected to server successfully! creating an admin session!")
+	cr.createAdminSession()
+
+	log.Print("Admin session created successfully! creating a terminal session!")
 	err = cr.createTerminalSession(deferCallback)
 	if err != nil {
 		return
 	}
 
-	cr.createAdminSession()
+	log.Print("Terminal session created successfully! returning...")
 	return nil
 }
 
@@ -108,6 +123,7 @@ func (cr *ConnResources) createTerminalSession(deferCallback func(connection *ss
 	sessionPty, err := cr.connection.NewSession()
 	cr.sessionPty = sessionPty
 
+	log.Print("Created a communication session for terminal session successfully! Attempting to attach PTY")
 	if err != nil {
 		fmt.Printf("Failed to create session for pty: %s\n", err)
 		return
@@ -131,6 +147,8 @@ func (cr *ConnResources) createTerminalSession(deferCallback func(connection *ss
 		return
 	}
 
+	log.Print("Created a session PTY successfully! putting it on wait...")
+
 	// Wait for sess to finish
 	err = sessionPty.Wait()
 	if err != nil {
@@ -138,6 +156,7 @@ func (cr *ConnResources) createTerminalSession(deferCallback func(connection *ss
 		return
 	}
 
+	log.Print("Session PTY wait returned...")
 	return nil
 }
 
@@ -201,18 +220,25 @@ func (cr *ConnResources) createAdminSession() {
 		sessionAdm.Close()
 	}()
 
-	cr.Run()
+	cr.Run("free -m")
 }
 
-func (cr *ConnResources) Run() {
+func (cr *ConnResources) Run(command string) []byte {
 	session, _ := cr.connection.NewSession()
-	defer session.Close()
+	defer func() {
+		console.log("CLOSING COMMAND SESSION")
+		session.Close()
+	}()
 
 	var stdoutBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
-	session.Run("free -m")
+	session.Run(command)
 
 	fmt.Printf("free -m -> %s", stdoutBuf.String())
+
+	log.Print("COMMAND: ", command)
+	log.Print("RESPONSE: ", stdoutBuf)
+	return stdoutBuf.Bytes()
 }
 
 func (ki keyboardInteractive) Challenge(user string, instruction string, questions []string, echos []bool) ([]string, error) {

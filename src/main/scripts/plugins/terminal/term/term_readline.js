@@ -544,12 +544,10 @@ term.Readline.prototype.commands['delete-char'] = function() {
 };
 
 term.Readline.prototype.commands['backward-delete-char'] = function() {
-  console.log("POSITIONS: ", this.linePosition, this.line);
   if (this.linePosition > 0) {
     this.linePosition -= 1;
     this.line = (this.line.substr(0, this.linePosition) +
                  this.line.substr(this.linePosition + 1));
-    console.log("POSITIONS: ", this.linePosition, this.line);
     this.print('%erase-chars(1)');
     this.dispatch('redraw-line');
   } else {
@@ -621,9 +619,8 @@ term.Readline.prototype.commands['undo'] = function() {
 };
 
 term.Readline.prototype.onComplete_ = function() {
-  console.log("CLOSING TERMINAL");
-  // if (this.executeContext.isOpen)
-  //   this.executeContext.closeOk(this.line);
+  if (this.executeContext.isOpen)
+    this.executeContext.closeOk(this.line);
 };
 
 module.exports = term.Readline;

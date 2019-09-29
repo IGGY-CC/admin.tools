@@ -30,6 +30,23 @@ term.binding.ExecuteContext = function() {
     this.onTTYRequest = new term.Event();
 
     /**
+     * The executeContext we're currently calling out to, if any.
+     *
+     * See ..setCallee().
+     */
+    this.callee = null;
+
+    /**
+     * Called by the execute() method of this instance.
+     */
+    this.onExecute = new lib.Event(function() {
+        this.didExecute_ = true;
+    }.bind(this));
+
+    // An indication that the execute() method was called.
+    this.didExecute_ = false;
+
+    /**
      * The arg provided to the execute() method of this ExecuteContext.
      */
     this.arg = null;
@@ -46,14 +63,62 @@ term.binding.ExecuteContext = function() {
     };
 };
 
-term.binding.ExecuteContext.prototype = Object.create(
-    Ready.prototype);
+term.binding.ExecuteContext.prototype = Object.create(Ready.prototype);
 
 /**
  * Create an execute context
  */
 term.binding.ExecuteContext.createExecuteContext = function() {
     return new term.binding.ExecuteContext();
+};
+
+/**
+ * Set the given ExecuteContext as the callee for this instance.
+ *
+ * When calling another executable, incoming calls and outbound events are
+ * wired up to the caller as appropriate.  This instance will not receive
+ * the stdio-like events while a call is in progress.  The onSignal event,
+ * however, is delivered to this instance even when a call is in progress.
+ *
+ * If the callee is closed, events are rerouted back to this instance and the
+ * callee instance property is set to null.
+ */
+term.binding.ExecuteContext.prototype.setCallee = function(executeContext) {
+    if (this.callee)
+        throw new Error('Still waiting for call:' + this.callee);
+
+    this.callee = executeContext;
+
+    const previousInterruptChar = this.tty_.interrupt;
+
+    const onClose = function() {
+        this.callee.onClose.removeListener(onClose);
+        this.callee.onStdOut.removeListener(this.onStdOut);
+        this.callee.onStdOut.removeListener(this.onStdErr);
+        this.callee.onTTYRequest.removeListener(this.onTTYRequest);
+        this.callee = null;
+
+        if (this.tty_.interrupt !== previousInterruptChar)
+            this.requestTTY({interrupt: previousInterruptChar});
+
+    }.bind(this);
+
+    this.callee.onClose.addListener(onClose);
+    this.callee.onStdOut.addListener(this.onStdOut);
+    this.callee.onStdErr.addListener(this.onStdErr);
+    this.callee.onTTYRequest.addListener(this.onTTYRequest);
+    this.callee.setEnvs(this.env_);
+    this.callee.setTTY(this.tty_);
+};
+
+/**
+ * Utility method to construct a new ExecuteContext, set it as the callee, and
+ * execute it with the given path and arg.
+ */
+term.binding.ExecuteContext.prototype.call = function(command, arg) {
+    this.setCallee(new term.binding.ExecuteContext());
+    this.callee.execute(command, arg, this.callee);
+    return this.callee;
 };
 
 /**
@@ -241,11 +306,45 @@ term.binding.ExecuteContext.prototype.stderr = function(value, opt_onAck) {
  */
 term.binding.ExecuteContext.prototype.stdin = function(value) {
     this.assertReady();
-    if (this.callee) {
-        this.callee.stdin(value);
-    } else {
+    // if (this.callee) {
+    //     this.callee.stdin(value);
+    // } else {
         this.onStdIn(value);
-    }
+    // }
+};
+
+/**
+ * Attempt to execute the given command with the given argument.
+ *
+ * This can only be called once per instance.
+ *
+ * This function attempts to execute a command.  If the execute succeeds, the
+ * onReady event of this binding will fire and you're free to start
+ * communicating with the target process.
+ *
+ * When you're finished, call closeOk, closeError, or closeErrorValue to clean
+ * up the execution context.
+ *
+ * If the execute fails the context will be close with an 'error' reason.
+ *
+ * The onClose event of this binding will fire when the context is closed,
+ * regardless of which side of the context initiated the close.
+ *
+ * @param {string} The command to execute.
+ * @param {*} The arg to pass to the executable.
+ */
+term.binding.ExecuteContext.prototype.execute = function(command, arg) {
+    this.assertReadyState('READY');
+
+    if (this.didExecute_)
+        throw new Error('Already executed on this context');
+
+    // this.command = command;
+    // this.arg = arg;
+    // arg.execute(command);
+    // this.onExecute();
+    command.call(null, arg);
+    this.onExecute();
 };
 
 module.exports = term.binding.ExecuteContext;

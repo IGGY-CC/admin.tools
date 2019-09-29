@@ -38,7 +38,6 @@ term.TerminalManager.Terminal.prototype.createTerminal = function(onComplete) {
 
 term.TerminalManager.Terminal.prototype.onContentLoaded_ = function(onComplete) {
     this.terminalWindow = document.querySelector(this.name);
-    console.log("NAME /  TERMINAL WINDOW", this.name, this.terminalWindow);
     onComplete(this.terminalWindow);
 };
 

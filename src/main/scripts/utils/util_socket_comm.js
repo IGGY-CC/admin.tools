@@ -3,7 +3,7 @@ ws = {};
 const _server = "localhost";
 const _port = "16443";
 
-ws.Manager = function (type, server, port, secure) {
+ws.Manager = function (type, server, port, secure=true) {
     this.server = server || _server;
     this.port = port || _port;
     this.type = type || "ws";
@@ -19,6 +19,13 @@ ws.Manager.prototype.makeEncodedJSONString = function(object) {
         return "";
     }
     return encodeURIComponent(JSON.stringify(object));
+};
+
+ws.Manager.prototype.makeEncodedString = function(command) {
+    if(typeof command === "undefined") {
+        return "";
+    }
+    return encodeURIComponent(command);
 };
 
 ws.Manager.prototype.prepareDefaultEndPoint = function(session, command, action, object) {
@@ -51,16 +58,38 @@ ws.Manager.prototype.makeHTTPConnection = function(resolve, reject) {
     return fetch(URL).then(status);
 };
 
-ws.Manager.prototype.makeWSConnection = function(resolve, reject) {
+ws.Manager.prototype.makeWSConnection = function(onClose, reject, onMessage, onResponseTimer, onResponse) {
     let _this = this;
     return new Promise(() => {
         let URL = _this.wss + _this.server + ":" + _this.port  + _this.urlPath;
         let server = new WebSocket(URL);
         server.onopen = function() {
-            resolve(server);
+            onMessage(server);
         };
         server.onerror = function(err) {
             reject(err);
         };
+        server.onclose = () => { onClose() };
+        server.onmessage = (evt) => { onResponseTimer(); onResponse(evt.data) };
     });
 };
+
+ws.Manager.prototype.generateSessionID = function() {
+        let randArray = new Uint8Array(16);
+        window.crypto.getRandomValues(randArray);
+
+        let sessionID = '';
+        for (let i = 0; i < randArray.length; i++) {
+            let byte = randArray[i].toString(16);
+            if (byte.length === 2) {
+                sessionID += byte;
+            } else {
+                sessionID += '0' + byte;
+            }
+        }
+
+        return sessionID;
+};
+
+
+module.exports = ws.Manager;

@@ -20,7 +20,6 @@ let LoadPlugins = function(mainGridObservable) {
 };
 
 LoadPlugins.prototype.addObserver = function(observer) {
-    console.log(this.mainGridObservable);
     this.mainGridObservable.addObserver(observer);
 };
 

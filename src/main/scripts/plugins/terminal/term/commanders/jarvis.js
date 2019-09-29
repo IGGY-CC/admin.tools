@@ -6,17 +6,21 @@
 'use strict';
 
 let commander = require('./commander');
+let Assistant = require('../../../../assistants/dialogflow/dialogflow');
 
 let jarvis = {};
 
-jarvis.Commander = function(assistant) {
+jarvis.Commander = function(id) {
+    this.id = id;
     commander.Command.call(this);
-    this.assistant = assistant;
+    this.assistant = new Assistant('appointmentscheduler-bjacvw');
 };
 
 jarvis.Commander.prototype = Object.create(
     commander.Command.prototype);
 
-jarvis.Commander.prototype.execute = async function(command) {
+jarvis.Commander.prototype.execute = async function(command, executeContext) {
     return this.assistant.send(command);
 };
+
+module.exports = jarvis.Commander;

@@ -18,7 +18,22 @@ FileMenu.prototype = Object.create(PluginRegister.prototype);
 
 // Start the plugin functionality
 FileMenu.prototype.Start = function() {
+    this.setupToolIcon();
     this.setupMenuItems();
+};
+
+FileMenu.prototype.setupToolIcon = function() {
+    this.tool  = {
+        pluginName: this.pluginName,
+        id: "toolbar-new-tab",
+        tooltip: "New Tab",
+        icon: "fas fa-folder-plus",
+        callback: this.onNewTabClick.bind(this),
+        color: "green",
+        hcolor: "white",
+        ttdirection: "right"
+    };
+    this.setTool(this.tool);
 };
 
 FileMenu.prototype.setupMenuItems = function() {
@@ -36,7 +51,7 @@ FileMenu.prototype.setupMenuItems = function() {
         row: 1,
         id: "menubar-new-tab",
         tooltip: "New Tab",
-        icon: "fa fa-file",
+        icon: "fas fa-folder-plus",
         callback: this.onNewTabClick.bind(this),
         color: "green",
         hcolor: "white",

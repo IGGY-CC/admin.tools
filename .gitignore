@@ -91,3 +91,4 @@ db/*.db
 ignore log.txt
 log.txt
 node_modules
+/src/main/scripts/assistants/dialogflow/AppointmentScheduler-8ba0293f3f52.json

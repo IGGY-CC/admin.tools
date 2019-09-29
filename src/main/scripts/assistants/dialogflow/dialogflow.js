@@ -1,6 +1,11 @@
 const dialogflow = require('dialogflow');
 const uuid = require('uuid');
 
+// IMPORTANT: Before executing, create an environment variable in the command prompt
+// and then do `npm start`
+// set GOOGLE_APPLICATION_CREDENTIALS=C:\AdityaNagaSanjeevi\Programming\MyLiveProducts\admin.tools\admin.tools\src\main\scripts\assistants\dialogflow\A
+// ppointmentScheduler-8ba0293f3f52.json
+//
 assistant = {};
 
 assistant.dialogFlow = function(projectID) {
@@ -45,3 +50,5 @@ assistant.dialogFlow.prototype.communicate = async function(request) {
 // }).catch(err => {
 //     console.error("Received error:", err);
 // });
+
+module.exports = assistant.dialogFlow;
