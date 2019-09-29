@@ -3,6 +3,7 @@ package server
 import (
 	"../lib"
 	"../ssh"
+	"net/url"
 
 	"encoding/json"
 	"log"
@@ -13,8 +14,10 @@ func webSocketSSHInit(socket *lib.AdmSocket, action string, jsonString string) (
 	sshManager := ssh.GetSSHConnectionManager(socket)
 	createAndClose = false
 
+	log.Print("Executing given action: ", action)
 	switch action {
 	case "init":
+		log.Print("In init... creating SSHConnection")
 		sshManager.CreateSSHConnection(jsonString)
 		break
 	case "resize":
@@ -37,7 +40,18 @@ func webSocketSSHInit(socket *lib.AdmSocket, action string, jsonString string) (
 		createAndClose = true
 		break
 	case "sshrun":
-		//sockets[name].ssh.Run()
+		writer, err := socket.GetWriter()
+		if err != nil {
+			log.Println(err)
+		}
+		command, err := url.QueryUnescape(jsonString)
+		if err != nil { log.Println(err) }
+		_, err = writer.Write(sshManager.Run(command))
+		if err != nil {
+			log.Println(err)
+		}
+	default:
+		log.Println("Unhandled command/action: ", action)
 	}
 
 	return

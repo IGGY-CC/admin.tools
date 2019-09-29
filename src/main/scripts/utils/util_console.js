@@ -2,7 +2,7 @@ const CONSOLE_LISTENERS = [];
 const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
 
 (function() {
-    const OVERRIDE = true;
+    const OVERRIDE = false;
     const DEBUG = true;
     const FILE_DEBUG = true;
     const CONSOLE_DEBUG = false;

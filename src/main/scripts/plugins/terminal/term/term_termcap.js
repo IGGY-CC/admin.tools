@@ -153,7 +153,6 @@ term.Termcap.prototype.outputFunctions = {
   },
 
   'get-row-column': function() {
-    console.log("Returning current row-column");
     return ('\x1b[6n');
   }
 };

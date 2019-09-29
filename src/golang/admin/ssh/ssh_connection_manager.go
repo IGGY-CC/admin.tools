@@ -4,9 +4,8 @@ import (
 	"../lib"
 
 	"fmt"
-	"log"
-
 	"golang.org/x/crypto/ssh"
+	"log"
 )
 
 var Connections map[string]*ConnectionManagerSSH = make(map[string]*ConnectionManagerSSH)
@@ -58,6 +57,10 @@ func (sm *ConnectionManagerSSH) CreateSSHConnection(jsonString string) {
 func (sm *ConnectionManagerSSH) Resize(cols int, rows int) (err error) {
 	err = sm.ssh.Resize(cols, rows)
 	return
+}
+
+func (sm *ConnectionManagerSSH) Run(command string) []byte {
+	return sm.ssh.Run(command)
 }
 
 func (sm *ConnectionManagerSSH) Disconnect(conn *ssh.Client, sess *ssh.Session) {

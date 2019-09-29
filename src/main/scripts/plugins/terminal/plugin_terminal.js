@@ -11,6 +11,7 @@ const Terminal = function() {
     this.pluginName = "Terminal";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);
+    this.activeTerminals = new Map();
     this.position = 2;
 };
 
@@ -50,36 +51,26 @@ Terminal.prototype.setupMenuItems = function() {
         ttdirection: "top"
     };
     this.setMenuItem(this.menuItem);
-    this.setMenuIcon(this.menuItem);
 
-    let splitVertical = Object.assign({}, this.menuItem);
-    let splitHorizontal = Object.assign({}, this.menuItem);
-    let deleteCell = Object.assign({}, this.menuItem);
+    this.addMenuItem(this.menuItem, "Split Vertical", "menubar-split-vertical",
+        "fas fa-columns", this.split.bind(this, true), "bottom");
 
-    splitVertical.displayName = "Split Vertical";
-    splitVertical.id = "menubar-split-vertical";
-    splitVertical.tooltip = "Split Vertically";
-    splitVertical.icon = "fa fa-columns";
-    splitVertical.callback = this.split.bind(this, true);
-    splitVertical.ttdirection = "bottom";
+    this.addMenuItem(this.menuItem, "Split Horizontal", "menubar-split-horizontal",
+        "fas fa-window-maximize", this.split.bind(this, false), "bottom");
 
-    splitHorizontal.displayName = "Split Horizontal";
-    splitHorizontal.id = "menubar-split-horizontal";
-    splitHorizontal.tooltip = "Split Horizontally";
-    splitHorizontal.icon = "fa fa-window-maximize";
-    splitHorizontal.callback = this.split.bind(this, false);
-    splitHorizontal.ttdirection = "bottom";
 
-    deleteCell.displayName = "Delete Active";
-    deleteCell.id = "menubar-delete-active";
-    deleteCell.tooltip = "Delete Active";
-    deleteCell.icon = "fa fa-backspace";
-    deleteCell.callback = this.deleteActiveCell.bind(this, false);
-    deleteCell.ttdirection = "bottom";
+    this.addMenuItem(this.menuItem, "Delete Active", "menubar-delete-active",
+        "fas fa-backspace", this.deleteActiveCell.bind(this), "bottom");
 
-    this.setMenuIcon(splitVertical);
-    this.setMenuIcon(splitHorizontal);
-    this.setMenuIcon(deleteCell);
+    this.addMenuItem(this.menuItem, "Switch Color", "menubar-switch-color",
+        "fas fa-star-half-alt", this.switchColor.bind(this), "bottom");
+
+    this.addMenuItem(this.menuItem, "Change Background", "menubar-change-background",
+        "fas fa-tree", this.changeBackground.bind(this, false), "bottom");
+
+    this.addMenuItem(this.menuItem, "Turnoff Background", "menubar-background-off",
+        "fas fa-ban", this.changeBackground.bind(this, true), "bottom");
+
 };
 
 Terminal.prototype.onIconClick = function() {
@@ -91,8 +82,20 @@ Terminal.prototype.onIconClick = function() {
     termContainer.style.boxSizing = "border-box";
 
     // let terminalWindow = new TerminalWindow("#" + this.getActiveElement().id);
-    let terminalWindow = new TerminalWindow("#" + termContainerID);
+    let terminalWindow = new TerminalWindow(this.getActiveElement().id, "#" + termContainerID);
     this.setActiveTabName("Terminal");
+    this.activeTerminals.set(termContainerID, terminalWindow);
+};
+
+Terminal.prototype.changeBackground = function(doTurnoff) {
+    console.log("CHANGE BG: ", doTurnoff);
+    let termContainerID = this.getActiveElement().id + "-term";
+    this.activeTerminals.get(termContainerID).changeBackground(doTurnoff);
+};
+
+Terminal.prototype.switchColor = function() {
+    let termContainerID = this.getActiveElement().id + "-term";
+    this.activeTerminals.get(termContainerID).switchColor();
 };
 
 // init logic

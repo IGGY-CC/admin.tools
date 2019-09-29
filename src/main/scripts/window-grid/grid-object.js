@@ -75,9 +75,8 @@ GridObject.prototype.checkElement = function(element, parent) {
 };
 
 GridObject.prototype.setDimensions = function(width=null, height=null) {
-    if(width !== null) this.width = width;
-    if(height !== null) this.height = height;
-    console.log("SET ELEMENT WIDTH, HEIGHT TO: ", this.element.id, this.width, this.height);
+    if(width !== null || !isNaN(width)) this.width = width;
+    if(height !== null || !isNaN(height)) this.height = height;
     this.checkAndSetupGrid(false);
 };
 

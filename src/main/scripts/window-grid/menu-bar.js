@@ -6,10 +6,10 @@
 'use strict';
 
 const menu = document.querySelector("#menu-bar");
-const firstIconRow = "#icons-first-row";
-const secondIconRow = "#icons-second-row";
-const widgetArea = "#widget-area";
-const progressBar = "#menu-progress-bar";
+const firstIconRow = "icons-first-row";
+const secondIconRow = "icons-second-row";
+const widgetArea = "widget-area";
+const progressBar = "menu-progress-bar";
 const firstGroupKey = "-menu-group-first";
 const secondGroupKey = "-menu-group-second";
 const menuItemKey = "menu-item-";
@@ -180,8 +180,8 @@ GridMenubar.prototype.menuItemOnClick = function(name) {
 };
 
 GridMenubar.prototype.setupIconGroups = function(menuItem) {
-    let firstDiv = UtilsUI.createNewElement('div', this.firstIconRow, menuItem.pluginName.toLowerCase() + firstGroupKey, "icon-group");
-    let secondDiv = UtilsUI.createNewElement('div', this.secondIconRow, menuItem.pluginName.toLowerCase() + secondGroupKey, "icon-group");
+    let firstDiv = UtilsUI.createNewElement('div', this.firstIconRow, menuItem.pluginName + firstGroupKey, "icon-group");
+    let secondDiv = UtilsUI.createNewElement('div', this.secondIconRow, menuItem.pluginName + secondGroupKey, "icon-group");
     this.firstGroupDiv.set(menuItem.pluginName, firstDiv);
     this.secondGroupDiv.set(menuItem.pluginName, secondDiv);
 };

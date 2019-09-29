@@ -77,4 +77,17 @@ PluginRegister.prototype.Start = function () {
     console.error("Please report to respective Plugin author", this.name);
 };
 
+PluginRegister.prototype.addMenuItem = function(base, name, id, icon, callback, ttDirection) {
+    let menuItem = Object.assign({}, base);
+
+    menuItem.displayName = name;
+    menuItem.id = id;
+    menuItem.tooltip = name;
+    menuItem.icon = icon;
+    menuItem.callback = callback;
+    menuItem.ttdirection = ttDirection;
+
+    this.setMenuIcon(menuItem);
+};
+
 module.exports = PluginRegister;

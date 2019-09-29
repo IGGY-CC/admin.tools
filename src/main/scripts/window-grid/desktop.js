@@ -39,11 +39,9 @@ const TabObject = require("../window-grid/tab-content");
     const rTC = new Resize(rightTabContent, LEFT, 2);
     const bTC = new Resize(bottomTabContent, TOP, 2);
 
-    console.log("BEFORE UPDATING SIZE: ", grid.matrix.columns);
     bottomTabContent.updateSize(0, false, false, TOP);
     toolBarContent.updateSize(0, true, false, RIGHT);
     rightTabContent.updateSize(0, true, false, LEFT);
-    console.log("AFTER UPDATING SIZE: ", grid.matrix.columns);
 
     const MAIN_CONTENT = document.querySelector("#main-content");
     const MAIN_TABS = "main-tabs";
@@ -84,18 +82,18 @@ const TabObject = require("../window-grid/tab-content");
     // Now that the basic desktop window is setup, load its contents / plugins
     new LoadPlugins(grid.matrix);
 
-    const rdp = require('node-rdpjs');
-
-    const client = rdp.createClient({
-        enablePerf : true,
-        autoLogin : true,
-        decompress : false,
-        screen : { width : 800, height : 600 },
-        locale : 'en',
-        logLevel : 'INFO'
-    }).on('connect', function () {
-    }).on('close', function() {
-    }).on('bitmap', function(bitmap) {
-    }).on('error', function(err) {
-    }).connect('91.203.200.100', 3389);
+    // const rdp = require('node-rdpjs');
+    //
+    // const client = rdp.createClient({
+    //     enablePerf : true,
+    //     autoLogin : true,
+    //     decompress : false,
+    //     screen : { width : 800, height : 600 },
+    //     locale : 'en',
+    //     logLevel : 'INFO'
+    // }).on('connect', function () {
+    // }).on('close', function() {
+    // }).on('bitmap', function(bitmap) {
+    // }).on('error', function(err) {
+    // }).connect('91.203.200.100', 3389);
 })();

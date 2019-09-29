@@ -240,11 +240,8 @@ class Matrix extends Observable {
             for (let index = 0; index < autoIndices.length; index++) {
                 let autoIndex = autoIndices[index];
                 let newWidth = (this.width - fixedPartialSum) * this.columns[autoIndex] / (totalSum - fixedPartialSum);
-                console.log("COLS: ", this.columns);
-                console.log("RESIZING: ", this.width, newWidth, autoIndex);
                 this.updateMatrixData(false, newWidth, autoIndex);
                 this.updateAutoNodes(false, autoIndex);
-                console.log("COLS: ", this.columns);
             }
         }
     }
@@ -299,7 +296,6 @@ class Matrix extends Observable {
         let autoSum = 0;
         let totalSum = 0;
         if (this.isFixedElement || !this.isAutoMatrixData) {
-            console.log("NUM COLUMNS: ", this.numColumns);
             for (let colIndex = 0; colIndex < this.numColumns; colIndex++) {
                 if (this.fixedColumns[colIndex]) {
                     fixedPartialSum += this.columns[colIndex];
@@ -818,7 +814,6 @@ class Matrix extends Observable {
 
                     // set the node dimensions
                     node.setWidth(MatrixUtil.floatRound(node.width + diffInWidth));
-                    console.log("Setting node width to ", MatrixUtil.floatRound(node.width + diffInWidth))
                     // update this.columns array
                     if(!columnIndices.has(colIndex)) {
                         this.columns[colIndex] = MatrixUtil.floatRound(this.columns[colIndex] + diffInWidth);
