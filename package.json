@@ -52,10 +52,14 @@
     },
     "engineStrict": true,
     "dependencies": {
+        "connect": "^3.7.0",
         "dialogflow": "^0.10.3",
         "electron-reload": "^1.5.0",
         "jailed": "^0.3.1",
         "node-rdpjs": "^0.3.0",
+        "request": "^2.88.0",
+        "rfb2": "^0.2.0",
+        "socket.io": "^2.3.0",
         "sweetalert": "^2.1.2",
         "uuid": "latest"
     }

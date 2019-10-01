@@ -28,7 +28,7 @@ ssh.Commander.prototype = Object.create(commander.Command.prototype);
 ssh.Commander.prototype.cloneConnection = async function(executionContext, onClose, sshIsActive) {
     // this.action = "new-tab";
     this.action = "sshrun";
-    this.wss.prepareDefaultEndPoint(this.sessionID, this.command, this.action, this.wss.makeEncodedString("cat /tmp/test"));
+    this.wss.prepareDefaultEndPoint(this.sessionID, this.command, this.action, this.wss.makeEncodedString("/usr/bin/cat ./test.sh"));
     let _serverConn = null;
     await this.wss.makeWSConnection(
         () => {
