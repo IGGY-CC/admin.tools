@@ -33,3 +33,9 @@ go-prompt.
  - https://github.com/zz85/threejs-term with three-js js 3d library, https://github.com/zz85/crayon.js
  - Disk space visualization: https://github.com/zz85/space-radar-electron/releases
  
+ - Firewall map with in - out - block
+ - Teleporter: http://www.virtualbox.org/manual/ch07.html
+ - Nodejs peer to peer - peerserver: https://github.com/peers/peerjs-server (on gums server?), client: https://peerjs.com/docs.html#start
+   peer-to-peer: another setup: https://medium.com/@carloslfu/make-a-p2p-connection-in-10-minutes-57d9559fd1c
+   
+  - slack client: https://github.com/nlopes/slack/blob/master/examples/websocket/websocket.go

@@ -253,7 +253,8 @@ term.TerminalWindow.prototype.onExecuteClose_ = async function(reason, value) {
 term.TerminalWindow.prototype.onSSHClose = function(closeMessage) {
     this.createContext();
     if(closeMessage) {
-        this.onSendString_(closeMessage);
+        // this.onSendString_(closeMessage);
+        this.executeContext.stderr(closeMessage + "\r\n", ()=>{});
         this.createContext();
     }
 };

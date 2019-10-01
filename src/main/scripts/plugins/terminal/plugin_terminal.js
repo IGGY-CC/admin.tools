@@ -51,6 +51,8 @@ Terminal.prototype.setupMenuItems = function() {
         ttdirection: "top"
     };
     this.setMenuItem(this.menuItem);
+    /* Menu Icon */
+    this.setMenuIcon(this.menuItem);
 
     this.addMenuItem(this.menuItem, "Split Vertical", "menubar-split-vertical",
         "fas fa-columns", this.split.bind(this, true), "bottom");

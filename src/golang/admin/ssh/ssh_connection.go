@@ -224,20 +224,25 @@ func (cr *ConnResources) createAdminSession() {
 }
 
 func (cr *ConnResources) Run(command string) []byte {
-	session, _ := cr.connection.NewSession()
+	session, err := cr.connection.NewSession()
+	if err != nil {
+		log.Println("Could not create a new session!")
+	}
 	defer func() {
-		console.log("CLOSING COMMAND SESSION")
+		log.Println("CLOSING COMMAND SESSION")
 		session.Close()
 	}()
 
 	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
 	session.Stdout = &stdoutBuf
+	session.Stderr = &stderrBuf
 	session.Run(command)
 
-	fmt.Printf("free -m -> %s", stdoutBuf.String())
+	fmt.Printf("free -m -> %s - %s\r\n", stdoutBuf.String(), stderrBuf.String())
 
-	log.Print("COMMAND: ", command)
-	log.Print("RESPONSE: ", stdoutBuf)
+	log.Println("COMMAND: ", command)
+	log.Println("RESPONSE: ", stdoutBuf)
 	return stdoutBuf.Bytes()
 }
 
