@@ -220,6 +220,7 @@ func (as *AdmSocket) GetName() string {
 	return as.name
 }
 
+
 func (as *AdmSocket) DeleteSocket() {
 	delete(Sockets, as.name)
 }

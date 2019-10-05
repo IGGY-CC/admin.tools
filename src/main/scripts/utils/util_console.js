@@ -16,7 +16,15 @@ const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
     const _log = console.log;
     const _warn = console.warn;
     const _error = console.error;
-    
+
+    const getCaller = () => {
+        return (new Error()).stack.split("\n")[2].trim().split(" ")[1];
+    };
+
+    const getCallee = () => {
+        return (new Error()).stack.split("\n")[1].trim().split(" ")[1];
+    }
+
     const log = (object, type, args) => {
         const date = getDate(null);
         const message = date.toUpperCase() + " " + type + " " + util.format.apply(null, args) + '\n';
