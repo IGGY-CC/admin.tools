@@ -33,13 +33,13 @@ type ConnResources struct {
 	socket   	*lib.AdmSocket
 }
 
-type keyboardInteractive map[string]string
+//type keyboardInteractive map[string]string
 
-var modes = ssh.TerminalModes{
-	ssh.ECHO:          1,
-	ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-	ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
-}
+//var modes = ssh.TerminalModes{
+//	ssh.ECHO:          1,
+//	ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+//	ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+//}
 
 func (cr *ConnResources) Resize(cols int, rows int) (err error) {
 	return cr.sessionPty.WindowChange(rows, cols)
@@ -246,10 +246,10 @@ func (cr *ConnResources) Run(command string) []byte {
 	return stdoutBuf.Bytes()
 }
 
-func (ki keyboardInteractive) Challenge(user string, instruction string, questions []string, echos []bool) ([]string, error) {
-	var answers []string
-	for _, q := range questions {
-		answers = append(answers, ki[q])
-	}
-	return answers, nil
-}
+//func (ki keyboardInteractive) Challenge(user string, instruction string, questions []string, echos []bool) ([]string, error) {
+//	var answers []string
+//	for _, q := range questions {
+//		answers = append(answers, ki[q])
+//	}
+//	return answers, nil
+//}

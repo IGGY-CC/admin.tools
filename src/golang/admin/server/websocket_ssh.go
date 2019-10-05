@@ -2,23 +2,72 @@ package server
 
 import (
 	"../lib"
-	"../ssh"
+	_ssh "../ssh"
 	"net/url"
 
 	"encoding/json"
 	"log"
 )
 
+type ConnectionParams struct {
+	Host     string
+	Port     int
+	User     string
+	Pass     string
+	Rows     int
+	Cols     int
+	CommPty  bool
+	AdmPty   bool
+	Config   *ssh.ClientConfig
+}
+
+func UnmarshalParams(jsonString string) (connObject ConnectionParams) {
+	jsonSSHObject, err := url.QueryUnescape(jsonString)
+	jsonSSHObject = jsonSSHObject[1 : len(jsonSSHObject)-1]
+
+	if err != nil {
+		log.Fatal("ERROR decoding jsonString", jsonString, err)
+		return
+	}
+
+	err = json.Unmarshal([]byte(jsonSSHObject), &connObject)
+	if err != nil {
+		log.Fatal("ERROR Unmarshalling JSON", jsonSSHObject, err)
+		return
+	}
+
+	log.Print("DECODED OBJECT: ", connObject)
+
+	return
+}
+
+var sshManager = _ssh.NewManager()
+
 func webSocketSSHInit(socket *lib.AdmSocket, action string, jsonString string) (createAndClose bool){
 
-	sshManager := ssh.GetSSHConnectionManager(socket)
+	//sshManager := ssh.GetSSHConnectionManager(socket)
 	createAndClose = false
 
 	log.Print("Executing given action: ", action)
 	switch action {
 	case "init":
-		log.Print("In init... creating SSHConnection")
-		sshManager.CreateSSHConnection(jsonString)
+		log.Print("In init... creating ServerConnection")
+		// OLD
+		//sshManager.CreateSSHConnection(jsonString)
+		params := UnmarshalParams(jsonString)
+		sshManager.InitSSHConnection(
+			socket.name,
+			params.Host,
+			params.Port,
+			params.User,
+			params.Pass,
+			[]string{"Verification code: "},
+			[]string{params.Pass},
+			params.Rows,
+			params.Cols,
+			true,
+			socket.conn
+		)
 		break
 	case "resize":
 		type dimensions struct {
