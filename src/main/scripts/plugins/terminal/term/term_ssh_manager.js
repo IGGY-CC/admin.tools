@@ -2,10 +2,27 @@ class SSHManager {
     constructor() {
         this.servers = new Map();
         this.sessions = new Map();
+        this.sockets = new Map();
+        this.occupiedSessions = new Set();
     }
 
     addSession(id, sessionID) {
         this.sessions.set(id, sessionID);
+    }
+
+    checkOccupiedSession(sessionID) {
+        return this.occupiedSessions.has(sessionID);
+    }
+
+    addOccupiedSession(sessionID) {
+        if(this.occupiedSessions.has(sessionID)) {
+            throw new Error("A session with ID " + sessionID + " already exists!");
+        }
+        this.occupiedSessions.add(sessionID)
+    }
+
+    addSocket(id, socket) {
+        this.sockets.set(id, socket);
     }
 
     getSessionByServer(server) {

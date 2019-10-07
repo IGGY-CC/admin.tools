@@ -12,6 +12,23 @@ const term = require("./term");
 const Ready = require("./term_state");
 
 term.binding.ExecuteContext = function() {
+    let sessid = () => {
+        let randArray = new Uint8Array(16);
+        window.crypto.getRandomValues(randArray);
+
+        let sessionID = '';
+        for (let i = 0; i < randArray.length; i++) {
+            let byte = randArray[i].toString(16);
+            if (byte.length === 2) {
+                sessionID += byte;
+            } else {
+                sessionID += '0' + byte;
+            }
+        }
+        return sessionID;
+    };
+    this.id = sessid();
+
     // We're a 'subclass' of term.binding.Ready.
     Ready.call(this);
 
@@ -59,7 +76,7 @@ term.binding.ExecuteContext = function() {
         isatty: false,
         rows: 0,
         columns: 0,
-        interrupt: String.fromCharCode('C'.charCodeAt(0) - 64)  // ^C
+        interrupt: String.fromCharCode('J'.charCodeAt(0) - 64)  // ^C
     };
 };
 

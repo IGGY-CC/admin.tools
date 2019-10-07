@@ -1,13 +1,14 @@
 package server
 
 import (
-	"../lib"
 	"../otp"
 	"encoding/json"
 	"log"
+
+	"github.com/gorilla/websocket"
 )
 
-func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (createAndClose bool){
+func webSocketOTPInit(name string, socket *websocket.Conn, action string, jsonString string) (createAndClose bool){
 	type OTPData struct{
 		Name string
 		Key string
@@ -28,9 +29,11 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 		err = otpManager.GenerateTOTP()
 		if err != nil {
 			log.Println("Couldn't generate a new TOTP: ", err)
-			socket.WriteHTTP(err.Error())
+			// TODO
+			//socket.WriteHTTP(err.Error())
 		}
-		socket.WriteHTTP(doMarshall(otpManager))
+		// TODO
+		//socket.WriteHTTP(doMarshall(otpManager))
 		break
 	case "list":
 		strings, err := otpManager.GetKeys()
@@ -38,7 +41,8 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 			log.Println("Couldn't retrieve any list")
 		}
 		log.Println("Retrieved list: ", strings)
-		socket.WriteHTTP(doMarshall(strings))
+		// TODO
+		//socket.WriteHTTP(doMarshall(strings))
 		break
 	case "validate":
 		valid := otpManager.ValidateOTP(otpData.Name, otpData.OTP)
@@ -48,7 +52,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 		}
 		break
 	case "validate-check":
-		err = otpManager.ValidateAndSave(otpData.Name, otpData.OTP)
+		err := otpManager.ValidateAndSave(otpData.Name, otpData.OTP)
 		if err != nil {
 			log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
 			return
@@ -87,7 +91,7 @@ func webSocketOTPInit(socket *lib.AdmSocket, action string, jsonString string) (
 	}
 
 	//log.Println("OTP Validated Successfully!")
-	createAndClose = true
+	//createAndClose = true
 
 	return
 }

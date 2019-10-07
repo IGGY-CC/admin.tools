@@ -2,7 +2,6 @@ package ssh
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -17,8 +16,8 @@ type TerminalClient struct {
 func NewTerminalClient(id string, socket *websocket.Conn) (terminalClient *TerminalClient, err error) {
 	terminalClient = &TerminalClient{id, nil,socket}
 	terminalClient.consumer = NewConsumer(id, socket)
-	terminalClient.setupReadFromClient()
-	terminalClient.setupWritesToClient()
+	go terminalClient.setupReadFromClient()
+	go terminalClient.setupWritesToClient()
 
 	return
 }
@@ -34,18 +33,17 @@ func (terminalClient *TerminalClient) setupReadFromClient() {
 		_, message, err := terminalClient.socket.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				Log.Printf("error: %v", err)
 			}
 			break
 		}
-		fmt.Printf("Received message: %c\n", message)
 		terminalClient.consumer.Stdin <- bytes.NewBuffer(message)
 	}
 }
 
 func (terminalClient *TerminalClient) setupWritesToClient() {
 	defer func() {
-		log.Println("closing from write channel...")
+		Log.Println("closing from write channel...")
 		terminalClient.socket.Close()
 	}()
 	for {
@@ -54,7 +52,7 @@ func (terminalClient *TerminalClient) setupWritesToClient() {
 		case message, ok := <-terminalClient.consumer.Stdout:
 			if !ok {
 				terminalClient.socket.WriteMessage(websocket.CloseMessage, []byte{})
-				Log.Fatalf("Reading from server stdout threw 'Not Ok!'")
+				Log.Printf("Reading from server stdout threw 'Not Ok!'")
 				return
 			}
 
@@ -69,13 +67,13 @@ func (terminalClient *TerminalClient) setupWritesToClient() {
 			_, _ = w.Write(buf.Bytes())
 
 			if err := w.Close(); err != nil {
-				Log.Fatalf("Error cloising socket next writer in Stdout")
+				Log.Printf("Error cloising socket next writer in Stdout")
 				return
 			}
 		case message, ok := <-terminalClient.consumer.Stderr:
 			if !ok {
 				terminalClient.socket.WriteMessage(websocket.CloseMessage, []byte{})
-				Log.Fatalf("Reading from server stdout threw 'Not Ok!'")
+				Log.Printf("Reading from server stdout threw 'Not Ok!'")
 				return
 			}
 
@@ -90,7 +88,7 @@ func (terminalClient *TerminalClient) setupWritesToClient() {
 			_, _ = w.Write(buf.Bytes())
 
 			if err := w.Close(); err != nil {
-				Log.Fatalf("Error cloising socket next writer in Stderr")
+				Log.Printf("Error cloising socket next writer in Stderr")
 				return
 			}
 		}

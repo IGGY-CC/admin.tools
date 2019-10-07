@@ -13,6 +13,11 @@ let term = require("./term");
  * A partial clone of GNU readline.
  */
 term.Readline = function(executeContext) {
+  // Jarvis functionality
+  this.isJarvis = false;
+  this.jarvis = executeContext.arg.jarvis.triggerText + " ";
+  this.callback = () => {};
+
   this.executeContext = executeContext;
   this.executeContext.onStdIn.addListener(this.onStdIn_, this);
   this.executeContext.ready();
@@ -194,6 +199,9 @@ term.Readline.prototype.addRawBinding = function(bytes, commandName) {
 
 term.Readline.prototype.print = function(str, opt_vars) {
   this.executeContext.stdout(this.tc_.output(str, opt_vars || {}));
+  if (this.line.toLowerCase() === this.jarvis.toLowerCase()) { // Jarvis Functionality
+    this.isJarvis = true;
+  }
 };
 
 term.Readline.prototype.setPrompt = function(str, vars) {
@@ -436,6 +444,7 @@ term.Readline.prototype.commands['accept-line'] = function() {
   if (this.line && this.line !== this.history_[1])
     this.history_.splice(1, 0, this.line);
   this.print('\r\n');
+  this.callback(); // Jarvis Functionality
   this.onComplete(this.line);
 };
 

@@ -1,107 +1,116 @@
 package server
 
 import (
-	"../lib"
 	_ssh "../ssh"
-	"net/url"
 
 	"encoding/json"
-	"log"
+	"net/url"
+
+	"github.com/gorilla/websocket"
+	//"golang.org/x/crypto/ssh"
 )
 
 type ConnectionParams struct {
-	Host     string
-	Port     int
-	User     string
-	Pass     string
-	Rows     int
-	Cols     int
-	CommPty  bool
-	AdmPty   bool
-	Config   *ssh.ClientConfig
-}
-
-func UnmarshalParams(jsonString string) (connObject ConnectionParams) {
-	jsonSSHObject, err := url.QueryUnescape(jsonString)
-	jsonSSHObject = jsonSSHObject[1 : len(jsonSSHObject)-1]
-
-	if err != nil {
-		log.Fatal("ERROR decoding jsonString", jsonString, err)
-		return
-	}
-
-	err = json.Unmarshal([]byte(jsonSSHObject), &connObject)
-	if err != nil {
-		log.Fatal("ERROR Unmarshalling JSON", jsonSSHObject, err)
-		return
-	}
-
-	log.Print("DECODED OBJECT: ", connObject)
-
-	return
+	Host               string
+	Port               int
+	User               string
+	Pass               string
+	Challenges         []string
+	ChallengePasswords []string
+	Rows               int
+	Cols               int
 }
 
 var sshManager = _ssh.NewManager()
 
-func webSocketSSHInit(socket *lib.AdmSocket, action string, jsonString string) (createAndClose bool){
-
-	//sshManager := ssh.GetSSHConnectionManager(socket)
-	createAndClose = false
-
-	log.Print("Executing given action: ", action)
+func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonString string) (err error) {
+	Log.Print("Executing given action: ", action)
 	switch action {
 	case "init":
-		log.Print("In init... creating ServerConnection")
-		// OLD
-		//sshManager.CreateSSHConnection(jsonString)
-		params := UnmarshalParams(jsonString)
-		sshManager.InitSSHConnection(
-			socket.name,
+		Log.Print("In init... creating ServerConnection")
+		var params ConnectionParams
+		deconstruct(&params, jsonString)
+		err = sshManager.InitSSHConnection(
+			name,
 			params.Host,
 			params.Port,
 			params.User,
 			params.Pass,
-			[]string{"Verification code: "},
-			[]string{params.Pass},
+			params.Challenges,
+			params.ChallengePasswords,
 			params.Rows,
 			params.Cols,
 			true,
-			socket.conn
+			socket,
 		)
+
 		break
+	case "allow-share-session":
+		type session struct {
+			ID string
+			Write bool
+		}
+		var sess session
+		deconstruct(&sess, jsonString)
+		err = sshManager.AllowShared(name, sess.ID, sess.Write)
+		if err != nil {
+			Log.Printf("Couldn't allow shared connection to %s from %s. Thrown Error %v", sess.ID, name, err)
+		}
+	case "share-session":
+		type session struct {
+			ID string
+		}
+		var sess session
+		deconstruct(&sess, jsonString)
+		sshManager.ShareSession(name, sess.ID, socket)
+	case "sub-command-init":
 	case "resize":
 		type dimensions struct {
 			Rows int
 			Cols int
 		}
 		var dim dimensions
-		err := json.Unmarshal([]byte(jsonString), &dim)
-		if err != nil {
-			log.Println("Unable to unmarshall...", err)
-			return
-		}
+		deconstruct(&dim, jsonString)
 
-		log.Println("Window resized to: ", jsonString, dim, dim.Cols, dim.Rows)
-		err = sshManager.Resize(dim.Cols, dim.Rows)
+		err = sshManager.Resize(name, dim.Cols, dim.Rows)
 		if err != nil {
-			log.Println(err)
+			Log.Print(err)
 		}
-		createAndClose = true
+		Log.Println("Window resized to: ", jsonString, dim, dim.Cols, dim.Rows)
 		break
-	case "sshrun":
-		writer, err := socket.GetWriter()
-		if err != nil {
-			log.Println(err)
-		}
-		command, err := url.QueryUnescape(jsonString)
-		if err != nil { log.Println(err) }
-		_, err = writer.Write(sshManager.Run(command))
-		if err != nil {
-			log.Println(err)
-		}
+	//case "sshrun":
+	//	writer, err := socket.GetWriter()
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
+	//	command, err := url.QueryUnescape(jsonString)
+	//	if err != nil { log.Println(err) }
+	//	_, err = writer.Write(sshManager.Run(command))
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
 	default:
-		log.Println("Unhandled command/action: ", action)
+		Log.Println("Unhandled command/action: ", action)
 	}
 
 	return
+}
+
+func deconstruct(object interface{}, jsonString string) {
+	Log.Printf("JSON STRING: %s", jsonString)
+	jsonObject, err := url.QueryUnescape(jsonString)
+	jsonObject = jsonObject[1 : len(jsonObject)-1]
+
+	if err != nil {
+		Log.Printf("ERROR decoding jsonString %s, %v", jsonString, err)
+		return
+	}
+
+	err = json.Unmarshal([]byte(jsonObject), &object)
+	if err != nil {
+		Log.Printf("ERROR Unmarshalling JSON %v, %v", jsonObject, err)
+		return
+	}
+
+	Log.Printf("DECODED OBJECT: %v", object)
 }

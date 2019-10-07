@@ -41,6 +41,8 @@ type ServerConnection struct {
 
 func NewServerConnection(host string, port int) *ServerConnection {
 	serverConnection := &ServerConnection{}
+	serverConnection.id = make(map[string]string)
+	serverConnection.sessions = make(map[string]*ssh.Session)
 	serverConnection.host = host
 	serverConnection.port = port
 	serverConnection.addToIdentifier("HOST:KEY", host + strconv.Itoa(port))
@@ -54,6 +56,7 @@ func (serverConnection *ServerConnection) addToIdentifier(key string, value stri
 }
 
 func (serverConnection *ServerConnection) isEqualIdentifier(id map[string]string) bool {
+	Log.Printf("Comparing %v, %v", serverConnection.id, id)
 	return reflect.DeepEqual(id, serverConnection.id)
 }
 
@@ -102,6 +105,7 @@ func (serverConnection *ServerConnection) Connect() (err error) {
 
 	serverConnection.isConnected = true
 	serverConnection.auth = nil
+	Log.Printf("Connected to server %s on port %d successfully", serverConnection.host, serverConnection.port)
 	return
 }
 
@@ -113,14 +117,15 @@ func (serverConnection *ServerConnection) CreateTerminalSession(name string, row
 		return
 	}
 
-	defer func() {
-		Log.Println("Closing terminal session for id: ", name)
-		session.Close()
-		delete(serverConnection.sessions, name)
-
-		// trigger the callback
-		closeCallback(name)
-	}()
+	// TODO: Session.Wait throws "session not started" and this defer gets executed immediately
+	//defer func() {
+	//	Log.Println("Closing terminal session for id: ", name)
+	//	session.Close()
+	//	delete(serverConnection.sessions, name)
+	//
+	//	// trigger the callback
+	//	closeCallback(name)
+	//}()
 
 	Log.Println("Created a communication session for terminal session successfully!")
 
@@ -130,7 +135,14 @@ func (serverConnection *ServerConnection) CreateTerminalSession(name string, row
 	// right here. If not passed, then it is expected that, session.Wait or a similar
 	// functionality is handled by the caller
 	if closeCallback != nil {
-		session.Wait()
+		Log.Println("Calling on session.wait...")
+		err = session.Wait()
+		if err != nil {
+			defer func() {
+				//return session, err
+			}()
+			Log.Printf("Session wait threw error: %v", err)
+		}
 	}
 
 	return session, err

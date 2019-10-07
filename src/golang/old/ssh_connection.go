@@ -1,4 +1,4 @@
-package ssh
+package old
 
 import (
 	"../lib"
