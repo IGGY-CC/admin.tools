@@ -1,28 +1,40 @@
 package server
 
 import (
-	"../lib"
-
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/gorilla/websocket"
 )
 
 var addr = flag.String("addr", ":16443", "admin.tools server")
+var Log *log.Logger
+var upgrader = websocket.Upgrader {
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func Init() {
 	flag.Parse()
-	lib.Init()
+	Log = log.New(os.Stdout, "[SSH] ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// TODO: SECURITY CHECK AND UPDATE
+	upgrader.CheckOrigin = func(_ *http.Request) bool {
+		return true
+	}
+
 	http.HandleFunc("/", defaultHandleFunc)
 	http.HandleFunc("/ws/", webSocketHandlerFunc)
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		Log.Print("ListenAndServe: ", err)
 	} 
 		
-	log.Println("listening on port 16443")
+	Log.Println("listening on port 16443")
 }
 
 func defaultHandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +45,16 @@ func defaultHandleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func  webSocketHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func setupWebSocket(writer http.ResponseWriter, reader *http.Request) (socket *websocket.Conn, err error) {
+	socket, err = upgrader.Upgrade(writer, reader, nil)
+	if err != nil {
+		Log.Println(err)
+		return nil, err
+	}
+	return socket, err
+}
+
+func  webSocketHandlerFunc(writer http.ResponseWriter, reader *http.Request) {
 	/**
 	 * /ws 							path components
 	 * /ws/name 					name for the component
@@ -42,11 +63,11 @@ func  webSocketHandlerFunc(w http.ResponseWriter, r *http.Request) {
 	 * /ws/name/action/security 	TODO: Add some security so that others cannot hijack this connection
 	**/
 
-	log.Println("received websocket connection")
+	Log.Println("received websocket connection")
 
-	params 		:= strings.Split(r.URL.Path, "/")
+	params 		:= strings.Split(reader.URL.Path, "/")
 	if len(params) < 5 {
-		log.Println("A minimum of three parameters required: name/sessid, command, action, jsonString[opt]")
+		Log.Println("A minimum of three parameters required: name/sessid, command, action, jsonString[opt]")
 		return
 	}
 	name 		:= params[2]
@@ -57,19 +78,20 @@ func  webSocketHandlerFunc(w http.ResponseWriter, r *http.Request) {
 		jsonString = params[5]
 	}
 
-	admSocket := lib.GetAdminSocket(name, w, r)
-	createAndClose := false
+	socket, err := setupWebSocket(writer, reader)
+	if err != nil {
+		Log.Printf("Cannot create a web socket")
+	}
 
 	switch command {
 	case "ssh":
-		admSocket.CreateConnection()
-		createAndClose = webSocketSSHInit(admSocket, action, jsonString)
+		//admSocket.CreateConnection()
+		err := webSocketSSHInit(name, socket, action, jsonString)
+		if err != nil {
+			Log.Printf("Received error: %v", err)
+		}
 		break
 	case "otp":
-		createAndClose = webSocketOTPInit(admSocket, action, jsonString)
-	}
-
-	if createAndClose {
-		admSocket.CreateAndCloseConnection()
+		webSocketOTPInit(name, socket, action, jsonString)
 	}
 }

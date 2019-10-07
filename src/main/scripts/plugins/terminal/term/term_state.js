@@ -21,14 +21,12 @@ term.binding.Ready = function() {
     this.closeValue = null;
 
     this.onReady = new term.Event(function(value) {
-        console.error("UPDATING READY STATE TO READY");
         this.readyValue = value;
         this.readyState = term.binding.Ready.state.READY;
         this.isOpen = true;
     }.bind(this));
 
     this.onClose = new term.Event(function(reason, value) {
-        console.error("UPDATING READY STATE TO CLOSED");
         this.closeReason = (reason === 'ok' ? 'ok' : 'error');
         this.closeValue = value;
         this.isOpen = false;

@@ -17,7 +17,7 @@ const Termcap = require("../term/term_termcap");
 const ExecutionContext = require("../term/term_execution_context");
 const ReadLine = require("../term/term_readline");
 const JarvisReadLine = require("../term/term_jarvis_readline");
-const CommandManager = require("../term/term_command_manager");
+const jarvis = require("../term/commanders/jarvis");
 
 term.jarvis = {
     symbol: "🤖",
@@ -39,12 +39,10 @@ term.TerminalWindow = function(id, parent) {
 
     this.terminalWindow = terminalManager.createTerminal(parent, this.onTerminalCreated_.bind(this));
     this.backgroundImage = true;
-    this.numberOfCommands = 0;
-    this.commandManager = new CommandManager();
     this.commander = null;
-    this.isSSHActive = false;
-    this.remote = true;
     this.inJarvis = false;
+    this.inRemote = false;
+    this.jarvisReadline = null;
 
     /**
      * Event we invoke when async init is complete.
@@ -117,6 +115,18 @@ term.TerminalWindow.prototype.setTerminalDefaults = function() {
     this.changeBackground();
 };
 
+term.TerminalWindow.prototype.changeFontSize = function(size) {
+    this.term.prefs_.set('font-size', size);
+};
+
+term.TerminalWindow.prototype.changeFontFamily = function(family) {
+    if(family === "reset" || family === "default") {
+        this.term.prefs_.set('font-family', "'DejaVu Sans Mono', 'Noto Sans Mono', 'Everson Mono', FreeMono, 'Menlo, Terminal', monospace");
+    } else {
+        this.term.prefs_.set('font-family', family);
+    }
+};
+
 term.TerminalWindow.prototype.changeBackground = function(doTurnoff) {
     // Disabled due to Content-Security-Policy rule
     if(this.backgroundImage && !doTurnoff) {
@@ -140,9 +150,13 @@ term.TerminalWindow.prototype.changeBackground = function(doTurnoff) {
     }
 };
 
-term.TerminalWindow.prototype.switchColor = function() {
-    this.foregroundColor = (this.foregroundColor === "black")? "white" : "black";
-    this.term.prefs_.set('foreground-color', this.foregroundColor);
+term.TerminalWindow.prototype.switchColor = function(color) {
+    if(typeof color !== "undefined") {
+        this.term.prefs_.set('foreground-color', color);
+    } else {
+        this.foregroundColor = (this.foregroundColor === "black") ? "white" : "black";
+        this.term.prefs_.set('foreground-color', this.foregroundColor);
+    }
 };
 
 term.TerminalWindow.prototype.print = function(str) {
@@ -158,27 +172,6 @@ term.TerminalWindow.prototype.println = function(str) {
  */
 term.TerminalWindow.prototype.onInit_ = function() {
     this.createContext();
-    // this.executeContext = ExecutionContext.createExecuteContext();
-    // this.executeContext.setEnvs(this.defaultEnv);
-    // this.executeContext.onClose.addListener(this.onExecuteClose_, this);
-    // this.executeContext.onStdOut.addListener(this.onStdOut_, this);
-    // this.executeContext.onStdErr.addListener(this.onStdOut_, this);
-    // this.executeContext.onTTYRequest.addListener(this.onTTYRequest_, this);
-    // this.executeContext.setTTY({rows: this.term.io.rowCount, columns: this.term.io.columnCount});
-    //
-    // this.executeContext.onReady.addListener(function() {
-    //     console.log('TerminalWindow: execute ready');
-    // });
-    //
-    // this.executeContext.onClose.addListener(function(reason, value) {
-    //     console.log('TerminalWindow: execute closed: ' + reason +
-    //         JSON.stringify(value));
-    // });
-    //
-    // this.executeContext.arg = {promptString: this.promptString_, inputHistory: this.inputHistory};
-    // this.readline = ReadLine.main(this.executeContext);
-    // this.readline.onCursorReport(0, 0);
-    // // this.executeContext.execute(this.commandPath, this.commandArg);
 };
 
 term.TerminalWindow.prototype.createContext = function() {
@@ -191,7 +184,7 @@ term.TerminalWindow.prototype.createContext = function() {
     this.executeContext.setTTY({rows: this.term.io.rowCount, columns: this.term.io.columnCount});
 
     this.executeContext.onReady.addListener(function() {
-        console.log('TerminalWindow-internal: execute ready');
+        // console.log('TerminalWindow-internal: execute ready');
     });
 
     this.executeContext.onClose.addListener(function(reason, value) {
@@ -204,11 +197,10 @@ term.TerminalWindow.prototype.createContext = function() {
         inputHistory: this.inputHistory,
         rows: this.term.io.rowCount,
         columns: this.term.io.columnCount,
+        jarvis: term.jarvis,
     };
 
     this.readline = ReadLine.main(this.executeContext);
-    // this.readline.onCursorReport(this.numberOfCommands++, 0);
-    // return this.executeContext;
 };
 
 term.TerminalWindow.prototype.createJarvisContext = function() {
@@ -222,12 +214,13 @@ term.TerminalWindow.prototype.createJarvisContext = function() {
             isatty: false,
             rows: this.term.io.rowCount,
             columns: this.term.io.columnCount,
-            interrupt: String.fromCharCode('C'.charCodeAt(0) - 64)  // ^C
+            interrupt: String.fromCharCode('J'.charCodeAt(0) - 64)  // ^J
         }
     };
 
     this.jarvisReadline = JarvisReadLine.main(arg);
 };
+
 /**
  * The default command exited.
  */
@@ -235,32 +228,14 @@ term.TerminalWindow.prototype.onExecuteClose_ = async function(reason, value) {
     if (reason === 'ok') {
         this.inputHistory.unshift(value);
         this.createContext();
-        this.createJarvisContext();
-        const sshIsActive = () => { this.isSSHActive = true };
-
-        if (!this.commander) {
-            this.commander = this.commandManager.execute(this.id, value, this.executeContext,
-                this.onSSHClose.bind(this), sshIsActive);
-        } else {
-            this.commander.execute(value, this.executeContext, this.onSSHClose.bind(this), sshIsActive);
-        }
-
+        await jarvis.execute(value, this).then(()=>{}).catch(error => console.error(error));
     } else {
         this.print('Error executing: ' + JSON.stringify(value));
     }
 };
 
-term.TerminalWindow.prototype.onSSHClose = function(closeMessage) {
-    this.createContext();
-    if(closeMessage) {
-        // this.onSendString_(closeMessage);
-        this.executeContext.stderr(closeMessage + "\r\n", ()=>{});
-        this.createContext();
-    }
-};
-
 term.TerminalWindow.prototype.onTTYRequest_ = function(request) {
-    if (typeof request.interrupt == 'string')
+    if (typeof request.interrupt === 'string')
         this.executeContext.setTTY({interrupt: request.interrupt});
 };
 
@@ -285,6 +260,9 @@ term.TerminalWindow.prototype.onStdOut_ = function(str, opt_onAck) {
  * We just forward them on to the default command.
  */
 term.TerminalWindow.prototype.onSendString_ = function(str) {
+    let line = (this.readline === null)? "" : this.readline.line;
+    let jline = (this.jarvisReadline === null)? "" : this.jarvisReadline.line;
+
     if(!this.executeContext) {
         console.log("Execution Context is not ready: ", str);
         return;
@@ -292,16 +270,12 @@ term.TerminalWindow.prototype.onSendString_ = function(str) {
     if (this.executeContext.isReadyState('READY')) {
         let interruptChar = this.executeContext.getTTY().interrupt;
         if (interruptChar && str === interruptChar) {
-            term.async(function() {
-                // TODO: Handle Interrupts
-                console.log('term.Signal.Interrupt');
+            term.async(() => {
+                this.executeContext.stdin('\x0b');
             }, [this]);
         } else {
             this.interpretJarvis(str);
-            if(this.remote) {
-                term.async(() => {this.executeContext.stdin(str)}, [this]);
-            }
-            this.remote = true;
+            term.async(() => {this.executeContext.stdin(str); this.interpretJarvis(); }, [this]);
         }
     } else {
         console.warn('Execute not ready, ignoring input: ' + str);
@@ -309,50 +283,51 @@ term.TerminalWindow.prototype.onSendString_ = function(str) {
 };
 
 term.TerminalWindow.prototype.interpretJarvis = function(str) {
-    this.remote = true;
-    if(this.jarvisReadline) {
-        this.jarvisReadline.onStdIn_(str);
-        // The very first time, we encountered Jarvis
-        if(this.jarvisReadline.isJarvis && !this.inJarvis) {
-            let position = this.jarvisReadline.linePosition;
-            for(let index = 0; index < position; index++) {
-                /* delete from jarvis buffer */
-                this.jarvisReadline.onStdIn_('\x7f');
+    if(this.readline === null && !this.inRemote) return;
 
-                /* delete from terminal buffer */
-                term.async(() => {
-                    this.executeContext.stdin('\x7f')
-                }, [this]);
-            }
-            this.jarvisReadline.onStdIn_(term.jarvis.symbol);
+    if(this.inRemote && this.jarvisReadline === null) {
+        this.createJarvisContext();
+    }
+
+    if(this.jarvisReadline !== null)  this.jarvisReadline.onStdIn_(str);
+
+    let readline = (this.inRemote)? this.jarvisReadline : this.readline;
+
+    // The very first time, we encountered Jarvis
+    if (readline.isJarvis && !this.inJarvis) {
+        let position = readline.linePosition;
+        for (let index = 0; index < position; index++) {
+            /* delete from terminal buffer */
             term.async(() => {
-                this.executeContext.stdin(term.jarvis.symbol);
+                this.executeContext.stdin('\x7f')
             }, [this]);
-            this.inJarvis = true;
-            this.remote = false;
-            this.jarvisReadline.callback = this.jarvisCommand.bind(this);
         }
+
+        term.async(() => {
+            this.executeContext.stdin(term.jarvis.symbol);
+        }, [this]);
+
+        this.inJarvis = true;
+        readline.callback = this.jarvisCommand.bind(this);
     }
 };
 
 term.TerminalWindow.prototype.jarvisCommand = function() {
-    let command = this.jarvisReadline.line;
-    let position = this.jarvisReadline.linePosition;
+    let readline = (this.inRemote)? this.jarvisReadline : this.readline;
+    let command = readline.line;
+    let position = readline.linePosition;
 
-    console.log("FINAL COMMAND RECEIVED IS: ", this.jarvisReadline.line);
+    jarvis.execute(command.replace(term.jarvis.symbol, ""), this).then(()=>{});
+
     for(let index = 0; index < position; index++) {
-        /* delete from jarvis buffer */
-        this.jarvisReadline.onStdIn_('\x7f');
-
         /* delete from terminal buffer */
         term.async(() => {
             this.executeContext.stdin('\x7f')
         }, [this]);
     }
-    this.remote = false;
     this.inJarvis = false;
-    this.jarvisReadline.isJarvis = false;
-    this.jarvisReadline.callback = () => {};
+    readline.isJarvis = false;
+    readline.callback = () => {};
 };
 
 /**
@@ -369,7 +344,7 @@ term.TerminalWindow.prototype.onTerminalResize_ = function(columns, rows) {
  * Our own keyboard accelerators.
  */
 term.TerminalWindow.prototype.onKeyDown_ = function(e) {
-    if (e.ctrlKey && e.shiftKey && e.keyCode === ('R').charCodeAt())
+    if (e.ctrlKey && e.shiftKey && e.keyCode === ('J').charCodeAt())
         console.log("cltr+shift+R: Provided. Unhandled, this is in TODO list.");
         // TODO: define Accelerators and develop how to handle them
 };

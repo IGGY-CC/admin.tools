@@ -444,7 +444,6 @@ term.JarvisReadline.prototype.commands['accept-line'] = function () {
     if (this.line && this.line !== this.history_[1])
         this.history_.splice(1, 0, this.line);
     this.print('\r\n');
-    console.log("LINE / LINE LENGTH", this.line, this.linePosition);
     this.callback();
     this.onComplete(this.line);
 };
@@ -636,7 +635,6 @@ term.JarvisReadline.prototype.onComplete_ = function () {
     this.cursorHome_ = {row: 0, column: 0};
     const refresh = term.JarvisReadline.bind(this);
     refresh(this.arg);
-    console.log("onComplete");
 };
 
 module.exports = term.JarvisReadline;
