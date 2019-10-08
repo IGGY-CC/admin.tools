@@ -8,12 +8,14 @@
 let commander = require('./commander');
 let Assistant = require('../../../../assistants/dialogflow/dialogflow');
 let SSH = require("./ssh");
+let SSHCommands = require("./ssh_commands");
 
 let jarvis = {};
 
 jarvis.Commander = function() {
     this.assistant = new Assistant('appointmentscheduler-bjacvw');
     this.windows = new Map();
+    this.terminalWindows = new Map();
 };
 
 jarvis.Commander.prototype = Object.create(
@@ -34,7 +36,18 @@ jarvis.Commander.prototype.execute = async function(command, terminalWindow) {
             if (!this.windows[id]) {
                 let ssh = new SSH(id);
                 this.windows[id] = ssh;
+                this.terminalWindows[id] = terminalWindow;
                 await ssh.execute(params, terminalWindow);
+            }
+            break;
+        case "exec":
+            let existingTerminalWindow = this.terminalWindows[id];
+            let sshCommands = new SSHCommands(id);
+            if(!existingTerminalWindow) {
+                await sshCommands.execute(params, terminalWindow);
+                terminalWindow.createContext();
+            } else {
+                await sshCommands.execute(params, existingTerminalWindow);
             }
             break;
         case "color":

@@ -99,7 +99,7 @@ func (serverConnection *ServerConnection) Connect() (err error) {
 	serverConnection.connection, err = ssh.Dial("tcp", net.JoinHostPort(serverConnection.host, strconv.Itoa(serverConnection.port)), serverConnection.config)
 
 	if err != nil {
-		Log.Fatalf("Failed to connect to the requested server: %s. Closing connection!\n", err)
+		Log.Printf("Failed to connect to the requested server: %s. Closing connection!\n", err)
 		return err
 	}
 
@@ -113,7 +113,7 @@ func (serverConnection *ServerConnection) CreateTerminalSession(name string, row
 	// Create a communication session
 	session, err = serverConnection.connection.NewSession()
 	if err != nil {
-		Log.Fatalf("Failed to create session for pty: %s\n", err)
+		Log.Printf("Failed to create session for pty: %s\n", err)
 		return
 	}
 
@@ -152,20 +152,23 @@ func (serverConnection *ServerConnection) ExecuteCommand(command string, stdout 
 	// Create a communication session
 	sessionPty, err := serverConnection.connection.NewSession()
 	if err != nil {
-		Log.Fatalf("Failed to create session for pty: %s\n", err)
+		Log.Printf("Failed to create session for pty: %s\n", err)
 		return
 	}
-
-	Log.Println("Created a communication session for terminal session successfully!")
 
 	defer func() {
 		sessionPty.Close()
 		Log.Println("Command session with command: ", command, "closed")
 	}()
 
+	//sessionPty.Shell()
 	sessionPty.Stdout = stdout
 	sessionPty.Stderr = stderr
+
 	err = sessionPty.Run(command)
+	if err != nil {
+		Log.Printf("Received err, %v", err)
+	}
 	return err
 }
 

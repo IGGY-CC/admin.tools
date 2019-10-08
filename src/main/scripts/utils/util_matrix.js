@@ -588,6 +588,7 @@ class Matrix extends Observable {
 
         // get the adjacent index which gets effected (its size changed) due the change in this node's size
         const adjacentIndex = (direction === LEFT || direction === TOP)? index - 1 : index + 1;
+        console.log("direction/ADJACENT-INDEX", direction, adjacentIndex);
         this.checkForEdges(isWidth, adjacentIndex);
 
         // is it possible/allowed to resize?

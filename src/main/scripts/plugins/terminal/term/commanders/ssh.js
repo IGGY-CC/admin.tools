@@ -14,7 +14,6 @@ ssh.Commander = function (id) {
     commander.Command.call(this);
     this.id = id;
     this.wss = new Socket();
-    this.name = this.wss.generateSessionID();
     this.sessionID = this.wss.generateSessionID();
     console.log("SESSION ID: ", this.sessionID, this.wss.generateSessionID());
     this.command = "ssh";
@@ -42,13 +41,12 @@ ssh.Commander.prototype.execute = async function (command, terminal) {
             return;
         }
         sshManager.addOccupiedSession(source);
-        this.name = source;
         this.sessionID = source;
         this.action = "share-session";
         let object = {ID: destination};
         this.wss.prepareDefaultEndPoint(this.sessionID, this.command, this.action, this.wss.makeEncodedJSONString(object));
     } else {
-        if(sshManager.checkOccupiedSession(this.name)) {
+        if(sshManager.checkOccupiedSession(this.sessionID)) {
             console.warn("A session already exists with that ID. cannot recreate.");
             return;
         }
@@ -144,8 +142,13 @@ ssh.Commander.prototype.getParamsByID = function (server, rows, columns) {
     sshObject.Port = parseInt(params[2]) || 22;
     sshObject.User = params[0];
     sshObject.Pass = "" + params[3];
-    sshObject.Challenges = ["Verification code: "];
-    sshObject.ChallengePasswords = [sshObject.Pass];
+    if(typeof params === "undefined") {
+        sshObject.Challenges = ["Verification code: "];
+        sshObject.ChallengePasswords = [sshObject.Pass];
+    } else {
+        // sshObject.Challenges = [params[4] + ": "];
+        // sshObject.ChallengePasswords = [sshObject.Pass];
+    }
     sshObject.Rows = rows;
     sshObject.Cols = columns;
 

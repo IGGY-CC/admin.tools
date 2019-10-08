@@ -2,6 +2,7 @@ package server
 
 import (
 	_ssh "../ssh"
+	"strconv"
 
 	"encoding/json"
 	"net/url"
@@ -38,12 +39,19 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 			params.Pass,
 			params.Challenges,
 			params.ChallengePasswords,
-			params.Rows,
-			params.Cols,
 			true,
 			socket,
 		)
-
+		if err != nil {
+			Log.Printf("Error creating connection!")
+			socket.Close()
+		}
+		key := params.User+":"+params.Host+":"+strconv.Itoa(params.Port)
+		err := sshManager.CreateTerminalSession(name, key, socket, params.Rows, params.Cols)
+		if err != nil {
+			Log.Printf("Cannot create a terminal session!")
+			socket.Close()
+		}
 		break
 	case "allow-share-session":
 		type session struct {
@@ -64,6 +72,35 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 		deconstruct(&sess, jsonString)
 		sshManager.ShareSession(name, sess.ID, socket)
 	case "sub-command-init":
+	case "exec":
+		type commandMap struct {
+			Host               string
+			Port               int
+			User               string
+			Pass               string
+			Challenges         []string
+			ChallengePasswords []string
+			Command            string
+		}
+		var command commandMap
+		deconstruct(&command, jsonString)
+		err = sshManager.InitSSHConnection(
+			name,
+			command.Host,
+			command.Port,
+			command.User,
+			command.Pass,
+			command.Challenges,
+			command.ChallengePasswords,
+			true,
+			socket,
+		)
+		key := command.User+":"+command.Host+":"+strconv.Itoa(command.Port)
+		err := sshManager.ExecuteCommand(key, command.Command, socket)
+		if err != nil {
+			Log.Printf("Received err %v while executing command %s for: %s", err, command.Command, name)
+		}
+		socket.Close()
 	case "resize":
 		type dimensions struct {
 			Rows int
