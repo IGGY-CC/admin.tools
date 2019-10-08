@@ -36,6 +36,8 @@ class SSHManager {
                 return "admin:localhost:9038:12345678";
             case("pxe"):
                 return "root:localhost:9022:12345678";
+            case("windows"):
+                return "sanje:localhost:22:@Duhitha20:sanje@localhost's password";
         }
     }
 }

@@ -14,7 +14,7 @@ const TabObject = require("../window-grid/tab-content");
     const TITLE_HEIGHT = 28;
     const MENU_HEIGHT = 83;
     const TOOLBAR_WIDTH = 30;
-    const TAB_WIDTH = 20;
+    const TAB_SIZE = 20;
     const STATUS_HEIGHT = 15;
 
 
@@ -30,10 +30,21 @@ const TabObject = require("../window-grid/tab-content");
     let toolBarContent = grid.createNode("toolbar-tab-content", 2, 1, 3, 1);
     let mainContent = grid.createNode("main-content", 2, 2,1, 1);
     let rightTabContent = grid.createNode("right-tab-content", 2, 3, 3, 1);
-    let rightTab = grid.createNode("right-tab-bar", 2, 4,3, 1, -1, TAB_WIDTH);
+    let rightTab = grid.createNode("right-tab-bar", 2, 4,3, 1, -1, TAB_SIZE);
     let bottomTabContent = grid.createNode("bottom-tab-content", 3, 2,1, 1);
-    let bottomTab = grid.createNode("bottom-tab-bar", 4, 2,1, 1,TAB_WIDTH);
+    let bottomTab = grid.createNode("bottom-tab-bar", 4, 2,1, 1,TAB_SIZE);
     let statusBar = grid.createNode("status-bar", 5, 0,1, MAX_COLS,STATUS_HEIGHT);
+
+    // GridElements.set("title-bar", titleBar);
+    // GridElements.set("menu-bar", menuBar);
+    // GridElements.set("tool-bar", toolBar);
+    GridElements.set("toolbar-tab-content", toolBarContent);
+    GridElements.set("main-content", mainContent);
+    GridElements.set("right-tab-content", rightTabContent);
+    // GridElements.set("right-tab-bar", rightTab);
+    GridElements.set("bottom-tab-content", bottomTabContent);
+    // GridElements.set("bottom-tab-bar", bottomTab);
+    // GridElements.set("status-bar", statusBar);
 
     const tBC = new Resize(toolBarContent, RIGHT, 2);
     const rTC = new Resize(rightTabContent, LEFT, 2);

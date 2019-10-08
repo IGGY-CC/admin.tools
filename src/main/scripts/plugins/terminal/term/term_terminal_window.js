@@ -317,6 +317,7 @@ term.TerminalWindow.prototype.jarvisCommand = function() {
     let command = readline.line;
     let position = readline.linePosition;
 
+    console.log("Final command to be executed", command);
     jarvis.execute(command.replace(term.jarvis.symbol, ""), this).then(()=>{});
 
     for(let index = 0; index < position; index++) {

@@ -8,7 +8,6 @@
 const LEFT_SLIDEOUT_CONTAINER = "toolbar-content";
 const RIGHT_SLIDEOUT_CONTAINER = "right-content";
 const BOTTOM_SLIDEOUT_CONTAINER = "bottom-content";
-const RESIZER_KEY = "-resize-handle";
 
 const LEFT_TAB_KEY = "left-tab-";
 const RIGHT_TAB_KEY = "right-tab-";
@@ -43,7 +42,7 @@ SlideOut.prototype.activate = function(doActivate) {
     let _name = this.name.replace(" ", "-");
     let _key = this.getLocationKey(false) + "content";
     if(doActivate) {
-        // gridWindow_.updateCellSize(_key, (this.location === BOTTOM), this.size, gridWindow_.getResizerDirection(location), true);
+        // GridElements[_key].updateSize(0, true, false, RIGHT);
         document.querySelector("#" + _key).style.display = "";
 
         if(this.isContentLoaded) {
@@ -53,9 +52,9 @@ SlideOut.prototype.activate = function(doActivate) {
         }
         // disable resize handle if content is fixed
         if(this.isContentFixed) {
-            document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "none";
+            // document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "none";
         } else {
-            document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "";
+            // document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "";
         }
     } else {
         // gridWindow_.hideCell(_key, (this.location === BOTTOM), gridWindow_.getResizerDirection(location));

@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"bytes"
 	"errors"
 	"log"
 	"os"
@@ -31,8 +32,7 @@ func (manager *Manager) InitSSHConnection(
 									id string, host string, port int,
 									username string, password string,
 									challenge []string, challengePasswords []string,
-									rows int, cols int, isReuseConnection bool,
-									socket *websocket.Conn) (err error) {
+									isReuseConnection bool, socket *websocket.Conn) (err error) {
 
 	serverConnection := NewServerConnection(host, port)
 	key := username+":"+host+":"+strconv.Itoa(port)
@@ -56,22 +56,25 @@ func (manager *Manager) InitSSHConnection(
 		}
 	}
 
-	err = manager.setupServerConnections(id, key, serverConnection, socket, rows, cols)
-
-	return err
-}
-
-func (manager *Manager) setupServerConnections(id string, key string, connection *ServerConnection, socket *websocket.Conn, rows int, cols int) error {
-	if !connection.isConnected {
+	if !serverConnection.isConnected {
 		// If not yet connected, create a new connection to server
-		err := connection.Connect()
+		err := serverConnection.Connect()
 		if err != nil {
 			return err
 		}
 	}
 
 	// Maintain a list of connections w.r.to their id
-	manager.connections[key] = connection
+	manager.connections[key] = serverConnection
+
+	return err
+}
+
+func (manager *Manager) CreateTerminalSession(id string, key string, socket *websocket.Conn, rows int, cols int) error {
+	connection, ok := manager.connections[key]
+	if !ok {
+		Log.Printf("Couldn't create a Terminal Session for requested key: %s", key)
+	}
 
 	// Setup a terminal client
 	terminalClient, err := manager.createTerminalClient(id, socket)
@@ -88,7 +91,7 @@ func (manager *Manager) setupServerConnections(id string, key string, connection
 	}
 
 	// Maintain a list of terminals w.r.to their id
-	Log.Printf("Saving terminal in terminals at %s", id);
+	Log.Printf("Saving terminal in terminals at %s", id)
 	manager.terminals[id] = terminal
 
 	Log.Printf("Created a new terminal session successfully!")
@@ -98,6 +101,37 @@ func (manager *Manager) setupServerConnections(id string, key string, connection
 
 	Log.Printf("Attached terminal client to new terminal session successfully!")
 
+	return err
+}
+
+func (manager *Manager) ExecuteCommand(key string, command string, socket *websocket.Conn) error {
+	connection, ok := manager.connections[key]
+	if !ok {
+		str := "Couldn't create a Terminal Session for requested key: " + key
+		Log.Printf(str)
+		return errors.New(str)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := connection.ExecuteCommand(command, &stdout, &stderr)
+
+	w, err := socket.NextWriter(websocket.TextMessage)
+	if err != nil {
+		return err
+	}
+
+	_, _ = w.Write(stdout.Bytes())
+	//errorBytes := append([]byte("\u001b[31m"), stderr.Bytes()...)
+	//_, _ = w.Write(append(errorBytes, []byte("\u001b[0m")...))
+	Log.Printf("RECEIVED FROM STDERR: %s", string(stderr.Bytes()))
+
+	if err := w.Close(); err != nil {
+		Log.Printf("Error cloising socket next writer in Stdout")
+		return err
+	}
+
+	socket.Close()
 	return err
 }
 

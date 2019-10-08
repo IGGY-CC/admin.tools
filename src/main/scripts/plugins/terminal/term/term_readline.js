@@ -325,7 +325,6 @@ term.Readline.prototype.onStdIn_ = function(value) {
     this.nextUndoIndex_ = 0;
     this.commands['self-insert'].call(this, string);
   } else {
-    console.log('unhandled: ' + JSON.stringify(string));
     this.nextUndoIndex_ = 0;
     this.commands['self-insert'].call(this, string);
   }
