@@ -1,6 +1,8 @@
 package server
 
 import (
+	_ssh "../ssh"
+
 	"flag"
 	"log"
 	"net/http"
@@ -19,7 +21,7 @@ var upgrader = websocket.Upgrader {
 
 func Init() {
 	flag.Parse()
-	Log = log.New(os.Stdout, "[SSH] ", log.Ldate|log.Ltime|log.Lshortfile)
+	Log = log.New(os.Stdout, "[SERVER] ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// TODO: SECURITY CHECK AND UPDATE
 	upgrader.CheckOrigin = func(_ *http.Request) bool {
@@ -78,20 +80,28 @@ func  webSocketHandlerFunc(writer http.ResponseWriter, reader *http.Request) {
 		jsonString = params[5]
 	}
 
-	socket, err := setupWebSocket(writer, reader)
-	if err != nil {
-		Log.Printf("Cannot create a web socket")
-	}
-
 	switch command {
 	case "ssh":
-		//admSocket.CreateConnection()
-		err := webSocketSSHInit(name, socket, action, jsonString)
+		socket, err := setupWebSocket(writer, reader)
+		if err != nil {
+			Log.Printf("Cannot create a web socket")
+		}
+
+		err = webSocketSSHInit(name, socket, action, jsonString)
 		if err != nil {
 			Log.Printf("Received error: %v", err)
 		}
 		break
 	case "otp":
-		webSocketOTPInit(name, socket, action, jsonString)
+		webSocketOTPInit(writer, action, jsonString)
+	case "logs":
+		socket, err := setupWebSocket(writer, reader)
+		if err != nil {
+			Log.Printf("Cannot create a web socket")
+		}
+
+		socketWriter := _ssh.NewSocketWriter(socket)
+		Log.SetOutput(socketWriter)
+		sshManager.SetLogger(socketWriter)
 	}
 }

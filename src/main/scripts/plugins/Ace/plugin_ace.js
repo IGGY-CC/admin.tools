@@ -9,8 +9,7 @@ const ace = require("./ace/ace.js");
 const BASE_DIR = "./ace/";
 const keyBindings = ["default", "vim", "emacs", "sublime"];
 
-let Ace = {};
-Ace = function() {
+let Ace = function() {
     this.pluginName = "Editor";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);
@@ -175,13 +174,15 @@ Ace.prototype.setFontSize = function(selected) {
 Ace.prototype.onIconClick = function() {
     let editorCell = this.getActiveElement().id;
     let currentEditor = this.registeredEditors.get(editorCell);
+    let editor = null;
     if(typeof currentEditor === "undefined") {
-        let editor = ace.edit(this.getActiveElement().id);
+        editor = ace.edit(this.getActiveElement().id);
         this.registeredEditors.set(editorCell, editor);
     } else {
         console.warn("An editor is already present in the selected cell! Select another cell to create a new editor");
     }
     this.setActiveTabName("Editor");
+    return editor;
 };
 
 Ace.prototype.setupThemeDropDown = function(baseMenuItem) {

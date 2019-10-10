@@ -1,8 +1,7 @@
 'use strict';
 const path = require('path');
 
-let Postit = {};
-Postit = function () {
+let Postit = function () {
     this.pluginName = "Postit";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);

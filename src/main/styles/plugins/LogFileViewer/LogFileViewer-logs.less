@@ -1,0 +1,59 @@
+.logs-area {
+  grid-area: logs-area;
+  background-color: black;
+  display: flex;
+  flex-direction: column-reverse;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .message-background-holder {
+    display: flex;
+    flex-direction: column;
+
+    .message-holder {
+      display: flex;
+      flex-direction: row;
+
+      .date-and-time {
+        min-width: 28ch;
+        padding-right: 8px;
+        text-transform: uppercase;
+        font-family: "OpenSansCondensed";
+        letter-spacing: 1px;
+        font-size: 12px;
+        color: #8add6d;
+      }
+
+      .messages {
+        font-family: OpenSansCondensed;
+        letter-spacing: 1px;
+        font-size: 12px;
+      }
+
+      .message-CRIT {
+        font-weight: 600;
+        color: red;
+      }
+
+      .message-SRVR {
+        font-weight: 600;
+        color: rebeccapurple;
+      }
+
+      .message-SSH {
+        font-weight: 600;
+        color: lightpink;
+      }
+
+      .message-WARN {
+        font-weight: 600;
+        color: orange;
+      }
+
+      .message-INFO {
+        font-weight: 500;
+        color: silver;
+      }
+    }
+  }
+}

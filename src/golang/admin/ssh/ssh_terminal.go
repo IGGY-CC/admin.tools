@@ -251,7 +251,6 @@ func (terminal *Terminal) setupServerToChannel() {
 }
 
 func (terminal *Terminal) setupServerErrToChannel() {
-	Log.Printf("Server stderr to Channel communication initiated %v, %T", terminal, terminal.readFromServer)
 	buf := make([]byte, terminal.rows*terminal.cols)
 	for {
 		n, err := terminal.readErrFromServer(buf)

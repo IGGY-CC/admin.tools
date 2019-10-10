@@ -14,7 +14,8 @@ ssh.Commands = function (id) {
     commander.Command.call(this);
     this.id = id;
     this.groups = {
-        vms: ["jumpbox", "pxe"]
+        vms: ["jumpbox", "pxe"],
+        all: ["windows", "jumpbox", "pxe"],
     }
 };
 
@@ -28,7 +29,7 @@ ssh.Commands.prototype.serverName = function (serverName) {
     return "\r\n\u001b[34;1m[[\u001b[44;1m " + serverName + " \u001b[0m\u001b[34;1m]]\u001b[0m\r\n";
 };
 
-ssh.Commands.prototype.execute = async function (command, terminal) {
+ssh.Commands.prototype.execute = async function (command, terminal, returnData=false) {
     let term = terminal.executeContext;
     let cmdArray = command.split(" ");
     let servers = this.groups[cmdArray[0]];
@@ -62,8 +63,12 @@ ssh.Commands.prototype.execute = async function (command, terminal) {
                     await this.closed(term, servers[index]);
                 },
                 async (data) => {
-                    // collectedData.push(this.serverName(servers[index]) + data);
-                    await term.stdout(this.serverName(servers[index]) + data);
+                    if(returnData) {
+                        returnData(data);
+                    } else {
+                        // collectedData.push(this.serverName(servers[index]) + data);
+                        await term.stdout(this.serverName(servers[index]) + data);
+                    }
                 }
             );
         };
@@ -94,16 +99,22 @@ ssh.Commands.prototype.checkAndSetupParams = function (server, command, wss) {
 };
 
 ssh.Commands.prototype.getParamsByID = function (server, command) {
+    console.log("ID IS: ", this.id);
+    console.log("SSH MANAGER: ", sshManager);
     const data = sshManager.connectTo(this.id, server);
-    const params = data.split(":");
+    const params = data.split(";");
 
     const sshObject = {};
     sshObject.Host = params[1];
     sshObject.Port = parseInt(params[2]) || 22;
     sshObject.User = params[0];
     sshObject.Pass = "" + params[3];
-    sshObject.Challenges = ["Verification code: "];
-    sshObject.ChallengePasswords = [sshObject.Pass];
+
+    if(typeof params[4] !== "undefined") {
+        sshObject.Challenges = [params[4]];
+        sshObject.ChallengePasswords = [params[5]];
+    }
+
     sshObject.Command = command;
 
     return sshObject;

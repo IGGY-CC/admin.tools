@@ -40,15 +40,15 @@ assistant.dialogFlow.prototype.communicate = async function(request) {
     return result.fulfillmentText;
 };
 
-// dfAssistant = new assistant.dialogFlow('appointmentscheduler-bjacvw');
-// dfAssistant.send('hi').then(resp => {
-//     console.log("Received response: ", resp);
-//     return dfAssistant.send('appointment');
-//     // this.send('appointment');
-// }).then(resp => {
-//     console.log("Received second response: ", resp);
-// }).catch(err => {
-//     console.error("Received error:", err);
-// });
+dfAssistant = new assistant.dialogFlow('appointmentscheduler-bjacvw');
+dfAssistant.send('hi').then(resp => {
+    console.log("Received response: ", resp);
+    return dfAssistant.send('appointment');
+    // this.send('appointment');
+}).then(resp => {
+    console.log("Received second response: ", resp);
+}).catch(err => {
+    console.error("Received error:", err);
+});
 
 module.exports = assistant.dialogFlow;

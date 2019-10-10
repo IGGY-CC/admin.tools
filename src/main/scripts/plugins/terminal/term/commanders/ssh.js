@@ -21,6 +21,8 @@ ssh.Commander = function (id) {
     this.connected = false;
     this.responseReceived = false;
     this.action = "init";
+    this.host = null;
+    this.serverMap =null;
 };
 
 ssh.Commander.prototype = Object.create(commander.Command.prototype);
@@ -29,7 +31,8 @@ ssh.Commander.prototype.throwError = function (message) {
     return "\u001b[31m--==[\u001b[43m " + message + " \u001b[0m\u001b[31m]==--\u001b[0m";
 };
 
-ssh.Commander.prototype.execute = async function (command, terminal) {
+ssh.Commander.prototype.execute = async function (command, terminal, serverMap) {
+    this.serverMap = serverMap;
     let term = terminal.executeContext;
     console.log("Command: ", command);
     if (command.toLowerCase().startsWith("id=")) {
@@ -52,6 +55,7 @@ ssh.Commander.prototype.execute = async function (command, terminal) {
         }
         sshManager.addOccupiedSession(this.sessionID);
         let encoded = this.checkAndSetupParams(command, term.arg.rows, term.arg.columns);
+        this.serverMap.set(this.id, this.host);
         this.action = "init";
         this.wss.prepareDefaultEndPoint(this.sessionID, this.command, this.action, encoded);
     }
@@ -119,6 +123,7 @@ ssh.Commander.prototype.getParams = function (command, rows, columns) {
     const data2 = data[1].split(":");
 
     const sshObject = {};
+    this.host = data2[0];
     sshObject.Host = data2[0];
     sshObject.Port = parseInt(data2[1]) || 22;
     sshObject.User = data[0];
@@ -135,20 +140,21 @@ ssh.Commander.prototype.getParams = function (command, rows, columns) {
 
 ssh.Commander.prototype.getParamsByID = function (server, rows, columns) {
     const data = sshManager.connectTo(this.id, server);
-    const params = data.split(":");
+    const params = data.split(";");
 
     const sshObject = {};
+    this.host = params[1];
     sshObject.Host = params[1];
     sshObject.Port = parseInt(params[2]) || 22;
     sshObject.User = params[0];
     sshObject.Pass = "" + params[3];
-    if(typeof params === "undefined") {
-        sshObject.Challenges = ["Verification code: "];
-        sshObject.ChallengePasswords = [sshObject.Pass];
-    } else {
-        // sshObject.Challenges = [params[4] + ": "];
-        // sshObject.ChallengePasswords = [sshObject.Pass];
+
+    if(typeof params[4] !== "undefined") {
+        sshObject.Challenges = [params[4]];
+        sshObject.ChallengePasswords = [params[5]];
     }
+    
+    
     sshObject.Rows = rows;
     sshObject.Cols = columns;
 

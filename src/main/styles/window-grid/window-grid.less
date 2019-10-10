@@ -49,7 +49,7 @@
 }
 
 #toolbar-tab-content {
-  .light-container()
+  .base-container()
 }
 
 #main-content {
@@ -60,7 +60,8 @@
 #right-tab-content {
   //max-width: 350px;
   min-width: 100px;
-  .light-container()
+  position: relative;
+  .base-container()
 }
 
 #right-tab-bar {
@@ -69,7 +70,7 @@
 }
 
 #bottom-tab-content {
-  .light-container();
+  .base-container();
 }
 
 #bottom-tab-bar {
@@ -94,3 +95,4 @@
 @import "tool-bar.less";
 @import "tabs.less";
 @import "main-content.less";
+@import "slideout.less";

@@ -588,7 +588,7 @@ class Matrix extends Observable {
 
         // get the adjacent index which gets effected (its size changed) due the change in this node's size
         const adjacentIndex = (direction === LEFT || direction === TOP)? index - 1 : index + 1;
-        console.log("direction/ADJACENT-INDEX", direction, adjacentIndex);
+        // console.log("direction/ADJACENT-INDEX", direction, adjacentIndex);
         this.checkForEdges(isWidth, adjacentIndex);
 
         // is it possible/allowed to resize?
@@ -625,8 +625,10 @@ class Matrix extends Observable {
             for(let rowIndex = 0; rowIndex < (node.rowStart + node.numRows); rowIndex++) {
                 let adjNode = this.matrix[rowIndex][adjacentIndex];
                 let finWidth = MatrixUtil.floatRound(Math.min(adjNode.width/adjNode.numColumns, this.columns[adjacentIndex]));
+                // console.log("-SIZE (not less than 0) && -SIZE + finWidth < resizeMargin", size, finWidth, this.resizeMargin);
                 if ((size * -1) < 0 && (((size * -1) + finWidth) < this.resizeMargin)) {
-                    throw new Error("Cannot resize further due to adjacent cell constraints!");
+                    // TODO: commented because of a false error
+                    // throw new Error("Cannot resize further due to adjacent cell constraints!");
                 }
             }
         } else {
@@ -639,9 +641,10 @@ class Matrix extends Observable {
             for(let colIndex = 0; colIndex < (node.columnStart + node.numColumns); colIndex++) {
                 let adjNode = this.matrix[adjacentIndex][colIndex];
                 let finHeight = Math.min(adjNode.height/adjNode.numRows, this.rows[adjacentIndex]);
-                if ((size * -1) < 0 && (((size * -1) + finHeight) < this.resizeMargin)) {
-                    throw new Error("Cannot resize further due to adjacent cell constraints!");
-                }
+                // TODO: Disabled due to DEMO purposes
+                // if ((size * -1) < 0 && (((size * -1) + finHeight) < this.resizeMargin)) {
+                //     throw new Error("Cannot resize further due to adjacent cell constraints!");
+                // }
             }
         }
     }
@@ -657,9 +660,10 @@ class Matrix extends Observable {
         } else {
             // This is not a fixed row/column. But are the adjacent ones fixed? if so, the resizing is
             // not allowed in that case as well.
-            if(this.isFixed(adjacentIndex, isWidth)) {
-                throw new Error("Cannot resize the " + textDirection + " as its adjacent " + textDirection + " is non resizeable!");
-            }
+            // TODO: DISABLED DUE TO DEMO PURPOSE
+            // if(this.isFixed(adjacentIndex, isWidth)) {
+            //     throw new Error("Cannot resize the " + textDirection + " as its adjacent " + textDirection + " is non resizeable!");
+            // }
         }
     }
 
