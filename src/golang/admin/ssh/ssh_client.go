@@ -56,7 +56,7 @@ func (serverConnection *ServerConnection) addToIdentifier(key string, value stri
 }
 
 func (serverConnection *ServerConnection) isEqualIdentifier(id map[string]string) bool {
-	Log.Printf("Comparing %v, %v", serverConnection.id, id)
+	//Log.Printf("Comparing %v, %v", serverConnection.id, id)
 	return reflect.DeepEqual(id, serverConnection.id)
 }
 

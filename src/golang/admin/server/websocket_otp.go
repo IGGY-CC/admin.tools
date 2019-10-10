@@ -3,12 +3,11 @@ package server
 import (
 	"../otp"
 	"encoding/json"
-	"log"
-
-	"github.com/gorilla/websocket"
+	"io"
+	"net/http"
 )
 
-func webSocketOTPInit(name string, socket *websocket.Conn, action string, jsonString string) (createAndClose bool){
+func webSocketOTPInit(writer http.ResponseWriter, action string, jsonString string) (createAndClose bool){
 	type OTPData struct{
 		Name string
 		Key string
@@ -21,76 +20,78 @@ func webSocketOTPInit(name string, socket *websocket.Conn, action string, jsonSt
 	var otpData = new(OTPData)
 	err := json.Unmarshal([]byte(jsonString), &otpData)
 	if err != nil {
-		log.Println("Cannot unmarshal provided data", jsonString, otpData)
+		Log.Println("Cannot unmarshal provided data", jsonString, otpData)
 	}
 
 	switch action {
 	case "create":
 		err = otpManager.GenerateTOTP()
 		if err != nil {
-			log.Println("Couldn't generate a new TOTP: ", err)
+			Log.Println("Couldn't generate a new TOTP: ", err)
 			// TODO
-			//socket.WriteHTTP(err.Error())
+			WriteHTTP(err.Error(), writer)
 		}
 		// TODO
-		//socket.WriteHTTP(doMarshall(otpManager))
+		WriteHTTP(doMarshall(otpManager), writer)
 		break
 	case "list":
 		strings, err := otpManager.GetKeys()
 		if err != nil {
-			log.Println("Couldn't retrieve any list")
+			Log.Println("Couldn't retrieve any list")
 		}
-		log.Println("Retrieved list: ", strings)
+		Log.Println("Retrieved list: ", strings)
 		// TODO
-		//socket.WriteHTTP(doMarshall(strings))
+		WriteHTTP(doMarshall(strings), writer)
 		break
 	case "validate":
 		valid := otpManager.ValidateOTP(otpData.Name, otpData.OTP)
 		if !valid {
-			log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
+			Log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "validate-check":
 		err := otpManager.ValidateAndSave(otpData.Name, otpData.OTP)
 		if err != nil {
-			log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
+			Log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "add-new":
 		err = otpManager.CheckAndSave(otpData.Name, otpData.Key, otpData.OTP)
 		if err != nil {
-			log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
+			Log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
 			return
 		}
+		WriteHTTP(doMarshall([]string {"success!"}), writer)
 		break
 	case "add-new-with-OTP":
 		err = otpManager.CheckAndSave(otpData.Name, otpData.Key, otpData.OTP)
 		if err != nil {
-			log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
+			Log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "generate-otp":
-		otp, err := otpManager.GenerateCodeFromNames(otpData.All)
+		otp2, err := otpManager.GenerateCodeFromNames(otpData.All)
 		if err != nil {
-			log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
+			Log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
 			return
 		}
-		log.Println("Generated codes successfully!", otp)
+		Log.Println("Generated codes successfully!", otp2)
 		break
 	case "generate-otp-names":
 		otp, err := otpManager.GenerateCodeFromName(otpData.Name)
 		if err != nil {
-			log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
+			Log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
 			return
 		}
-		log.Println("Generated code successfully!", otp)
+		Log.Println("Generated code successfully!", otp)
+		WriteHTTP(doMarshall([]string{otp}), writer)
 		break
 	}
 
-	//log.Println("OTP Validated Successfully!")
+	Log.Println("OTP Validated Successfully!")
 	//createAndClose = true
 
 	return
@@ -99,7 +100,16 @@ func webSocketOTPInit(name string, socket *websocket.Conn, action string, jsonSt
 func doMarshall(v interface{}) string {
 	bytes, err := json.Marshal(v)
 	if err != nil {
-		log.Println("There is an error Marshalling object to Json string", err)
+		Log.Println("There is an error Marshalling object to Json string", err)
 	}
 	return string(bytes)
+}
+
+func WriteHTTP(data string, writer http.ResponseWriter) {
+	code, err := io.WriteString(writer, data+"\n")
+	//as.httpWriter.(http.Flusher).Flush()
+	//code, err := fmt.Fprintf(*as.httpWriter, data)
+	if err != nil {
+		Log.Println("Error while writing to http(s) stream", err, code)
+	}
 }

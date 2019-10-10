@@ -60,7 +60,7 @@ PluginRegister.prototype.getActiveElement = function () {
 };
 
 PluginRegister.prototype.createNewTab = function() {
-    const gridContainer = tabObject.createNewTab("Editor", "fa fa-file");
+    const gridContainer = tabObject.createNewTab("New Tab", "fa fa-file");
     this.observable(gridContainer);
 };
 
@@ -69,7 +69,7 @@ PluginRegister.prototype.setActiveTabName = function(name) {
 };
 
 PluginRegister.prototype.createSlideOutEntry = function(containerObject) {
-    slideOutObject.createNewEntry(containerObject);
+    return slideOutObject.createNewEntry(containerObject);
 };
 
 PluginRegister.prototype.Start = function () {

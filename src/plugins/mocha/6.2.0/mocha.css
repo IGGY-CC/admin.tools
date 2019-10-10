@@ -258,9 +258,10 @@ body {
 }
 
 #mocha-stats {
-  position: fixed;
-  top: 15px;
-  right: 10px;
+  /*position: fixed;*/
+  /*top: 20px;*/
+  /*right: 10px;*/
+  /*right: 170px;*/
   font-size: 12px;
   margin: 0;
   color: #888;

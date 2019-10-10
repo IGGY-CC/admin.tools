@@ -20,11 +20,11 @@ beforeEach(() => {
     height = MatrixUtil.stripPx(computedStyle.height);
 });
 
-describe.skip("disable all test cases", () => {
-    it('disable all tests', (done) => {
-        done();
-    });
-});
+// describe.skip("disable all test cases", () => {
+//     it('disable all tests', (done) => {
+//         done();
+//     });
+// });
 
 const fr = (size, p=ROUND) => MatrixUtil.floatRound(size, 3, p);
 
@@ -571,7 +571,7 @@ describe('Check resizing a fixed node within the matrix', function () {
     });
 });
 
-describe('Check resizing window & its effects on matrix & its nodes', function () {
+describe.skip('Check resizing window & its effects on matrix & its nodes', function () {
     it('Check for resizing of non-fixed and fixed nodes', (done) => {
         let width = window.innerWidth;
         let height = window.innerHeight;
@@ -627,7 +627,7 @@ describe('Check resizing window & its effects on matrix & its nodes', function (
     });
 });
 
-describe('Check resizing nodes beyond their adjacent dimensions', function () {
+describe.skip('Check resizing nodes beyond their adjacent dimensions', function () {
     it('Check for resizing height beyond adjacent node', (done) => {
         let width = window.innerWidth;
         let height = window.innerHeight;

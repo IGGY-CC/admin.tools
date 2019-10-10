@@ -1,6 +1,7 @@
 class SSHManager {
     constructor() {
         this.servers = new Map();
+        this.ids = new Map();
         this.sessions = new Map();
         this.sockets = new Map();
         this.occupiedSessions = new Set();
@@ -30,14 +31,19 @@ class SSHManager {
     }
 
     connectTo(id, server) {
-        this.servers.set(server, id);
         switch(server) {
             case("jumpbox"):
-                return "admin:localhost:9038:12345678";
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "admin;localhost;9038;12345678;Verification code: ;12345678";
             case("pxe"):
-                return "root:localhost:9022:12345678";
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "root;localhost;9022;12345678;Verification code: ;12345678";
             case("windows"):
-                return "sanje:localhost:22:@Duhitha20:sanje@localhost's password";
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "sanje;localhost;22;@Duhitha20";
         }
     }
 }

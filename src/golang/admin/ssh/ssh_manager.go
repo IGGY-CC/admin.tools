@@ -12,6 +12,7 @@ import (
 )
 
 var Log *log.Logger
+
 func init() {
 	Log = log.New(os.Stdout, "[SSH] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
@@ -26,6 +27,10 @@ func NewManager() (manager *Manager) {
 	manager.connections = make(map[string]*ServerConnection)
 	manager.terminals = make(map[string]*Terminal)
 	return
+}
+
+func (manager *Manager) SetLogger(logWriter *SocketWriter) {
+	Log.SetOutput(logWriter)
 }
 
 func (manager *Manager) InitSSHConnection(
@@ -74,6 +79,7 @@ func (manager *Manager) CreateTerminalSession(id string, key string, socket *web
 	connection, ok := manager.connections[key]
 	if !ok {
 		Log.Printf("Couldn't create a Terminal Session for requested key: %s", key)
+		return errors.New("Couldn't create a Terminal Session for requested key: " + key)
 	}
 
 	// Setup a terminal client

@@ -2,10 +2,10 @@ const CONSOLE_LISTENERS = [];
 const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
 
 (function() {
-    const OVERRIDE = false;
+    const OVERRIDE = true;
     const DEBUG = true;
-    const FILE_DEBUG = true;
-    const CONSOLE_DEBUG = false;
+    const FILE_DEBUG = false;
+    const CONSOLE_DEBUG = true;
     const LISTENERS_DEBUG = true;
 
     const fs = require('fs');
@@ -23,7 +23,7 @@ const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
 
     const getCallee = () => {
         return (new Error()).stack.split("\n")[1].trim().split(" ")[1];
-    }
+    };
 
     const log = (object, type, args) => {
         const date = getDate(null);
@@ -45,5 +45,8 @@ const ADD_CONSOLE = console => { CONSOLE_LISTENERS.push(console) };
         console.error = function () {
             log.call(null, _error, "CRIT", arguments)
         };
+        console.server = function () {
+            log.call(null, _error, "SRVR", arguments)
+        }
     }
 })();

@@ -32,8 +32,8 @@ const TabObject = require("../window-grid/tab-content");
     let rightTabContent = grid.createNode("right-tab-content", 2, 3, 3, 1);
     let rightTab = grid.createNode("right-tab-bar", 2, 4,3, 1, -1, TAB_SIZE);
     let bottomTabContent = grid.createNode("bottom-tab-content", 3, 2,1, 1);
-    let bottomTab = grid.createNode("bottom-tab-bar", 4, 2,1, 1,TAB_SIZE);
-    let statusBar = grid.createNode("status-bar", 5, 0,1, MAX_COLS,STATUS_HEIGHT);
+    let bottomTab = grid.createNode("bottom-tab-bar", 4, 2,1, 1, TAB_SIZE);
+    let statusBar = grid.createNode("status-bar", 5, 0,1, MAX_COLS, STATUS_HEIGHT);
 
     // GridElements.set("title-bar", titleBar);
     // GridElements.set("menu-bar", menuBar);
@@ -91,7 +91,30 @@ const TabObject = require("../window-grid/tab-content");
     require("../plugins/plugin");
 
     // Now that the basic desktop window is setup, load its contents / plugins
-    new LoadPlugins(grid.matrix);
+    Plugins = new LoadPlugins(grid.matrix);
+
+// <div id="the-menu-grid">
+//         <div id="system-resources" class="chart_area">
+//         <!--canvas id="cpudata" class="bb" style="position: relative;" width="160" height="160"></canvas -->
+//         <div id="cpudata" class="bb" style="position: relative;"></div>
+//         <div id="cpu-text"></div>
+//         <div id="cpu-cycles"></div>
+//         </div>
+//         <div id="ram-text">
+//         <div id="ram-text-align"></div>
+//         </div>
+//         <div id="ram-ratio" class="chart_area"></div>
+//         </div>
+    let widgetGrid = document.querySelector("#widget-area");
+    let menuGrid = UtilsUI.createNewElement('div', widgetGrid, 'the-menu-grid');
+    let systemResources = UtilsUI.createNewElement('div', menuGrid, 'system-resources', "chart_area");
+    UtilsUI.createNewElement('div', systemResources, "cpudata", "bb").style.posistion = "relative";
+    UtilsUI.createNewElement('div', systemResources, "cpu-text");
+    UtilsUI.createNewElement('div', systemResources, "cpu-cycles");
+    let ramText = UtilsUI.createNewElement('div', menuGrid, 'ram-text');
+    UtilsUI.createNewElement('div', ramText, "ram-text-align");
+    UtilsUI.createNewElement('div', menuGrid, 'ram-ratio', "chart_area");
+    // let mochaStats = document.querySelector("#mocha-stats");
 
     // const rdp = require('node-rdpjs');
     //

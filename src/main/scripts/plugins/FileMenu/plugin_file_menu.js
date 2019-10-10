@@ -4,10 +4,8 @@
 // found in the LICENSE file.
 
 'use strict';
-const path = require('path');
 
-let FileMenu = {};
-FileMenu = function() {
+let FileMenu = function() {
     this.pluginName = "File";
     // subclass of PluginRegister
     PluginRegister.call(this, this.pluginName);

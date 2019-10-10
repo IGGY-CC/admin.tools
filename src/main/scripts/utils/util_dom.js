@@ -12,7 +12,7 @@ UtilsUI.createNewElement = function(type, parent, id, className, onClick, text, 
     if(UtilsUI.checkParam(parent)) parent.appendChild(element);
     if(UtilsUI.checkParam(id)) element.id = id;
     if(UtilsUI.checkParam(className)) element.className = className;
-    if(UtilsUI.checkParam(onClick)) element.onclick = onClick;
+    if(UtilsUI.checkParam(onClick)) element.addEventListener("click", onClick);
     if(UtilsUI.checkParam(text)) element.innerHTML = text;
     if(UtilsUI.checkParam(placeholder)) element.placeholder = placeholder;
 

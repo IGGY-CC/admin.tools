@@ -8,11 +8,16 @@
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/plugins/Welcome/welcome-logs.less"/>
+    <link rel="stylesheet/less" type="text/css" href="../styles/plugins/LogFileViewer/LogFileViewer-logs.less"/>
     <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/plugins/Authenticator/tfa-manager.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/plugins/ServerInfo/server_info.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/common/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../plugins/mocha/6.2.0/mocha.css" />
+    <link rel="stylesheet" type="text/css" href="../../plugins/billboard/1.8.1/billboard.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" />
 
     <!-- Local scripts -->
     <script type="text/javascript" src="../scripts/utils/util_current_datetime.js"></script>
@@ -34,6 +39,10 @@
     <!-- LESS: Remove in LIVE -->
     <script type="text/javascript" src="../../plugins/less/less.js"></script>
 
+    <!-- billboard.js -->
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/d3/5.9.2/d3.js"></script>
+    <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/billboard/1.8.1/billboard.js"></script>
+
     <!-- hterm -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../scripts/external-edited/hterm_all.js"></script>
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/libdot/third_party/punycode/lib_punycode.js"></script>
@@ -49,6 +58,8 @@
 </div>
 
 <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==">
+    setInterval.__proto__.unref = function () {};
+
     const Observable = require('../scripts/utils/util_observable');
     const Observer = require('../scripts/utils/util_observer');
     const FindFiles = require('../scripts/utils/util_find_files');
@@ -73,6 +84,7 @@
     const CEIL = 1024;
     const ROUND = 2048;
     const GridElements = new Map();
+    let Plugins = null;
 
     // regular constants
     const RESIZE_MARGIN = 4;
@@ -95,7 +107,7 @@
     require("../scripts/window-grid/title-bar");
 
     const PluginRegister = require('../scripts/plugins/plugin');
-
+    require('../scripts/cpu-data');
 </script>
 <!-- MOCHA -->
 <script type="text/javascript" src="../scripts/external-edited/mocha.js"></script>
@@ -112,7 +124,7 @@
 <!--<script src="../../test/spec.js"></script>-->
 <script type="module" class="mocha-exec">
     // require("../../test/browser/test-util_css_grid_manager");
-    // require("../../test/browser/util/test-util_matrix");
+    require("../../test/browser/util/test-util_matrix");
     // require("../../test/browser/util/test-util_grid");
     setTimeout(() => mocha.run(), 1000);
 </script>

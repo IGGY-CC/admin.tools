@@ -1,15 +1,16 @@
-'use strict'
+'use strict';
 
 let swal = require('sweetalert');
 
 let tfa = {};
 
-tfa.UI = function() {
+tfa.UI = function(tfaManager) {
+    this.tfaManager = tfaManager;
     this.timer = null;
     this.newServerDiv = null;
 
-    onloadManager.onLoad(this.activateTFAClick.bind(this));
-    onloadManager.onLoad(this.setupAddNewServer.bind(this));
+    this.activateTFAClick();
+    this.setupAddNewServer();
 
 };
 
@@ -20,7 +21,10 @@ tfa.UI.prototype.activateTFAClick = function() {
             let otp_code  = document.querySelector("#" + otp_server.id + "-otp");
             if(otp_code.style.display === "none") {
                 otp_code.style.display = "";
-                //this.timer(30);
+                this.tfaManager.getOTP(otp_server.id);
+                if(this.timer) {
+                    this.timer(30);
+                }
             } else {
                 otp_code.style.display = "none";
             }
@@ -55,12 +59,12 @@ tfa.UI.prototype.addNewServerUI = function() {
     this.newServerDiv.id = "new-tfa-server";
 
     this.createNewElement("div", this.newServerDiv, "new-tfa-key-label", "", "Key");
-    let key = this.createNewElement("textarea", this.newServerDiv, "new-tfa-key-input");
+    let key = UtilsUI.createNewElement("textarea", this.newServerDiv, "new-tfa-key-input", "", function() { this.select(); });
     this.addIconToInput("new-tfa-input-icon", "fa-key", this.newServerDiv);
     key.addEventListener("keyup", () => this.activateAddButton());
 
     this.createNewElement("div", this.newServerDiv, "new-tfa-name-label", "", "Name/Alias");
-    let nameInput = this.createNewElement("input", this.newServerDiv, "new-tfa-name-input");
+    let nameInput = UtilsUI.createNewElement("input", this.newServerDiv, "new-tfa-name-input", "", function() { this.select(); });
     this.addIconToInput("new-tfa-input-ticon", "fa-address-card", this.newServerDiv);
     nameInput.type = "text";
     nameInput.addEventListener("keyup", () => this.activateAddButton());
@@ -118,7 +122,7 @@ tfa.UI.prototype.addNewServer = function() {
     let name = document.querySelector("#new-tfa-name-input").value.trim();
     let key = document.querySelector("#new-tfa-key-input").value.trim().toUpperCase();
 
-    tfaManager.addNewServer(name, key);
+    this.tfaManager.addNewServer(name, key);
 };
 
 tfa.UI.prototype.setupAddNewServer = function() {
@@ -175,12 +179,14 @@ tfa.UI.prototype.setupProgressBar = function() {
 
 tfa.UI.prototype.displayServers = function(name) {
     let parent = document.querySelector("#otp-servers");
-
+    let iconArray = ["../assets/Ars.svg", "../assets/ATC_Bournemouth.svg", "../assets/chel2.svg", "../assets/aufc.svg",
+        "../assets/bde.svg", "../assets/lpfc4.svg", "../assets/face_auth_fm.svg"];
     let serverElement = this.createNewElement("div", parent, name, "tfa");
     let tfaServer = this.createNewElement("div", serverElement, "", "tfa-server");
     let tfaServerIcon = this.createNewElement("div", tfaServer,"", "tfa-server-icon");
     let tfaImage = this.createNewElement("img", tfaServerIcon);
-    tfaImage.src = "../assets/ATC_Bournemouth.svg";
+    // tfaImage.src = ;
+    tfaImage.src = iconArray[this.tfaManager.servers.size - 1];
     tfaImage.width = "25";
     tfaImage.height = "27";
 
@@ -212,6 +218,7 @@ tfa.UI.prototype.displayServers = function(name) {
     let otpValue = this.createNewElement("div", serverOTP, name + "-otp-value", "otp-value");
     otpValue.innerHTML = "12345678";
     serverOTP.style.display = "none";
+    this.activateTFAClick();
 };
 
 tfa.UI.prototype.confirmDelete = function(name, callback) {
@@ -229,33 +236,38 @@ tfa.UI.prototype.confirmDelete = function(name, callback) {
 };
 
 tfa.Manager = function() {
-    this.ui = new tfa.UI();
-    this.sessionID = "hello-world";
-    this.servers = [];
+    this.ui = new tfa.UI(this);
+    this.sessionID = "hello-world-otp-manager";
+    this.servers = new Set();
     this.getRegisteredList();
+    this.displayList = new Set();
 };
 
 tfa.Manager.prototype.getRegisteredList = function() {
-    let _ws = new ws.Manager("http");
+    let _ws = new ws.Manager("http", undefined, undefined, false);
     _ws.prepareDefaultEndPoint(this.sessionID, "otp", "list");
     let promise = _ws.makeConnection(() => {}, () => {});
     promise.then(response => {
         return response.json();
     }).catch(err => {
-        console.log("ERROR: ", err);
+        console.error("ERROR: ", err);
     }).then(data => {
         this.prepareList(data);
     }).catch(err => {
-        console.log("Error: ", err);
+        console.error("Error: ", err);
     });
 };
 
 tfa.Manager.prototype.prepareList = function(data) {
+    if(data === "") return;
     data.forEach(alias => {
-        console.log("ADDING SERVER: ", alias);
-        this.ui.displayServers(alias);
+        this.servers.add(alias);
+        if(!this.displayList.has(alias)) {
+            this.displayList.add(alias);
+            this.ui.displayServers(alias);
+        }
     });
-    // this.setupProgressBar();
+    this.ui.setupProgressBar();
 };
 
 tfa.Manager.prototype.makeWSObject = function(object) {
@@ -267,7 +279,7 @@ tfa.Manager.prototype.addNewServer = function(name, key) {
     otpData.Name = name;
     otpData.Key = key;
 
-    let _ws = new ws.Manager("http");
+    let _ws = new ws.Manager("http", null, null, false);
     _ws.prepareDefaultEndPoint("new-otp-gen", "otp", "add-new", otpData);
     let promise = _ws.makeConnection(()=>{}, ()=>{});
     promise.then(response => {
@@ -277,6 +289,41 @@ tfa.Manager.prototype.addNewServer = function(name, key) {
     });
 };
 
-let tfaManager = new tfa.Manager();
+tfa.Manager.prototype.deleteServer = function(name) {
+    let otpData = {};
+    otpData.Name = name;
 
-module.exports = tfaManager;
+    let _ws = new ws.Manager("http", null, null, false);
+    _ws.prepareDefaultEndPoint(this.sessionID, "otp", "", otpData);
+    let promise = _ws.makeConnection(()=>{}, ()=>{});
+    promise.then(response => {
+        console.log("Fulfilled with response: ", response.json());
+    }).catch(err => {
+        console.log("ERROR: ", err);
+    });
+};
+
+tfa.Manager.prototype.getOTP = function(name) {
+    let otpData = {};
+    otpData.Name = name;
+
+    let _ws = new ws.Manager("http", undefined, undefined, false);
+    _ws.prepareDefaultEndPoint(this.sessionID, "otp", "generate-otp-names", otpData);
+    let promise = _ws.makeConnection(()=>{}, ()=>{});
+
+    promise.then(response => {
+        console.log("Fulfilled with response: ", response.json());
+    }).catch(err => {
+        console.log("ERROR: ", err);
+    }).then(data => {
+        let otp_value = document.querySelector("#" + name + "-otp-value");
+        otp_value.innerHTML = data || 123456;
+        console.log("GOT VALUE FROM SERVER FOR ", name, data);
+    }).catch(err => {
+        console.error("Error: ", err);
+    });
+};
+// let tfaManager = new tfa.Manager();
+// module.exports = tfaManager;
+
+module.exports = tfa.Manager;

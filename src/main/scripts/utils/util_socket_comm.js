@@ -48,6 +48,7 @@ ws.Manager.prototype.makeConnection = function(resolve, reject) {
 ws.Manager.prototype.makeHTTPConnection = function(resolve, reject) {
     let URL = this.https + this.server + ":" + this.port + this.urlPath;
     status = function(response) {
+        console.log("GOT RESPONSE FROM OTP SERVER: ", response);
         if (response.status >= 200 && response.status < 300) {
             return Promise.resolve(resolve(response));
         } else {

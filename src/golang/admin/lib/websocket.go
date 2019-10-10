@@ -14,8 +14,6 @@ var upgrader = websocket.Upgrader {
 	WriteBufferSize: 1,
 }
 
-var Sockets map[string]*AdmSocket = make(map[string]*AdmSocket)
-
 type AdmSocket struct {
 	name 			string
 	conn 			*websocket.Conn

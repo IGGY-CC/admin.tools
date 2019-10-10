@@ -88,7 +88,7 @@ func (terminalClient *TerminalClient) setupWritesToClient() {
 			_, _ = w.Write(buf.Bytes())
 
 			if err := w.Close(); err != nil {
-				Log.Printf("Error cloising socket next writer in Stderr")
+				Log.Printf("Error closing socket next writer in Stderr")
 				return
 			}
 		}

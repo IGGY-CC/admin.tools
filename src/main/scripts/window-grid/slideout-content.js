@@ -18,10 +18,16 @@ const CONTENT_KEY = SLIDEOUT_KEY + "-main-";
 
 let SlideOut = function() {
     this.name = null;
+    this.icon = null;
     this.location = RIGHT;
+    this.headerHeight = 30;
+    this.pluginPosition = 0;
 
     this.tab = null;
     this.container = null;
+
+    this.header = null;
+    this.content = null;
 
     this.isActive = false;
     this.isContentLoaded = false;
@@ -38,28 +44,29 @@ let SlideOut = function() {
 };
 
 SlideOut.prototype.activate = function(doActivate) {
-    // return;
     let _name = this.name.replace(" ", "-");
     let _key = this.getLocationKey(false) + "content";
+    let slideDirection = this.getSlideDirection();
+
     if(doActivate) {
-        // GridElements[_key].updateSize(0, true, false, RIGHT);
-        document.querySelector("#" + _key).style.display = "";
+        if(slideDirection === TOP || slideDirection === BOTTOM) {
+            GridElements.get(_key).updateSize(this.size, false, false, slideDirection);
+        } else {
+            GridElements.get(_key).updateSize(this.size, true, false, slideDirection);
+        }
+        this.container.style.display = "";
 
         if(this.isContentLoaded) {
             if (this.refreshCallback !== null) this.refreshCallback(CONTENT_KEY + _name);
         } else {
             this.openCallback(CONTENT_KEY + _name);
         }
-        // disable resize handle if content is fixed
-        if(this.isContentFixed) {
-            // document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "none";
-        } else {
-            // document.querySelector("#" + this.getLocationKey() + RESIZER_KEY).style.display = "";
-        }
+
+        this.isActive = true;
     } else {
-        // gridWindow_.hideCell(_key, (this.location === BOTTOM), gridWindow_.getResizerDirection(location));
+        this.container.style.display = "none";
         if(this.closeCallback !== null) this.closeCallback(CONTENT_KEY + _name);
-        document.querySelector("#" + _key).style.display = "none";
+        this.isActive = false;
     }
     this.adjustGridSize(doActivate, this.location);
 };
@@ -81,46 +88,62 @@ SlideOut.prototype.getLocationKey = function(isContainer=true) {
     }
 };
 
+SlideOut.prototype.getSlideDirection = function() {
+    return (this.location === LEFT)? RIGHT : (this.location === RIGHT)? LEFT : (this.location === TOP)? BOTTOM : TOP;
+};
+
 SlideOut.prototype.setupContainer = function() {
+    let _key = this.getLocationKey(false) + "content";
+    let slideDirection = this.getSlideDirection();
+    if(slideDirection === BOTTOM || slideDirection === TOP) {
+        GridElements.get(_key).updateSize(this.size, false, false, BOTTOM);
+    } else {
+        GridElements.get(_key).updateSize(this.size, true, false, slideDirection);
+    }
+
     let parentContainer = "#" + this.getLocationKey();
     let textLocation = null;
     let _name = this.name.replace(" ", "-");
 
     let parent = document.querySelector(parentContainer);
-    let container = UtilsUI.createNewElement('div', parent, SLIDEOUT_KEY + "-content-" + _name, SLIDEOUT_KEY + "-grid-container");
-    this.setupContainerGrid(container);
-    this.setupContainerSize(container);
+    this.container = UtilsUI.createNewElement('div', parent, SLIDEOUT_KEY + "-content-" + _name, SLIDEOUT_KEY + "-grid-container");
+    this.container.style.position = "absolute";
+    this.container.style.top = 0;
+    this.container.style.left = 0;
+    this.container.style.zIndex = 20 + this.pluginPosition;
+    this.setupContainerGrid(this.container);
+    this.setupContainerSize(this.container);
 
-    let headerArea = UtilsUI.createNewElement('div', container, SLIDEOUT_KEY + "-header-" + _name, "header-area");
-    let mainContent = UtilsUI.createNewElement('div', container, CONTENT_KEY + _name, "main-content");
+    this.header = UtilsUI.createNewElement('div', this.container, SLIDEOUT_KEY + "-header-" + _name, "header-area");
+    UtilsUI.createNewElement('span', this.header, SLIDEOUT_KEY + "-header-" + _name + "-icon", this.icon);
+    let headerTitle = UtilsUI.createNewElement('span', this.header, SLIDEOUT_KEY + "-header-" + _name + "-title", "header-text");
+    headerTitle.innerHTML = this.name;
 
-    headerArea.style.gridArea = "header-area";
-    mainContent.style.gridArea = "main-content";
-    mainContent.style.width = this.size + "px";
+    this.content = UtilsUI.createNewElement('div', this.container, CONTENT_KEY + _name, "slideout-main-content");
+    this.content.style.overflow = "auto";
 
-    if(this.location !== BOTTOM) {
-        let borderArea = UtilsUI.createNewElement('div', container, SLIDEOUT_KEY + "-border-" + _name, "border-area");
-        borderArea.style.gridArea = "border-area";
+    this.header.style.gridArea = "header-area";
+    this.content.style.gridArea = "main-content";
+    if(location === BOTTOM) {
+        this.content.style.height = this.size + "px";
+    } else {
+        this.content.style.width = this.size + "px";
     }
 
-    this.container = container;
+    if(this.isActive) {
+        this.container.style.display = "";
+    } else {
+        this.container.style.display = "none";
+    }
 };
 
 SlideOut.prototype.setupContainerGrid = function(container) {
     container.style.display = "grid";
-    let headerSize = (this.requireHeader)? 25 : 0;
-    let borderSize = (this.isContentFixed)? 2 : 0; // If fixed content, we will disable resize handle and this will act as border.
+    let headerSize = (this.requireHeader)? this.headerHeight : 0;
 
     container.style.gridTemplateRows = headerSize + "px auto";
-
-    if(this.location === BOTTOM) {
-        container.style.gridTemplateColumns = "auto";
-        container.style.gridTemplateAreas = '"header-area" "main-content"';
-    } else {
-        container.style.gridTemplateColumns = (this.location === LEFT)? 'auto ' + borderSize + "px" : borderSize + "px auto";
-        container.style.gridTemplateAreas = (this.location === LEFT)? '"header-area header-area" "main-content border-area"' :
-            '"header-area" "header-area" "border-area main-content"';
-    }
+    container.style.gridTemplateColumns = "auto";
+    container.style.gridTemplateAreas = '"header-area" "main-content"';
 };
 
 SlideOut.prototype.setupContainerSize = function(container) {
@@ -150,13 +173,14 @@ let SlideOutManager = function() {
     this.slideouts = [];
 
     this.tabMap = new Map();
-    this.activeTabs = [];
+    this.activeTabs = new Set();
 };
 
 /**
  * containerObject {
  *     name: XXX,
  *     icon: XXX,
+ *     pluginPosition: XX, // the order at which this plugin loads in front - or - after the other plugins
  *     location: RIGHT | LEFT | BOTTOM,
  *     isActive: true, // content window open
  *     isContentFixed: false,  // resizable
@@ -164,6 +188,8 @@ let SlideOutManager = function() {
  *     closeCallback: callback on close
  *     refreshCallback: If content needs to be refreshed
  *     requireHeader: true
+ *     // headerText: XXX  -- not required, shall use "name" attribute
+ *     // headerIcon: XXX -- not required, shall use "icon" attribute
  *     maxSize: XXpx // max resizable width/height of the content element (if isContentFixed is false)
  *     minSize: XXpx // min resizable width/height of the content element (if isContentFixed is false)
  *     size: XXpx // default width/height of the content element
@@ -172,15 +198,20 @@ let SlideOutManager = function() {
  */
 SlideOutManager.prototype.createNewEntry = function(containerObject) {
     let slideOut = this.tabMap.get(containerObject.name);
+    console.log("Creating new entry for: ", containerObject.name);
     if(!slideOut) {
-        let slideOut = new SlideOut();
+        slideOut = new SlideOut();
 
         this.tabMap.set(containerObject.name, slideOut);
 
         slideOut.name = containerObject.name;
+        slideOut.icon = containerObject.icon;
+        slideOut.pluginPosition = containerObject.pluginPosition;
         slideOut.isActive = containerObject.isActive;
         slideOut.isContentFixed = containerObject.isContentFixed;
         slideOut.requireHeader = containerObject.requireHeader;
+        // slideOut.headerText = containerObject.headerText;
+        // slideOut.headerIcon = containerObject.headerIcon;
         slideOut.size = containerObject.size;
         slideOut.minSize = containerObject.minSize;
         slideOut.maxSize = containerObject.maxSize;
@@ -189,13 +220,17 @@ SlideOutManager.prototype.createNewEntry = function(containerObject) {
         slideOut.closeCallback = containerObject.closeCallback;
         slideOut.refreshCallback = containerObject.refreshCallback;
 
-        if(slideOut.location !== LEFT) {
-            this.createNewSlideOutPair(containerObject.name, containerObject.icon, slideOut);
-        }
+        // if(slideOut.isActive) {
+        //     slideOut.activate(true);
+        // }
 
+        // if(slideOut.location !== LEFT) {
+            this.createNewSlideOutPair(containerObject.name, containerObject.icon, slideOut);
+        // }
     } else {
         console.log("Container already created for: ", containerObject.name);
     }
+    return slideOut;
 };
 
 SlideOutManager.prototype.createNewSlideOutPair = function(text, icon, slideOut) {
@@ -228,23 +263,41 @@ SlideOutManager.prototype.createNewSlideOutPair = function(text, icon, slideOut)
     /* Create new TAB Content Pane */
     this.createNewContainer(slideOut);
 
-    if(slideOut.isActive) {
-        this.activeTabs.push(slideOut);
-        this.tabClicked(slideOut);
+    // if(slideOut.isActive) {
+    //     this.activeTabs.add(slideOut);
+    //     this.tabClicked(slideOut);
+    // }
+};
+
+SlideOutManager.prototype.enableTab = function(_slideOut) {
+    _slideOut.tab.className = "tab active";
+    _slideOut.activate(true);
+    this.activeTabs.add(_slideOut);
+};
+
+SlideOutManager.prototype.disableTab = function(_slideOut) {
+    _slideOut.tab.className = "tab";
+    _slideOut.activate(false);
+    this.activeTabs.delete(_slideOut);
+    if(this.activeTabs.size === 0) {
+        let _key = _slideOut.getLocationKey(false) + "content";
+        let slideDirection = _slideOut.getSlideDirection();
+        GridElements.get(_key).updateSize(0, true, false, slideDirection);
     }
 };
 
 SlideOutManager.prototype.tabClicked = function(slideOut) {
     this.slideouts.forEach(_slideOut => {
-        if(_slideOut.id === slideOut.id) {
-            _slideOut.tab.className = "tab active";
-            _slideOut.activate(true);
-            this.activeTabs.push(_slideOut);
+        if(_slideOut.name === slideOut.name) {
+            if(_slideOut.isActive) {
+                this.disableTab(_slideOut);
+            } else {
+                this.enableTab(_slideOut);
+            }
         } else {
             // only deactivate slides that share the same location/side.
             if(_slideOut.location === slideOut.location) {
-                _slideOut.tab.className = "tab";
-                _slideOut.activate(false);
+                this.disableTab(_slideOut);
             }
         }
     });

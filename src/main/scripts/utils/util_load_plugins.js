@@ -62,4 +62,17 @@ LoadPlugins.prototype.startPlugins = function() {
     });
 };
 
+LoadPlugins.prototype.getLoadedPlugin = function(name) {
+    let loadedPlugin = null;
+    this.loadedPlugins.forEach((pluginArray) => {
+        return pluginArray.forEach(plugin => {
+            if(plugin.pluginName === name) {
+                loadedPlugin = plugin;
+                ;
+            }
+        });
+    });
+    return loadedPlugin;
+};
+
 module.exports = LoadPlugins;

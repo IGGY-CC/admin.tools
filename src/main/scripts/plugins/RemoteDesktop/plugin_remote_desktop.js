@@ -1,4 +1,4 @@
-// SOURCE FILE: admin.tools/src/main/scripts/plugins/FileMenu/plugin_file_menu.js
+// SOURCE FILE: admin.tools/src/main/scripts/plugins/RemoteDesktop/plugin_remote_desktop.js
 // Copyright (c) 2019 "Aditya Naga Sanjeevi, Yellapu". All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
