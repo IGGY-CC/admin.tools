@@ -1,7 +1,9 @@
 ws = {};
 
-const _server = "localhost";
-const _port = "16443";
+const _server = "muse.am";
+// const _port = "16443";
+const _port = "443";
+
 
 ws.Manager = function (type, server, port, secure=true) {
     this.server = server || _server;
@@ -37,32 +39,58 @@ ws.Manager.prototype.prepareEndPoint = function(urlPath) {
     this.urlPath = urlPath;
 };
 
-ws.Manager.prototype.makeConnection = function(resolve, reject) {
+ws.Manager.prototype.makeConnection = function(resolve, reject, responseType="json") {
     if(this.type === "ws") {
         return this.makeWSConnection(resolve, reject);
     } else {
-        return this.makeHTTPConnection(resolve, reject);
+        return this.makeHTTPConnection(resolve, reject, responseType);
     }
 };
 
-ws.Manager.prototype.makeHTTPConnection = function(resolve, reject) {
-    let URL = this.https + this.server + ":" + this.port + this.urlPath;
-    status = function(response) {
-        console.log("GOT RESPONSE FROM OTP SERVER: ", response);
+ws.Manager.prototype.makeHTTPConnection = function(resolve, reject, type="json") {
+    let URL;
+    if(this.port === 80 || this.port === 443) {
+        URL = this.https + this.server + this.urlPath;
+    } else {
+        URL = this.https + this.server + ":" + this.port + this.urlPath;
+    }
+    let status = function(response) {
         if (response.status >= 200 && response.status < 300) {
-            return Promise.resolve(resolve(response));
+            let data;
+            switch(type) {
+                case "text":
+                    data = response.text();
+                    break;
+                case "formData":
+                    data = response.formData();
+                    break;
+                case "blob":
+                    data = response.blob();
+                    break;
+                case "arrayBuffer":
+                    data = response.arrayBuffer();
+                    break;
+                case "json":
+                default:
+                    data = response.json();
+                    break;
+            }
+            console.log("CATEGORIZED DATA: ", data);
+            resolve(data); //Promise.resolve(resolve(data));
+            // return Promise.resolve(resolve(data));
         } else {
             return Promise.reject(reject(new Error(response.statusText)));
         }
     };
 
-    return fetch(URL).then(status);
+    return fetch(URL).then((data) => { return status(data) });
 };
 
 ws.Manager.prototype.makeWSConnection = function(onClose, reject, onMessage, onResponseTimer, onResponse) {
     let _this = this;
     return new Promise(() => {
-        let URL = _this.wss + _this.server + ":" + _this.port  + _this.urlPath;
+        // let URL = _this.wss + _this.server + ":" + _this.port  + _this.urlPath;
+        let URL = _this.wss + _this.server + ":443"  + _this.urlPath;
         let server = new WebSocket(URL);
         server.onopen = function() {
             onMessage(server);

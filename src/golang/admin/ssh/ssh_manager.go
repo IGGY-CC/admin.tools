@@ -3,7 +3,9 @@ package ssh
 import (
 	"bytes"
 	"errors"
+	"io"
 	"log"
+	"net"
 	"os"
 	"strconv"
 
@@ -19,7 +21,7 @@ func init() {
 
 type Manager struct {
 	connections map[string]*ServerConnection
-	terminals map[string]*Terminal
+	terminals   map[string]*Terminal
 }
 
 func NewManager() (manager *Manager) {
@@ -33,14 +35,13 @@ func (manager *Manager) SetLogger(logWriter *SocketWriter) {
 	Log.SetOutput(logWriter)
 }
 
-func (manager *Manager) InitSSHConnection(
-									id string, host string, port int,
-									username string, password string,
-									challenge []string, challengePasswords []string,
-									isReuseConnection bool, socket *websocket.Conn) (err error) {
+func (manager *Manager) getServerConnection(
+	host string, port int, username string, password string,
+	challenge []string, challengePasswords []string,
+	isReuseConnection bool, privateKey []byte) (serverConnection *ServerConnection) {
 
-	serverConnection := NewServerConnection(host, port)
-	key := username+":"+host+":"+strconv.Itoa(port)
+	serverConnection = NewServerConnection(host, port)
+	key := username + ":" + host + ":" + strconv.Itoa(port)
 
 	if challenge != nil {
 		for index, challenge := range challenge {
@@ -52,27 +53,167 @@ func (manager *Manager) InitSSHConnection(
 		serverConnection.CreatePasswordAuthMethod(password)
 	}
 
+	if privateKey != nil {
+		serverConnection.CreatePrivateKeyAuthMethod(privateKey)
+	}
+
 	serverConnection.CreateConfig(username, ssh.InsecureIgnoreHostKey())
 
 	if isReuseConnection {
 		existingConnection, ok := manager.connections[key]
 		if ok && existingConnection.isEqualIdentifier(serverConnection.id) {
 			serverConnection = existingConnection
+		} else {
+			log.Printf("DID NOT FIND A CONNECTION TO REUSE: %v:%s:%s", ok, serverConnection.id, key)
 		}
 	}
 
+	err := manager.createConnection(serverConnection, key)
+	if err != nil {
+		log.Printf("THERE IS AN ERROR CREATING CONNECTION: %v", err)
+	}
+	return serverConnection
+}
+
+func (manager *Manager) createConnection(serverConnection *ServerConnection, key string) (err error){
 	if !serverConnection.isConnected {
 		// If not yet connected, create a new connection to server
 		err := serverConnection.Connect()
 		if err != nil {
 			return err
 		}
+
+		// Maintain a list of connections w.r.to their id
+		log.Printf("~~~~~~~ CREATING NEW CONNECTION FOR: %s", key)
+		manager.connections[key] = serverConnection
+	}
+	return err
+}
+
+func (manager *Manager) InitSSHConnection(
+	id string, host string, port int,
+	username string, password string,
+	challenge []string, challengePasswords []string,
+	isReuseConnection bool, socket *websocket.Conn,
+	privateKey []byte) (err error) {
+
+	manager.getServerConnection(host, port, username, password, challenge, challengePasswords, isReuseConnection, privateKey)
+	return err
+}
+
+func (manager *Manager) createLocalConnection() (localConnection net.Listener, err error) {
+	localConnection, err = net.Listen("tcp", "localhost:0")
+	if err != nil {
+		return nil, err
 	}
 
-	// Maintain a list of connections w.r.to their id
-	manager.connections[key] = serverConnection
+	return localConnection, err
+}
 
-	return err
+func (manager *Manager) forwardConnections(local net.Conn, remote net.Conn) {
+	//defer local.Close()
+	closeConnection := make(chan bool)
+
+	// Copy remote data to local
+	go func() {
+		_, err := io.Copy(local, remote)
+		if err != nil {
+			log.Println("error while copying data from remote to local:", err)
+		}
+		closeConnection <- true
+	}()
+
+	// Copy local data to remote
+	go func() {
+		_, err := io.Copy(remote, local)
+		if err != nil {
+			log.Println("error while copying data from local to remote:", err)
+		}
+		closeConnection <- true
+	}()
+
+	<-closeConnection
+	log.Printf("+++++++++++++++ CLOSED LOCAL CONNECTION! ++++++++++++++++++++++++++++")
+}
+
+func (manager *Manager) CheckActiveServerConnection(hostKey string) bool {
+	_, ok := manager.connections[hostKey]
+	if !ok {
+		return false
+	}
+	return true
+}
+func (manager *Manager) UpdateRouteKey(routeKey string, hostKey string) {
+	serverConnection, ok := manager.connections[routeKey]
+	if !ok {
+		log.Printf("Cannot find a server connection for route key")
+		return
+	}
+	manager.connections[hostKey] = serverConnection
+}
+
+func (manager *Manager) TunnelConnection(
+	id string, host string, port int,
+	username string, password string,
+	challenge []string, challengePasswords []string,
+	isReuseConnection bool, socket *websocket.Conn,
+	parentKey string,
+	privateKeyPath string) (key string, err error) {
+
+	var parentConnection *ServerConnection = nil
+
+	if parentKey == "" {
+		return "", errors.New("parent key is mandatory for a tunnel connection")
+	}
+
+	Log.Printf("Getting connection to parent server %s", parentKey)
+	parentConnection = manager.connections[parentKey]
+
+	Log.Printf("Creating a Local connection")
+	localConnection, err := manager.createLocalConnection()
+	if err != nil {
+		return "", err
+	}
+
+	localPort := localConnection.Addr().(*net.TCPAddr).Port
+
+	// Open a remote connection
+	Log.Printf("Creating connection to remote server %s:%d %T %v", host, port, parentConnection, parentConnection.isConnected)
+	remoteConnection, err := parentConnection.connection.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+	if err != nil {
+		return "", err
+	}
+
+	go func() {
+		for {
+			local, err := localConnection.Accept()
+			if err != nil {
+				Log.Print("Couldn't initiate a connection on Localhost")
+			}
+			manager.forwardConnections(local, remoteConnection)
+		}
+	}()
+
+	log.Printf("GETTING PRIVATE KEY FROM THE PARENT SERVER")
+
+	var privateKey []byte
+
+	if privateKeyPath != "" {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		err = manager.executeCommand(parentKey, "cat "+ privateKeyPath, &stdout, &stderr)
+		if err != nil {
+			log.Printf("COULDN'T GET PRIVATE KEY: %v", err)
+		}
+		log.Printf("FOUND PRIVATE KEY %s", string(stdout.Bytes()))
+		if &stdout != nil {
+			privateKey = stdout.Bytes()
+		}
+	}
+	log.Printf("INITIATING SSH CONNECTION to LOCALHOST AT PORT %v", localPort)
+	key = username + ":localhost:" + strconv.Itoa(localPort)
+	return key, manager.InitSSHConnection(id, "localhost", localPort, username, password, challenge, challengePasswords, isReuseConnection, socket, privateKey)
 }
 
 func (manager *Manager) CreateTerminalSession(id string, key string, socket *websocket.Conn, rows int, cols int) error {
@@ -107,6 +248,24 @@ func (manager *Manager) CreateTerminalSession(id string, key string, socket *web
 
 	Log.Printf("Attached terminal client to new terminal session successfully!")
 
+	return err
+}
+
+func (manager *Manager) executeCommand(key string, command string, stdout *bytes.Buffer, stderr *bytes.Buffer) error {
+	connection, ok := manager.connections[key]
+	if !ok {
+		str := "Couldn't create a Terminal Session for requested key: " + key
+		Log.Printf(str)
+		return errors.New(str)
+	}
+
+	log.Printf("EXECUTING COMMAND WITH CONNECTION %v", connection)
+	err := connection.ExecuteCommand(command, stdout, stderr)
+	if err != nil {
+		log.Printf("THERE IS AN ERROR EXECUTING LOCAL COMMAND: %v", err)
+	}
+
+	log.Printf("COMMAND RETURNED DATA %s, %s", string(stdout.Bytes()), string(stderr.Bytes()))
 	return err
 }
 

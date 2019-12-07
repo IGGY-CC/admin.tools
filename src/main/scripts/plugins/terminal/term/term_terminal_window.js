@@ -17,12 +17,7 @@ const Termcap = require("../term/term_termcap");
 const ExecutionContext = require("../term/term_execution_context");
 const ReadLine = require("../term/term_readline");
 const JarvisReadLine = require("../term/term_jarvis_readline");
-const jarvis = require("../term/commanders/jarvis");
-
-term.jarvis = {
-    symbol: "🤖",
-    triggerText: "jarvis",
-};
+const jarvis = require("../../../commanders/jarvis");
 
 /**
  * A window containing an instance of (currently) hterm.
@@ -197,7 +192,10 @@ term.TerminalWindow.prototype.createContext = function() {
         inputHistory: this.inputHistory,
         rows: this.term.io.rowCount,
         columns: this.term.io.columnCount,
-        jarvis: term.jarvis,
+        jarvis: {
+            symbol: jarvis.symbol,
+            triggerText: jarvis.triggerText
+        },
     };
 
     this.readline = ReadLine.main(this.executeContext);
@@ -209,7 +207,10 @@ term.TerminalWindow.prototype.createJarvisContext = function() {
         inputHistory: [], // this.inputHistory,
         rows: this.term.io.rowCount,
         columns: this.term.io.columnCount,
-        jarvis: term.jarvis,
+        jarvis: {
+            symbol: jarvis.symbol,
+            triggerText: jarvis.triggerText
+        },
         tty: {
             isatty: false,
             rows: this.term.io.rowCount,
@@ -304,7 +305,7 @@ term.TerminalWindow.prototype.interpretJarvis = function(str) {
         }
 
         term.async(() => {
-            this.executeContext.stdin(term.jarvis.symbol);
+            this.executeContext.stdin(jarvis.symbol);
         }, [this]);
 
         this.inJarvis = true;
@@ -317,8 +318,8 @@ term.TerminalWindow.prototype.jarvisCommand = function() {
     let command = readline.line;
     let position = readline.linePosition;
 
-    console.log("Final command to be executed", command);
-    jarvis.execute(command.replace(term.jarvis.symbol, ""), this).then(()=>{});
+    console.log("Final command to be executed", command, command.replace(jarvis.symbol, ""));
+    jarvis.execute(command.replace(jarvis.symbol, ""), this).then(()=>{});
 
     for(let index = 0; index < position; index++) {
         /* delete from terminal buffer */

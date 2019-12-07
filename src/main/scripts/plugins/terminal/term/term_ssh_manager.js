@@ -44,6 +44,10 @@ class SSHManager {
                 this.servers.set(server, id);
                 this.ids.set(id, server);
                 return "sanje;localhost;22;@Duhitha20";
+            case("jumpbox2"):
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "@jumpbox;admin;10.1.1.148;22;;Verification code: ;12345678;~/.ssh/id_rsa";
         }
     }
 }

@@ -87,47 +87,30 @@ const TabObject = require("../window-grid/tab-content");
     // Setup the basic tab layout and create a tab
     tabObject = new TabObject(grid.matrix);
 
-    // Search and load any plugins
-    require("../plugins/plugin");
 
-    // Now that the basic desktop window is setup, load its contents / plugins
-    Plugins = new LoadPlugins(grid.matrix);
+    let loggedIn = true;
 
-// <div id="the-menu-grid">
-//         <div id="system-resources" class="chart_area">
-//         <!--canvas id="cpudata" class="bb" style="position: relative;" width="160" height="160"></canvas -->
-//         <div id="cpudata" class="bb" style="position: relative;"></div>
-//         <div id="cpu-text"></div>
-//         <div id="cpu-cycles"></div>
-//         </div>
-//         <div id="ram-text">
-//         <div id="ram-text-align"></div>
-//         </div>
-//         <div id="ram-ratio" class="chart_area"></div>
-//         </div>
-    let widgetGrid = document.querySelector("#widget-area");
-    let menuGrid = UtilsUI.createNewElement('div', widgetGrid, 'the-menu-grid');
-    let systemResources = UtilsUI.createNewElement('div', menuGrid, 'system-resources', "chart_area");
-    UtilsUI.createNewElement('div', systemResources, "cpudata", "bb").style.posistion = "relative";
-    UtilsUI.createNewElement('div', systemResources, "cpu-text");
-    UtilsUI.createNewElement('div', systemResources, "cpu-cycles");
-    let ramText = UtilsUI.createNewElement('div', menuGrid, 'ram-text');
-    UtilsUI.createNewElement('div', ramText, "ram-text-align");
-    UtilsUI.createNewElement('div', menuGrid, 'ram-ratio', "chart_area");
-    // let mochaStats = document.querySelector("#mocha-stats");
+    if(loggedIn) {
+        document.querySelector("#login").style.display = "none";
+        // Search and load any plugins
+        require("../plugins/plugin");
 
-    // const rdp = require('node-rdpjs');
-    //
-    // const client = rdp.createClient({
-    //     enablePerf : true,
-    //     autoLogin : true,
-    //     decompress : false,
-    //     screen : { width : 800, height : 600 },
-    //     locale : 'en',
-    //     logLevel : 'INFO'
-    // }).on('connect', function () {
-    // }).on('close', function() {
-    // }).on('bitmap', function(bitmap) {
-    // }).on('error', function(err) {
-    // }).connect('91.203.200.100', 3389);
+        // Now that the basic desktop window is setup, load its contents / plugins
+        Plugins = new LoadPlugins(grid.matrix);
+
+        let widgetGrid = document.querySelector("#widget-area");
+        let menuGrid = UtilsUI.createNewElement('div', widgetGrid, 'the-menu-grid');
+        let systemResources = UtilsUI.createNewElement('div', menuGrid, 'system-resources', "chart_area");
+        UtilsUI.createNewElement('div', systemResources, "cpudata", "bb").style.posistion = "relative";
+        UtilsUI.createNewElement('div', systemResources, "cpu-text");
+        UtilsUI.createNewElement('div', systemResources, "cpu-cycles");
+        let ramText = UtilsUI.createNewElement('div', menuGrid, 'ram-text');
+        UtilsUI.createNewElement('div', ramText, "ram-text-align");
+        UtilsUI.createNewElement('div', menuGrid, 'ram-ratio', "chart_area");
+        // let mochaStats = document.querySelector("#mocha-stats");
+    } else {
+        document.querySelector("#grid-container").style.display = "none";
+        let login = require("./login");
+        login.setupUI();
+    }
 })();

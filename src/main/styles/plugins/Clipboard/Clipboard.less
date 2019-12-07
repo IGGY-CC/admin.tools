@@ -1,0 +1,145 @@
+@import "base16.less";
+
+*[tooltip]:focus:after {
+  content: attr(tooltip);
+  display:block;
+  position: absolute;
+}
+
+.clipboard {
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .clipboard-entries {
+    background-color: black;
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    .clipboard-defaults {
+      padding: 6px 10px 6px 6px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      color: #0e0e0e;
+    }
+
+    .clip-pin {
+      background-color: @base06;
+      border-bottom: 1px solid darken(@base05, 10%);
+    }
+
+    .clip-text {
+      background-color: @base07;
+      border-bottom: 1px solid @base06;
+    }
+
+    .whitespace-symbols {
+      //color: grey;
+      color: @base05;
+    }
+    .clipboard-entry {
+      display: grid;
+      grid-template-columns: 120px 20px 20px 20px 5px;
+      grid-template-rows: 1fr;
+      grid-template-areas: "text secret pin delete spacer";
+
+      .clipboard-delete {
+        grid-area: delete;
+        padding: 2px;
+        text-align: center;
+        vertical-align: middle;
+        color: @base05;
+        text-shadow: 1px 1px 1px black;
+      }
+
+      .clipboard-text {
+        padding: 2px;
+        vertical-align: middle;
+        font-weight: bold;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+      }
+
+      .clipboard-secret {
+        grid-area: secret;
+        padding: 2px;
+        text-align: center;
+        vertical-align: middle;
+        color: darkgray;
+
+        & > .fa-mask {
+          text-shadow: 1px 1px 2px black;
+        }
+
+        &.active {
+          color: @base0A;
+
+          & > .fa-mask {
+            text-shadow: 1px 1px 1px black;
+          }
+        }
+      }
+
+      .clipboard-pin {
+        grid-area: pin;
+        padding: 2px;
+        font-size: 12px;
+        text-align: center;
+        vertical-align: middle;
+        color: darkgray;
+
+        & > .fa-thumbtack {
+            text-shadow: 1px 1px 2px black;
+        }
+
+        &.active {
+          color: @base0A;
+
+          & > .fa-thumbtack {
+            text-shadow: 1px 1px 1px black;
+          }
+        }
+      }
+
+      &.active { /* active clip board text */
+        background-color: @base0F; //lighten(@base08, 20%);
+        border-left: 6px solid @base0A; // @base0A;
+      }
+
+      &:nth-child(5n+1):not(.active) {
+        color: @base09;
+        border-left: 6px solid @base0F;
+      }
+
+      &:nth-child(5n+2):not(.active) {
+        color: @base0B;
+        border-left: 6px solid @base0E;
+      }
+
+      &:nth-child(5n+3):not(.active) {
+        color: @base0C;
+        border-left: 6px solid @base0D;
+      }
+
+      &:nth-child(5n+4):not(.active) {
+        color: @base0D;
+        border-left: 6px solid @base0C;
+      }
+
+      &:nth-child(5n+5):not(.active) {
+        color: @base0E;
+        border-left: 6px solid @base0B;
+      }
+
+      &:nth-child(5n+6):not(.active) {
+        color: @base0F;
+        border-left: 6px solid @base0A;
+      }
+    }
+  }
+}
