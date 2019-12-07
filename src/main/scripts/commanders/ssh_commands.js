@@ -6,7 +6,7 @@
 'use strict';
 
 const commander = require('./commander');
-const sshManager = require('../term_ssh_manager');
+const sshManager = require('../plugins/terminal/term/term_ssh_manager');
 
 const ssh = {};
 
@@ -15,7 +15,7 @@ ssh.Commands = function (id) {
     this.id = id;
     this.groups = {
         vms: ["jumpbox", "pxe"],
-        all: ["windows", "jumpbox", "pxe"],
+        all: ["windows", "jumpbox", "pxe", "jumpbox2"],
     }
 };
 
@@ -45,7 +45,6 @@ ssh.Commands.prototype.execute = async function (command, terminal, returnData=f
 
         /* Setup Websocket */
         let wss = new Socket();
-        wss.wss = "ws://"; // TODO: disable this line or change it to wss:// in production
         let sessionID = wss.generateSessionID();
         let encoded = this.checkAndSetupParams(servers[index], serverCommand, wss);
         wss.prepareDefaultEndPoint(sessionID, command, action, encoded);
@@ -95,6 +94,9 @@ ssh.Commands.prototype.closed = function (terminal) {
 
 ssh.Commands.prototype.checkAndSetupParams = function (server, command, wss) {
     let params = this.getParamsByID(server, command);
+    if(!Array.isArray(params)) {
+        params = [params];
+    }
     return wss.makeEncodedJSONString(params);
 };
 
@@ -102,6 +104,7 @@ ssh.Commands.prototype.getParamsByID = function (server, command) {
     console.log("ID IS: ", this.id);
     console.log("SSH MANAGER: ", sshManager);
     const data = sshManager.connectTo(this.id, server);
+    console.log("FOUND DATA: ", data);
     const params = data.split(";");
 
     const sshObject = {};

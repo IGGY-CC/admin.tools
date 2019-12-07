@@ -4,7 +4,7 @@
 // found in the LICENSE file.
 
 'use strict';
-let jarvis = require('../terminal/term/commanders/jarvis');
+let jarvis = require('../../commanders/jarvis');
 
 let ServerInfo = function () {
     this.pluginName = "ServerInfo";

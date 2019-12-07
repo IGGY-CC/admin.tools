@@ -25,7 +25,7 @@ LogFileViewer.prototype.Start = function () {
         icon: "fa fa-shipping-fast",
         pluginPosition: this.position,
         location: RIGHT,
-        isActive: true,
+        isActive: false,
         isContentFixed: true,
         openCallback: this.getSlideOutContent.bind(this),
         closeCallback: this.removeSlideOutContent.bind(this),
@@ -47,7 +47,7 @@ LogFileViewer.prototype.getSlideOutContent = async function() {
     if(!this.connected) {
         /* Setup Websocket */
         let wss = new Socket();
-        wss.wss = "ws://"; // TODO: disable this line or change it to wss:// in production
+        wss.wss = "wss://"; // TODO: disable this line or change it to wss:// in production
         let sessionID = wss.generateSessionID();
         let encoded = {};
         wss.prepareDefaultEndPoint(sessionID, "logs", "logs", encoded);
@@ -87,11 +87,13 @@ LogFileViewer.prototype.addMessage = function(message, type) {
     const cs = getComputedStyle(rightContent);
     this.slideOut.content.style.height = parseInt(cs.height) - this.slideOut.headerHeight + "px";
 
-
     //
     const entry = UtilsUI.createNewElement('div', this.logs, "", "message-holder");
     const dateElem = UtilsUI.createNewElement('div', entry, "", "date-and-time");
-    dateElem.innerHTML = getDate();
+    // Log date and time
+    // dateElem.innerHTML = getDate(); -- default value
+    // dateElem.innerHTML = getDate(null, "short", "numeric", "2-digit", "2-digit", "2-digit", null);
+    dateElem.innerHTML = getDate(null, null, null, "2-digit", "2-digit", "2-digit", null);
     if(message.startsWith("[SSH")) {
         const msgElem = UtilsUI.createNewElement('div', entry, "", "messages message-SSH");
         msgElem.innerHTML = message;

@@ -3,16 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Hello, World!</title>
+
+    <!-- Common CSS -->
     <link rel="stylesheet" href="../styles/main.css"/>
     <link rel="stylesheet" href="../styles/common/common.css"/>
+    <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+
+    <!-- Less scripts -->
+    <!-- [TODO: Change the architecture to load these as plain css (without less) and while loading respective plugin] -->
     <link rel="stylesheet/less" type="text/css" href="../styles/window-grid/window-grid.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/common/tool-tip.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/plugins/Welcome/welcome-logs.less"/>
     <link rel="stylesheet/less" type="text/css" href="../styles/plugins/LogFileViewer/LogFileViewer-logs.less"/>
-    <link rel="stylesheet" type="text/css" href="../styles/fonts/fonts.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet/less" type="text/css" href="../styles/plugins/Clipboard/Clipboard.less"/>
+
+    <!-- Plain CSS -->
     <link rel="stylesheet" type="text/css" href="../styles/plugins/Authenticator/tfa-manager.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
     <link rel="stylesheet" type="text/css" href="../styles/plugins/ServerInfo/server_info.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
     <link rel="stylesheet" type="text/css" href="../styles/common/menu.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
+    <link rel="stylesheet" type="text/css" href="../styles/common/login.css" nonce="ZXh0ZXJuYWwgc2NyaXB0cw=="/>
 
     <!-- External/third-party CSS files -->
     <link rel="stylesheet" type="text/css" href="../../plugins/fontawesome/5.9.0/css/all.min.css"/>
@@ -50,10 +59,26 @@
 
     <!-- simplebar: scrollbar -->
     <script type="text/javascript" nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/simplebar/4.0.0/simplebar.min.js"></script>
+
+    <!-- jailed -->
+    <script nonce="ZXh0ZXJuYWwgc2NyaXB0cw==" src="../../plugins/jailed/jailed-0.3.1/lib/jailed.js"></script>
+
     <!-- end external scripts -->
 </head>
-<body>
+<body style="border-radius: 5px;">
+<!--<div id="login">-->
+<!--    <script>-->
+<!--        let api = {-->
+<!--            alert: alert,-->
+<!--            querySelector: document.querySelector-->
+<!--        };-->
+<!--        let plugin = new jailed.Plugin("https://muse.am/web/scripts/login.js", api);-->
+<!--        // let code = "application.remote.alert('Hello from the plugin!');";-->
+<!--        // let plugin = new jailed.DynamicPlugin(code, api);-->
 
+<!--    </script>-->
+<!--</div>-->
+<div id="login"></div>
 <div id="grid-container" style="width: 100%; height: 100%">
 </div>
 
@@ -63,6 +88,7 @@
     const Observable = require('../scripts/utils/util_observable');
     const Observer = require('../scripts/utils/util_observer');
     const FindFiles = require('../scripts/utils/util_find_files');
+    const LocalDB = require('../scripts/utils/util_local_db');
     const UtilsUI = require("../scripts/utils/util_dom");
     const utilListeners = require("../scripts/utils/util_listeners");
     const Resize = require("../scripts/utils/util_resize");
@@ -70,6 +96,8 @@
     const { Matrix, MatrixNode, MatrixUtil } = require('../scripts/utils/util_matrix');
     const Grid = require('../scripts/utils/util_grid');
     const Socket = require('../scripts/utils/util_socket_comm');
+    const Jailed = jailed;
+    require('../scripts/utils/util_clipboard');
     require('../scripts/assistants/dialogflow/dialogflow');
 
     const VERTICAL = 2;
@@ -84,7 +112,8 @@
     const CEIL = 1024;
     const ROUND = 2048;
     const GridElements = new Map();
-    let Plugins = null;
+    let server = "local";
+    let Plugins = null; /* TODO: INSECURE -- REMOVE AFTER RE-ARCHITECTURE */
 
     // regular constants
     const RESIZE_MARGIN = 4;
@@ -122,11 +151,11 @@
     mocha.checkLeaks();
 </script>
 <!--<script src="../../test/spec.js"></script>-->
-<script type="module" class="mocha-exec">
+<!-- script type="module" class="mocha-exec">
     // require("../../test/browser/test-util_css_grid_manager");
     require("../../test/browser/util/test-util_matrix");
     // require("../../test/browser/util/test-util_grid");
     setTimeout(() => mocha.run(), 1000);
-</script>
+</script -->
 </body>
 </html>

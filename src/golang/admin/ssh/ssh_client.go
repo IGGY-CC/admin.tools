@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"io"
+	"log"
 	"net"
 	"reflect"
 	"strconv"
@@ -67,7 +68,18 @@ func (serverConnection *ServerConnection) CreateConfig(username string, hostKeyC
 		Auth: serverConnection.auth,
 
 		// This callback function validates the server.
-		HostKeyCallback: hostKeyCallback,
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			log.Printf("HOSTKEYCALLBACK: hostname")
+			log.Printf("hostname: %s", hostname)
+			log.Printf("remote: %v, port %d, IP %s, Zone %s", remote, remote.(*net.TCPAddr).Port, remote.(*net.TCPAddr).IP, remote.(*net.TCPAddr).Zone)
+			log.Printf("key: %v", key)
+			// Return nil because we want the connection to move forward
+			return nil
+		},
+		BannerCallback: func(message string) error {
+			log.Printf("BANNER: %s", message)
+			return nil
+		},
 	}
 	serverConnection.addToIdentifier("USER", username)
 }
@@ -87,13 +99,22 @@ func (serverConnection *ServerConnection) CreatePasswordAuthMethod(password stri
 	serverConnection.auth = append(serverConnection.auth, ssh.Password(password))
 }
 
+func (serverConnection *ServerConnection) CreatePrivateKeyAuthMethod(keyData []byte) {
+	signer, err := ssh.ParsePrivateKey(keyData)
+	if err != nil {
+		log.Printf("COULDN'T PARSE GIVEN BYTES INTO PRIVATE KEY: %v", err)
+	}
+	serverConnection.addToIdentifier("KEY", string(keyData)[10:20])
+	serverConnection.auth = append(serverConnection.auth, ssh.PublicKeys(signer))
+}
+
 func (serverConnection ServerConnection) Close() {
 	serverConnection.connection.Close()
 	serverConnection.isConnected = false
 }
 
 func (serverConnection *ServerConnection) Connect() (err error) {
-	Log.Printf("Connecting to server %s on port %d with Config %v", serverConnection.host, serverConnection.port, serverConnection.config)
+	Log.Printf("Connecting to server %s on port %d with Config %v:%v:%v", serverConnection.host, serverConnection.port, serverConnection.config.User, serverConnection.config.Auth, serverConnection.config.HostKeyCallback)
 
 	// Connect to host
 	serverConnection.connection, err = ssh.Dial("tcp", net.JoinHostPort(serverConnection.host, strconv.Itoa(serverConnection.port)), serverConnection.config)

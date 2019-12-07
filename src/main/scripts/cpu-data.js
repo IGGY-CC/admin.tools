@@ -68,7 +68,7 @@ chart.zoom.enable(true);
 
 let cpuFrequency;
 
-function cpuTimes() {
+function localCPUTimes() {
   const cpus = os.cpus();
   return cpus.map(cpu => {
     const times = cpu.times;
@@ -77,11 +77,25 @@ function cpuTimes() {
       tick: Object.keys(times).reduce((tick, time) => tick + times[time], 0),
       idle: times.idle,
     }
-  })
+  });
+}
+
+function cpuTimes() {
+  switch(server) {
+    case "remote":
+
+    case "local":
+    default:
+      return localCPUTimes();
+  }
+
 }
 
 let initMeasurements = cpuTimes();
-document.getElementById("cpu-cycles").innerHTML = os.cpus().length + " * " + cpuFrequency;
+let element = document.getElementById("cpu-cycles");
+if(element !== null) {
+  element.innerHTML = os.cpus().length + " * " + cpuFrequency;
+}
 
 // Set a delay of 1 sec (timeout) before the next call to cpu times and next update to graph
 setTimeout(function () {
@@ -89,10 +103,16 @@ setTimeout(function () {
     const currentMeasurements = cpuTimes();
     const diffValues = currentMeasurements.map((cur, i) => {
       return ((cur.idle - initMeasurements[i].idle) / (cur.tick - initMeasurements[i].tick) * 100);
-    })
+    });
     initMeasurements = currentMeasurements;
-    totalPercentage = 100 - ((diffValues.reduce((sum, val) => sum + val)) / os.cpus().length);
-    document.getElementById("cpu-text").innerHTML = totalPercentage.toFixed(1) + "%";
+
+    let totalPercentage = 100 - ((diffValues.reduce((sum, val) => sum + val)) / os.cpus().length);
+    let textElement = document.getElementById("cpu-text");
+
+    if(textElement !== null) {
+      textElement.innerHTML = totalPercentage.toFixed(1) + "%";
+    }
+
     chart.flow({
       columns: [
         ["x", new Date().getUTCSeconds()],

@@ -244,7 +244,8 @@ tfa.Manager = function() {
 };
 
 tfa.Manager.prototype.getRegisteredList = function() {
-    let _ws = new ws.Manager("http", undefined, undefined, false);
+    // let _ws = new ws.Manager("https", undefined, undefined, true);
+    let _ws = new ws.Manager();
     _ws.prepareDefaultEndPoint(this.sessionID, "otp", "list");
     let promise = _ws.makeConnection(() => {}, () => {});
     promise.then(response => {
@@ -279,7 +280,8 @@ tfa.Manager.prototype.addNewServer = function(name, key) {
     otpData.Name = name;
     otpData.Key = key;
 
-    let _ws = new ws.Manager("http", null, null, false);
+    // let _ws = new ws.Manager("http", null, null, false);
+    let _ws = new ws.Manager();
     _ws.prepareDefaultEndPoint("new-otp-gen", "otp", "add-new", otpData);
     let promise = _ws.makeConnection(()=>{}, ()=>{});
     promise.then(response => {

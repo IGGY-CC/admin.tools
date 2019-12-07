@@ -3,8 +3,7 @@ const uuid = require('uuid');
 
 // IMPORTANT: Before executing, create an environment variable in the command prompt
 // and then do `npm start`
-// set GOOGLE_APPLICATION_CREDENTIALS=C:\AdityaNagaSanjeevi\Programming\MyLiveProducts\admin.tools\admin.tools\src\main\scripts\assistants\dialogflow\A
-// ppointmentScheduler-8ba0293f3f52.json
+// set GOOGLE_APPLICATION_CREDENTIALS=C:\AdityaNagaSanjeevi\Programming\MyLiveProducts\admin.tools\admin.tools\src\main\scripts\assistants\dialogflow\AppointmentScheduler-8ba0293f3f52.json
 //
 assistant = {};
 
@@ -40,15 +39,15 @@ assistant.dialogFlow.prototype.communicate = async function(request) {
     return result.fulfillmentText;
 };
 
-dfAssistant = new assistant.dialogFlow('appointmentscheduler-bjacvw');
-dfAssistant.send('hi').then(resp => {
-    console.log("Received response: ", resp);
-    return dfAssistant.send('appointment');
-    // this.send('appointment');
-}).then(resp => {
-    console.log("Received second response: ", resp);
-}).catch(err => {
-    console.error("Received error:", err);
-});
+// dfAssistant = new assistant.dialogFlow('appointmentscheduler-bjacvw');
+// dfAssistant.send('hi').then(resp => {
+//     console.log("Received response: ", resp);
+//     return dfAssistant.send('appointment');
+//     // this.send('appointment');
+// }).then(resp => {
+//     console.log("Received second response: ", resp);
+// }).catch(err => {
+//     console.error("Received error:", err);
+// });
 
 module.exports = assistant.dialogFlow;

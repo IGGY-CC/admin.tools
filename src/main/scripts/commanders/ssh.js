@@ -6,7 +6,7 @@
 'use strict';
 
 const commander = require('./commander');
-const sshManager = require('../term_ssh_manager');
+const sshManager = require('../plugins/terminal/term/term_ssh_manager');
 
 const ssh = {};
 
@@ -17,12 +17,13 @@ ssh.Commander = function (id) {
     this.sessionID = this.wss.generateSessionID();
     console.log("SESSION ID: ", this.sessionID, this.wss.generateSessionID());
     this.command = "ssh";
-    this.wss.wss = "ws://"; // TODO: disable this line or change it to wss:// in production
+    this.wss.wss = "wss://";
     this.connected = false;
-    this.responseReceived = false;
     this.action = "init";
     this.host = null;
     this.serverMap =null;
+    this.route = false;
+    this.callback = null;
 };
 
 ssh.Commander.prototype = Object.create(commander.Command.prototype);
@@ -31,7 +32,8 @@ ssh.Commander.prototype.throwError = function (message) {
     return "\u001b[31m--==[\u001b[43m " + message + " \u001b[0m\u001b[31m]==--\u001b[0m";
 };
 
-ssh.Commander.prototype.execute = async function (command, terminal, serverMap) {
+ssh.Commander.prototype.execute = async function (command, terminal, serverMap, callback) {
+    this.callback = callback;
     this.serverMap = serverMap;
     let term = terminal.executeContext;
     console.log("Command: ", command);
@@ -55,8 +57,9 @@ ssh.Commander.prototype.execute = async function (command, terminal, serverMap) 
         }
         sshManager.addOccupiedSession(this.sessionID);
         let encoded = this.checkAndSetupParams(command, term.arg.rows, term.arg.columns);
+        console.log("FINAL ENCODED MESSAGE: ", encoded);
         this.serverMap.set(this.id, this.host);
-        this.action = "init";
+        this.action = (this.route)? "route" : "init";
         this.wss.prepareDefaultEndPoint(this.sessionID, this.command, this.action, encoded);
     }
     await this.wss.makeWSConnection(
@@ -88,6 +91,10 @@ ssh.Commander.prototype.checkAndSetupParams = function (server, rows, columns) {
         params = this.getParamsByID(server, rows, columns);
     }
 
+    if(!Array.isArray(params)) {
+        params = [params];
+    }
+    console.log("FINAL MESSAGE: ", params);
     return this.wss.makeEncodedJSONString(params);
 };
 
@@ -100,10 +107,10 @@ ssh.Commander.prototype.closed = function (terminal) {
 };
 
 ssh.Commander.prototype.connecting = function (terminal) {
-    terminal.stdout("🦅 \u001b[31mconnecting\u001b[0m...");
+    terminal.stdout("🦅 \u001b[31mconnecting\u001b[0m.");
     this.interval = setInterval(() => {
-        terminal.stdout(".");
-    }, 200);
+        terminal.stdout(" .");
+    }, 400);
     setTimeout(() => {
         this.closed(terminal);
     }, 10000);
@@ -116,6 +123,9 @@ ssh.Commander.prototype.onClose = function (terminal, message) {
     terminal.inRemote = false;
     terminal.jarvisReadline = null;
     terminal.createContext();
+    if(this.callback) {
+        this.callback();
+    }
 };
 
 ssh.Commander.prototype.getParams = function (command, rows, columns) {
@@ -138,11 +148,24 @@ ssh.Commander.prototype.getParams = function (command, rows, columns) {
     return sshObject;
 };
 
-ssh.Commander.prototype.getParamsByID = function (server, rows, columns) {
-    const data = sshManager.connectTo(this.id, server);
+ssh.Commander.prototype.getParamsByID = function (server, rows, columns, route=false) {
+    let id = (route)? this.id + "-1" : this.id;
+    const data = sshManager.connectTo(id, server);
     const params = data.split(";");
 
-    const sshObject = {};
+    if(params[0].startsWith("@")) {
+        this.route = true;
+        const sshObject = [];
+        sshObject.push(this.getParamsByID(params.shift().substr(1), rows, columns, true));
+        sshObject.push(this.setupData(params, rows, columns));
+        return sshObject;
+    } else {
+        return this.setupData(params, rows, columns);
+    }
+};
+
+ssh.Commander.prototype.setupData = function(params, rows, columns) {
+    let sshObject = {};
     this.host = params[1];
     sshObject.Host = params[1];
     sshObject.Port = parseInt(params[2]) || 22;
@@ -151,10 +174,17 @@ ssh.Commander.prototype.getParamsByID = function (server, rows, columns) {
 
     if(typeof params[4] !== "undefined") {
         sshObject.Challenges = [params[4]];
+    }
+
+    if(typeof params[5] !== "undefined") {
         sshObject.ChallengePasswords = [params[5]];
     }
-    
-    
+
+    if(typeof params[6] !== "undefined") {
+        sshObject.Key = params[6];
+    }
+
+
     sshObject.Rows = rows;
     sshObject.Cols = columns;
 

@@ -34,14 +34,8 @@ UtilsUI.removeElement = function(element, parent, cleanUp=true) {
     };
 
     let removeRecursive = (child, parent) => {
-        if(child !== null) {
-            removeChildren(child);
-            console.log("REMOVING: ", child);
-            parent.removeChild(child);
-        } else {
-            // Request is to remove all children from parent
-            removeChildren(parent);
-        }
+        removeChildren(child);
+        parent.removeChild(child);
     };
 
     if(cleanUp === true) {

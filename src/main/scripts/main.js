@@ -1,6 +1,6 @@
-'use strict'
+'use strict';
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, MenuItem} = require('electron');
+const {app, BrowserWindow, Menu, MenuItem } = require('electron');
 require('electron-reload')(__dirname);
 
 // var ppapiPath = __dirname + '\\..\\..\\plugins\\pnacl\\ssh_client\\ssh_client.nmf';
@@ -21,6 +21,7 @@ function createWindow() {
         height: 600,
         minHeight: 600,
         frame: false,
+        transparent: true,
         webPreferences: {
             contextIsolation: false,
             sandbox: false,
@@ -57,11 +58,22 @@ function createWindow() {
 
 }
 
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    // if (url === 'https://github.com') {
+    // Verification logic.
+    event.preventDefault();
+    console.log("CERTIFICATE ERROR RECEIVED");
+    callback(true);
+    // } else {
+    //     callback(false)
+    // }
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', function() {
-    createWindow()
+    createWindow();
 
     const template = [];
     const menu = Menu.buildFromTemplate(template);
