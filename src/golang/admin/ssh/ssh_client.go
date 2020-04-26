@@ -85,6 +85,7 @@ func (serverConnection *ServerConnection) CreateConfig(username string, hostKeyC
 }
 
 func (serverConnection *ServerConnection) CreateKBIAuthMethod(password string, catchPhrase string) {
+	Log.Printf("Using password verification: %s, %s", catchPhrase, password)
 	answers := keyboardInteractive(map[string]string{
 		catchPhrase: password,
 	})
@@ -179,7 +180,7 @@ func (serverConnection *ServerConnection) ExecuteCommand(command string, stdout 
 
 	defer func() {
 		sessionPty.Close()
-		Log.Println("Command session with command: ", command, "closed")
+		//Log.Println("Command session with command: ", command, "closed")
 	}()
 
 	//sessionPty.Shell()
@@ -188,7 +189,7 @@ func (serverConnection *ServerConnection) ExecuteCommand(command string, stdout 
 
 	err = sessionPty.Run(command)
 	if err != nil {
-		Log.Printf("Received err, %v", err)
+		//Log.Printf("Received err, %v", err)
 	}
 	return err
 }

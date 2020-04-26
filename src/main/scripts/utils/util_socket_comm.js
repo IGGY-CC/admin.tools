@@ -75,7 +75,7 @@ ws.Manager.prototype.makeHTTPConnection = function(resolve, reject, type="json")
                     data = response.json();
                     break;
             }
-            console.log("CATEGORIZED DATA: ", data);
+            // console.log("CATEGORIZED DATA: ", data);
             resolve(data); //Promise.resolve(resolve(data));
             // return Promise.resolve(resolve(data));
         } else {

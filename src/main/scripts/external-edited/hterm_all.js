@@ -16,9 +16,32 @@
 // libdot/js/lib_storage_chrome.js
 // libdot/js/lib_storage_local.js
 // libdot/js/lib_storage_memory.js
+// libdot/js/lib_storage_terminal_private.js
 // libdot/third_party/fast-text-encoding/text.js
 // libdot/third_party/intl-segmenter/intl-segmenter.js
 // libdot/third_party/wcwidth/lib_wc.js
+// hterm/js/hterm.js
+// hterm/js/hterm_accessibility_reader.js
+// hterm/js/hterm_contextmenu.js
+// hterm/js/hterm_frame.js
+// hterm/js/hterm_keyboard.js
+// hterm/js/hterm_keyboard_bindings.js
+// hterm/js/hterm_keyboard_keymap.js
+// hterm/js/hterm_keyboard_keypattern.js
+// hterm/js/hterm_options.js
+// hterm/js/hterm_parser.js
+// hterm/js/hterm_parser_identifiers.js
+// hterm/js/hterm_preference_manager.js
+// hterm/js/hterm_pubsub.js
+// hterm/js/hterm_screen.js
+// hterm/js/hterm_scrollport.js
+// hterm/js/hterm_terminal.js
+// hterm/js/hterm_terminal_io.js
+// hterm/js/hterm_text_attributes.js
+// hterm/js/hterm_vt.js
+// hterm/js/hterm_vt_character_map.js
+// hterm\audio\bell.ogg
+// hterm\images\icon-96.png
 
 'use strict';
 
@@ -28,11 +51,6 @@
 // found in the LICENSE file.
 
 const lib = {};
-
-// Export for node environments.
-if (typeof exports !== 'undefined') {
-  module.exports = lib;
-}
 
 /**
  * List of functions that need to be invoked during library initialization.
@@ -52,8 +70,9 @@ lib.initCallbacks_ = [];
  *
  * @param {string} name A short descriptive name of the init routine useful for
  *     debugging.
- * @param {function(function)} callback The initialization function to register.
- * @return {function} The callback parameter.
+ * @param {function(function())} callback The initialization function to
+ *     register.
+ * @return {function(function())} The callback parameter.
  */
 lib.registerInit = function(name, callback) {
   lib.initCallbacks_.push([name, callback]);
@@ -71,19 +90,18 @@ lib.registerInit = function(name, callback) {
  *
  * @param {function()} onInit The function to invoke when initialization is
  *     complete.
- * @param {function(*)} opt_logFunction An optional function to send
- *     initialization related log messages to.
+ * @param {function(*)=} logFunction An optional function to send initialization
+ *     related log messages to.
  */
-
-lib.init = function(onInit, opt_logFunction) {
-  // console.log("lib init function called", onInit);
+lib.init = function(onInit, logFunction) {
   var ary = lib.initCallbacks_;
 
   var initNext = function() {
     if (ary.length) {
       var rec = ary.shift();
-      if (opt_logFunction)
-        opt_logFunction('admin.tools init: ' + rec[0]);
+      if (logFunction) {
+        logFunction(`muse.am init: ${rec[0]}`);
+      }
       rec[1](initNext);
     } else {
       onInit();
@@ -95,6 +113,55 @@ lib.init = function(onInit, opt_logFunction) {
 
   setTimeout(initNext, 0);
 };
+
+/**
+ * Verify |condition| is truthy else throw Error.
+ *
+ * This function is primarily for satisfying the JS compiler and should be
+ * used only when you are certain that your condition is true.  The function is
+ * designed to have a version that throws Errors in tests if condition fails,
+ * and a nop version for production code.  It configures itself the first time
+ * it runs.
+ *
+ * @param {boolean} condition A condition to check.
+ * @closurePrimitive {asserts.truthy}
+ */
+lib.assert = function(condition) {
+  if (window.chai) {
+    lib.assert = window.chai.assert;
+  } else {
+    lib.assert = function(condition) {};
+  }
+  lib.assert(condition);
+};
+
+/**
+ * Verify |value| is not null and return |value| if so, else throw Error.
+ * See lib.assert.
+ *
+ * @template T
+ * @param {T} value A value to check for null.
+ * @return {T} A non-null |value|.
+ * @closurePrimitive {asserts.truthy}
+ */
+lib.notNull = function(value) {
+  lib.assert(value !== null);
+  return value;
+};
+
+/**
+ * Verify |value| is not undefined and return |value| if so, else throw Error.
+ * See lib.assert.
+ *
+ * @template T
+ * @param {T} value A value to check for null.
+ * @return {T} A non-undefined |value|.
+ * @closurePrimitive {asserts.truthy}
+ */
+lib.notUndefined = function(value) {
+  lib.assert(value !== undefined);
+  return value;
+};
 // SOURCE FILE: libdot/js/lib_polyfill.js
 // Copyright 2017 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -102,10 +169,21 @@ lib.init = function(onInit, opt_logFunction) {
 
 /**
  * @fileoverview Polyfills for ES2016+ features we want to use.
+ * @suppress {duplicate} This file redefines many functions.
  */
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart
-if (!String.prototype.padStart) {
+/** @const */
+lib.polyfill = {};
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padStart
+ */
+lib.polyfill.stringPadStart = function() {
+  /**
+   * @param {number} targetLength
+   * @param {string=} padString
+   * @return {string}
+   */
   String.prototype.padStart = function(targetLength, padString) {
     // If the string is already long enough, nothing to do!
     targetLength -= this.length;
@@ -121,10 +199,21 @@ if (!String.prototype.padStart) {
 
     return padString.slice(0, targetLength) + String(this);
   };
+};
+
+if (!String.prototype.padStart) {
+  lib.polyfill.stringPadStart();
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd
-if (!String.prototype.padEnd) {
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/padEnd
+ */
+lib.polyfill.stringPadEnd = function() {
+  /**
+   * @param {number} targetLength
+   * @param {string=} padString
+   * @return {string}
+   */
   String.prototype.padEnd = function(targetLength, padString) {
     // If the string is already long enough, nothing to do!
     targetLength -= this.length;
@@ -140,17 +229,27 @@ if (!String.prototype.padEnd) {
 
     return String(this) + padString.slice(0, targetLength);
   };
+};
+
+if (!String.prototype.padEnd) {
+  lib.polyfill.stringPadEnd();
 }
 
-// https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_objects/Object/values
-// https://github.com/tc39/proposal-object-values-entries/blob/master/polyfill.js
-if (!Object.values || !Object.entries) {
+/**
+ * https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_objects/Object/values
+ * https://github.com/tc39/proposal-object-values-entries/blob/master/polyfill.js
+ */
+lib.polyfill.object = function() {
   const reduce = Function.bind.call(Function.call, Array.prototype.reduce);
   const isEnumerable = Function.bind.call(Function.call,
       Object.prototype.propertyIsEnumerable);
   const concat = Function.bind.call(Function.call, Array.prototype.concat);
 
   if (!Object.values) {
+    /**
+     * @param {!Object} O
+     * @return {!Array}
+     */
     Object.values = function values(O) {
       return reduce(Reflect.ownKeys(O), (v, k) => concat(v,
           typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []);
@@ -158,16 +257,31 @@ if (!Object.values || !Object.entries) {
   }
 
   if (!Object.entries) {
+    /**
+     * @param {!Object} O
+     * @return {!Array<!Array<string>>}
+     */
     Object.entries = function entries(O) {
       return reduce(Reflect.ownKeys(O), (e, k) => concat(e,
           typeof k === 'string' && isEnumerable(O, k) ? [[k, O[k]]] : []), []);
     };
   }
+};
+
+if (!Object.values || !Object.entries) {
+  lib.polyfill.object();
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/finally
-// https://github.com/tc39/proposal-promise-finally/blob/master/polyfill.js
-if (typeof Promise.prototype.finally !== 'function') {
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/finally
+ * https://github.com/tc39/proposal-promise-finally/blob/master/polyfill.js
+ */
+lib.polyfill.promiseFinally = function() {
+  /**
+   * @param {!Object} O
+   * @param {!Function} defaultConstructor
+   * @return {!Function}
+   */
   const speciesConstructor = function(O, defaultConstructor) {
     if (!O || (typeof O !== 'object' && typeof O !== 'function')) {
       throw new TypeError('Assertion failed: Type(O) is not Object');
@@ -191,26 +305,68 @@ if (typeof Promise.prototype.finally !== 'function') {
     throw new TypeError('no constructor found');
   };
 
-  const shim = {
-    finally(onFinally) {
-      const promise = this;
-      if (typeof promise !== 'object' || promise === null) {
-        throw new TypeError('"this" value is not an Object');
-      }
-      const C = speciesConstructor(promise, Promise);
-      if (typeof onFinally !== 'function') {
-        return Promise.prototype.then.call(promise, onFinally, onFinally);
-      }
-      return Promise.prototype.then.call(
-        promise,
-        x => new C(resolve => resolve(onFinally())).then(() => x),
-        e => new C(resolve => resolve(onFinally())).then(() => { throw e; })
-      );
+  /**
+   * @param {function()} onFinally
+   * @return {!Promise}
+   */
+  function finallyFn(onFinally) {
+    const promise = this;
+    if (typeof promise !== 'object' || promise === null) {
+      throw new TypeError('"this" value is not an Object');
     }
-  };
+    const C = speciesConstructor(promise, Promise);
+    if (typeof onFinally !== 'function') {
+      return Promise.prototype.then.call(promise, onFinally, onFinally);
+    }
+    return Promise.prototype.then.call(
+      promise,
+      x => new C(resolve => resolve(onFinally())).then(() => x),
+      e => new C(resolve => resolve(onFinally())).then(() => { throw e; })
+    );
+  }
   Object.defineProperty(Promise.prototype, 'finally', {
-    configurable: true, writable: true, value: shim.finally,
+    configurable: true, writable: true, value: finallyFn,
   });
+};
+
+if (typeof Promise.prototype.finally !== 'function') {
+  lib.polyfill.promiseFinally();
+}
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/API/Blob/arrayBuffer
+ *
+ * @return {!Promise<!ArrayBuffer>}
+ */
+lib.polyfill.BlobArrayBuffer = function() {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onabort = reader.onerror = () => reject(reader);
+    reader.readAsArrayBuffer(this);
+  });
+};
+
+if (typeof Blob.prototype.arrayBuffer != 'function') {
+  Blob.prototype.arrayBuffer = lib.polyfill.BlobArrayBuffer;
+}
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/API/Blob/text
+ *
+ * @return {!Promise<string>}
+ */
+lib.polyfill.BlobText = function() {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onabort = reader.onerror = () => reject(reader);
+    reader.readAsText(this);
+  });
+};
+
+if (typeof Blob.prototype.arrayBuffer != 'function') {
+  Blob.prototype.text = lib.polyfill.BlobText;
 }
 // SOURCE FILE: libdot/js/lib_array.js
 // Copyright 2017 The Chromium OS Authors. All rights reserved.
@@ -229,7 +385,7 @@ lib.array = {};
  *
  * @template TYPED_ARRAY
  * @param {...!TYPED_ARRAY} arrays
- * @returns {!TYPED_ARRAY}
+ * @return {!TYPED_ARRAY}
  */
 lib.array.concatTyped = function(...arrays) {
   let resultLength = 0;
@@ -249,9 +405,9 @@ lib.array.concatTyped = function(...arrays) {
  * Compare two array-like objects entrywise.
  *
  * @template ARRAY_LIKE
- * @param {?ARRAY_LIKE} a
- * @param {?ARRAY_LIKE} b
- * @returns {!boolean} true if both arrays are null or they agree entrywise;
+ * @param {?ARRAY_LIKE} a The first array to compare.
+ * @param {?ARRAY_LIKE} b The second array to compare.
+ * @return {boolean} true if both arrays are null or they agree entrywise;
  *     false otherwise.
  */
 lib.array.compare = function(a, b) {
@@ -286,7 +442,8 @@ lib.codec = {};
  *
  * The input array type may be an Array or a typed Array (e.g. Uint8Array).
  *
- * @param {Array<number>} array The code units to generate for the string.
+ * @param {!Uint8Array|!Array<number>} array The code units to generate for
+ *     the string.
  * @return {string} A UTF-16 encoded string.
  */
 lib.codec.codeUnitArrayToString = function(array) {
@@ -307,12 +464,13 @@ lib.codec.codeUnitArrayToString = function(array) {
  * Create an array of code units from a UTF-16 encoded string.
  *
  * @param {string} str The string to extract code units from.
- * @param {type=} type The type of the return value.
- * @return {Array<number>} The array of code units.
+ * @param {!ArrayBufferView=} ret The buffer to hold the result.  If not set, a
+ *     new Uint8Array is created.
+ * @return {!ArrayBufferView} The array of code units.
  */
-lib.codec.stringToCodeUnitArray = function(str, type=Array) {
+lib.codec.stringToCodeUnitArray = function(
+    str, ret = new Uint8Array(str.length)) {
   // Indexing string directly is faster than Array.map.
-  const ret = new type(str.length);
   for (let i = 0; i < str.length; ++i) {
     ret[i] = str.charCodeAt(i);
   }
@@ -351,11 +509,11 @@ lib.colors = {};
  * Instead, we stoop to this .replace() trick.
  */
 lib.colors.re_ = {
-  // CSS hex color, #RGB.
-  hex16: /#([a-f0-9])([a-f0-9])([a-f0-9])/i,
+  // CSS hex color, #RGB or RGBA.
+  hex16: /^#([a-f0-9])([a-f0-9])([a-f0-9])([a-f0-9])?$/i,
 
-  // CSS hex color, #RRGGBB.
-  hex24: /#([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})/i,
+  // CSS hex color, #RRGGBB or #RRGGBBAA.
+  hex24: /^#([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})?$/i,
 
   // CSS rgb color, rgb(rrr,ggg,bbb).
   rgb: new RegExp(
@@ -363,7 +521,7 @@ lib.colors.re_ = {
        '/s*(/d{1,3})/s*/)/s*$'
        ).replace(/\//g, '\\'), 'i'),
 
-  // CSS rgb color, rgb(rrr,ggg,bbb,aaa).
+  // CSS rgb color, rgba(rrr,ggg,bbb,aaa).
   rgba: new RegExp(
       ('^/s*rgba/s*' +
        '/(/s*(/d{1,3})/s*,/s*(/d{1,3})/s*,/s*(/d{1,3})/s*' +
@@ -374,6 +532,26 @@ lib.colors.re_ = {
   rgbx: new RegExp(
       ('^/s*rgba?/s*' +
        '/(/s*(/d{1,3})/s*,/s*(/d{1,3})/s*,/s*(/d{1,3})/s*' +
+       '(?:,/s*(/d+(?:/./d+)?)/s*)?/)/s*$'
+       ).replace(/\//g, '\\'), 'i'),
+
+  // CSS hsl color, hsl(hhh,sss%,lll%).
+  hsl: new RegExp(
+      ('^/s*hsl/s*' +
+       '/(/s*(/d{1,3})/s*,/s*(/d{1,3})/s*%/s*,/s*(/d{1,3})/s*%/s*/)/s*$'
+       ).replace(/\//g, '\\'), 'i'),
+
+  // CSS hsl color, hsla(hhh,sss%,lll%,aaa).
+  hsla: new RegExp(
+      ('^/s*hsla/s*' +
+       '/(/s*(/d{1,3})/s*,/s*(/d{1,3})/s*%/s*,/s*(/d{1,3})/s*%/s*' +
+       '(?:,/s*(/d+(?:/./d+)?)/s*)/)/s*$'
+       ).replace(/\//g, '\\'), 'i'),
+
+  // Either HSL or HSLA.
+  hslx: new RegExp(
+      ('^/s*hsla?/s*' +
+       '/(/s*(/d{1,3})/s*,/s*(/d{1,3})/s*%/s*,/s*(/d{1,3})/s*%/s*' +
        '(?:,/s*(/d+(?:/./d+)?)/s*)?/)/s*$'
        ).replace(/\//g, '\\'), 'i'),
 
@@ -392,7 +570,7 @@ lib.colors.re_ = {
  * Each 'ddd' component is a one byte value specified in decimal.
  *
  * @param {string} value The CSS color value to convert.
- * @return {string} The X11 color value or null if the value could not be
+ * @return {?string} The X11 color value or null if the value could not be
  *     converted.
  */
 lib.colors.rgbToX11 = function(value) {
@@ -409,7 +587,7 @@ lib.colors.rgbToX11 = function(value) {
 };
 
 /**
- * Convert a legacy X11 colover value into an CSS rgb(...) color value.
+ * Convert a legacy X11 color value into an CSS rgb(...) color value.
  *
  * They take the form:
  * 12 bit: #RGB          -> #R000G000B000
@@ -419,6 +597,10 @@ lib.colors.rgbToX11 = function(value) {
  * These are the most significant bits.
  *
  * Truncate values back down to 24 bit since that's all CSS supports.
+ *
+ * @param {string} v The X11 hex color value to convert.
+ * @return {?string} The CSS color value or null if the value could not be
+ *     converted.
  */
 lib.colors.x11HexToCSS = function(v) {
   if (!v.startsWith('#'))
@@ -457,8 +639,8 @@ lib.colors.x11HexToCSS = function(v) {
  * rgb:hhhh/hhhh/hhhh.  If a component value is less than 4 digits it is
  * padded out to 4, then scaled down to fit in a single byte.
  *
- * @param {string} value The X11 color value to convert.
- * @return {string} The CSS color value or null if the value could not be
+ * @param {string} v The X11 color value to convert.
+ * @return {?string} The CSS color value or null if the value could not be
  *     converted.
  */
 lib.colors.x11ToCSS = function(v) {
@@ -507,96 +689,254 @@ lib.colors.x11ToCSS = function(v) {
 };
 
 /**
- * Converts one or more CSS '#RRGGBB' color values into their rgb(...)
- * form.
+ * Converts one or more CSS '#RRGGBB' or '#RRGGBBAA' color values into their
+ * rgb(...) or rgba(...) form respectively.
  *
  * Arrays are converted in place. If a value cannot be converted, it is
  * replaced with null.
  *
- * @param {string|Array.<string>} A single RGB value or array of RGB values to
- *     convert.
- * @return {string|Array.<string>} The converted value or values.
+ * @param {string} hex A single RGB or RGBA value to convert.
+ * @return {?string} The converted value.
  */
-lib.colors.hexToRGB = function(arg) {
-  var hex16 = lib.colors.re_.hex16;
-  var hex24 = lib.colors.re_.hex24;
+lib.colors.hexToRGB = function(hex) {
+  const hex16 = lib.colors.re_.hex16;
+  const hex24 = lib.colors.re_.hex24;
 
-  function convert(hex) {
-    if (hex.length == 4) {
-      hex = hex.replace(hex16, function(h, r, g, b) {
-        return "#" + r + r + g + g + b + b;
-      });
-    }
-    var ary = hex.match(hex24);
-    if (!ary)
-      return null;
-
-    return 'rgb(' + parseInt(ary[1], 16) + ', ' +
-        parseInt(ary[2], 16) + ', ' +
-        parseInt(ary[3], 16) + ')';
+  if (hex16.test(hex)) {
+    // Convert from RGB to RRGGBB and from RGBA to RRGGBBAA.
+    hex = `#${hex.match(/[a-f0-9]/gi).map(x => `${x}${x}`).join('')}`;
   }
 
-  if (arg instanceof Array) {
-    for (var i = 0; i < arg.length; i++) {
-      arg[i] = convert(arg[i]);
-    }
-  } else {
-    arg = convert(arg);
+  const ary = hex.match(hex24);
+  if (!ary) {
+    return null;
   }
 
-  return arg;
+  const val = (index) => parseInt(ary[index + 1], 16);
+  return ary[4] === undefined || val(3) === 255
+      ? `rgb(${val(0)}, ${val(1)}, ${val(2)})`
+      : `rgba(${val(0)}, ${val(1)}, ${val(2)}, ${val(3) / 255})`;
 };
 
 /**
- * Converts one or more CSS rgb(...) forms into their '#RRGGBB' color values.
- *
- * If given an rgba(...) form, the alpha field is thrown away.
+ * Converts one or more CSS rgb(...) or rgba(...) forms into their '#RRGGBB' or
+ * '#RRGGBBAA' color values respectively.
  *
  * Arrays are converted in place. If a value cannot be converted, it is
  * replaced with null.
  *
- * @param {string|Array.<string>} A single rgb(...) value or array of rgb(...)
- *     values to convert.
- * @return {string|Array.<string>} The converted value or values.
+ * @param {string} rgb A single rgb(...) or rgba(...) value to convert.
+ * @return {?string} The converted value.
  */
-lib.colors.rgbToHex = function(arg) {
-  function convert(rgb) {
-    var ary = lib.colors.crackRGB(rgb);
-    if (!ary)
-      return null;
-    return '#' + lib.f.zpad(((parseInt(ary[0]) << 16) |
-                             (parseInt(ary[1]) <<  8) |
-                             (parseInt(ary[2]) <<  0)).toString(16), 6);
+lib.colors.rgbToHex = function(rgb) {
+  const ary = lib.colors.crackRGB(rgb);
+  if (!ary) {
+    return null;
   }
 
-  if (arg instanceof Array) {
-    for (var i = 0; i < arg.length; i++) {
-      arg[i] = convert(arg[i]);
+  const hex = '#' + lib.f.zpad((
+      (parseInt(ary[0], 10) << 16) |
+      (parseInt(ary[1], 10) <<  8) |
+      (parseInt(ary[2], 10) <<  0)).toString(16), 6);
+  return ary[3] === undefined || ary[3] === '1'
+      ? hex
+      : `${hex}${lib.f.zpad(Math.round(255 * ary[3]).toString(16), 2)}`;
+};
+
+/**
+ * Split an hsl/hsla color into an array of its components.
+ *
+ * On success, a 4 element array will be returned.  For hsl values, the alpha
+ * will be set to 1.
+ *
+ * @param {string} color The HSL/HSLA CSS color spec.
+ * @return {?Array<string>} The HSL/HSLA values split out.
+ */
+lib.colors.crackHSL = function(color) {
+  if (color.startsWith('hsla')) {
+    const ary = color.match(lib.colors.re_.hsla);
+    if (ary) {
+      ary.shift();
+      return Array.from(ary);
     }
   } else {
-    arg = convert(arg);
+    const ary = color.match(lib.colors.re_.hsl);
+    if (ary) {
+      ary.shift();
+      ary.push('1');
+      return Array.from(ary);
+    }
   }
 
-  return arg;
+  console.error(`Couldn't crack: ${color}`);
+  return null;
+};
+
+/**
+ * Converts hslx array to rgba array.
+ *
+ * The returned alpha component defaults to 1 if it isn't present in the input.
+ *
+ * The returned values are not rounded to preserve precision for computations,
+ * rounded before they are used in CSS strings.
+ *
+ * @param {?Array<string|number>} hslx The HSL or HSLA elements to convert.
+ * @return {!Array<number>} The RGBA values.
+ */
+lib.colors.hslxArrayToRgbaArray = function(hslx) {
+  const hue = hslx[0] / 60;
+  const sat = hslx[1] / 100;
+  const light = hslx[2] / 100;
+
+  // The following algorithm has been adapted from:
+  //     https://www.w3.org/TR/css-color-4/#hsl-to-rgb
+  const hueToRgb = (t1, t2, hue) => {
+    if (hue < 0) {
+      hue += 6;
+    }
+    if (hue >= 6) {
+      hue -= 6;
+    }
+
+    if (hue < 1) {
+      return (t2 - t1) * hue + t1;
+    } else if (hue < 3) {
+      return t2;
+    } else if (hue < 4) {
+      return (t2 - t1) * (4 - hue) + t1;
+    } else {
+      return t1;
+    }
+  };
+
+  const t2 = light <= 0.5 ?  light * (sat + 1) : light + sat - (light * sat);
+  const t1 = light * 2 - t2;
+
+  return [
+    255 * hueToRgb(t1, t2, hue + 2),
+    255 * hueToRgb(t1, t2, hue),
+    255 * hueToRgb(t1, t2, hue - 2),
+    hslx[3] !== undefined ? +hslx[3] : 1
+  ];
+};
+
+/**
+ * Converts one or more CSS hsl(...) or hsla(...) forms into their rgb(...) or
+ * rgba(...) color values respectively.
+ *
+ * Arrays are converted in place. If a value cannot be converted, it is
+ * replaced with null.
+ *
+ * @param {string} hsl A single hsl(...) or hsla(...) value to convert.
+ * @return {?string} The converted value.
+ */
+lib.colors.hslToRGB = function(hsl) {
+  const ary = lib.colors.crackHSL(hsl);
+  if (!ary) {
+    return null;
+  }
+
+  const [r, g, b, a] = lib.colors.hslxArrayToRgbaArray(ary);
+
+  const rgb = [r, g, b].map(Math.round).join(', ');
+
+  return a === 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${a})`;
+};
+
+/**
+ * Converts rgbx array to hsla array.
+ *
+ * The returned alpha component defaults to 1 if it isn't present in the input.
+ *
+ * The returned values are not rounded to preserve precision for computations,
+ * so should be rounded before they are used in CSS strings.
+ *
+ * @param {?Array<string|number>} rgbx The RGB or RGBA elements to convert.
+ * @return {!Array<number>} The HSLA values.
+ */
+lib.colors.rgbxArrayToHslaArray = function(rgbx) {
+  const r = rgbx[0] / 255;
+  const g = rgbx[1] / 255;
+  const b = rgbx[2] / 255;
+
+  const min = Math.min(r, g, b);
+  const max = Math.max(r, g, b);
+  const spread = max - min;
+
+  const l = (max + min) / 2;
+
+  if (spread == 0) {
+    return [0, 0, 100 * l, rgbx[3] !== undefined ? +rgbx[3] : 1];
+  }
+
+  let h = (() => {
+    switch (max) {
+      case r: return ((g - b) / spread) % 6;
+      case g: return (b - r) / spread + 2;
+      case b: return (r - g) / spread + 4;
+    }
+  })();
+  h *= 60;
+  if (h < 0) {
+    h += 360;
+  }
+
+  const s = spread / (1 - Math.abs(2 * l - 1));
+
+  return [h, 100 * s, 100 * l, rgbx[3] !== undefined ? +rgbx[3] : 1];
+};
+
+/**
+ * Converts one or more CSS rgb(...) or rgba(...) forms into their hsl(...) or
+ * hsla(...) color values respectively.
+ *
+ * Arrays are converted in place. If a value cannot be converted, it is
+ * replaced with null.
+ *
+ * @param {string} rgb A single rgb(...) or rgba(...) value to convert.
+ * @return {?string} The converted value.
+ */
+lib.colors.rgbToHsl = function(rgb) {
+  const ary = lib.colors.crackRGB(rgb);
+  if (!ary) {
+    return null;
+  }
+
+  let [h, s, l, a] = lib.colors.rgbxArrayToHslaArray(ary);
+  h = Math.round(h);
+  s = Math.round(s);
+  l = Math.round(l);
+
+  return a === 1 ? `hsl(${h}, ${s}%, ${l}%)` : `hsla(${h}, ${s}%, ${l}%, ${a})`;
 };
 
 /**
  * Take any valid css color definition and turn it into an rgb or rgba value.
  *
- * Returns null if the value could not be normalized.
+ * @param {string} def The CSS color spec to normalize.
+ * @return {?string} The converted value.
  */
 lib.colors.normalizeCSS = function(def) {
-  if (def.startsWith('#'))
+  if (def.startsWith('#')) {
     return lib.colors.hexToRGB(def);
+  }
 
-  if (lib.colors.re_.rgbx.test(def))
+  if (lib.colors.re_.rgbx.test(def)) {
     return def;
+  }
+
+  if (lib.colors.re_.hslx.test(def)) {
+    return lib.colors.hslToRGB(def);
+  }
 
   return lib.colors.nameToRGB(def);
 };
 
 /**
  * Convert a 3 or 4 element array into an rgba(...) string.
+ *
+ * @param {?Array<string|number>} ary The RGB or RGBA elements to convert.
+ * @return {string} The normalized CSS color spec.
  */
 lib.colors.arrayToRGBA = function(ary) {
   var alpha = (ary.length > 3) ? ary[3] : 1;
@@ -605,15 +945,24 @@ lib.colors.arrayToRGBA = function(ary) {
 
 /**
  * Overwrite the alpha channel of an rgb/rgba color.
+ *
+ * @param {string} rgb The normalized CSS color spec.
+ * @param {number} alpha The alpha channel.
+ * @return {string} The normalized CSS color spec with updated alpha channel.
  */
 lib.colors.setAlpha = function(rgb, alpha) {
   var ary = lib.colors.crackRGB(rgb);
-  ary[3] = alpha;
+  ary[3] = alpha.toString();
   return lib.colors.arrayToRGBA(ary);
 };
 
 /**
  * Mix a percentage of a tint color into a base color.
+ *
+ * @param  {string} base The normalized CSS base color spec.
+ * @param  {string} tint The normalized CSS color to tint with.
+ * @param  {number} percent The percentage of the tinting.
+ * @return {string} The new tinted CSS color spec.
  */
 lib.colors.mix = function(base, tint, percent) {
   var ary1 = lib.colors.crackRGB(base);
@@ -621,7 +970,7 @@ lib.colors.mix = function(base, tint, percent) {
 
   for (var i = 0; i < 4; ++i) {
     var diff = ary2[i] - ary1[i];
-    ary1[i] = Math.round(parseInt(ary1[i]) + diff * percent);
+    ary1[i] = Math.round(parseInt(ary1[i], 10) + diff * percent).toString();
   }
 
   return lib.colors.arrayToRGBA(ary1);
@@ -632,6 +981,9 @@ lib.colors.mix = function(base, tint, percent) {
  *
  * On success, a 4 element array will be returned.  For rgb values, the alpha
  * will be set to 1.
+ *
+ * @param {string} color The RGB/RGBA CSS color spec.
+ * @return {?Array<string>} The RGB/RGBA values split out.
  */
 lib.colors.crackRGB = function(color) {
   if (color.startsWith('rgba')) {
@@ -663,7 +1015,7 @@ lib.colors.crackRGB = function(color) {
  * rgb.txt file.
  *
  * @param {string} name The color name to convert.
- * @return {string} The corresponding CSS rgb(...) value.
+ * @return {?string} The corresponding CSS rgb(...) value.
  */
 lib.colors.nameToRGB = function(name) {
   if (name in lib.colors.colorNames)
@@ -682,9 +1034,11 @@ lib.colors.nameToRGB = function(name) {
 
 /**
  * The stock color palette.
+ *
+ * @type {!Array<string>}
  */
-lib.colors.stockColorPalette = lib.colors.hexToRGB
-  ([// The "ANSI 16"...
+lib.colors.stockColorPalette = [
+     // The "ANSI 16"...
     '#000000', '#CC0000', '#4E9A06', '#C4A000',
     '#3465A4', '#75507B', '#06989A', '#D3D7CF',
     '#555753', '#EF2929', '#00BA13', '#FCE94F',
@@ -738,7 +1092,7 @@ lib.colors.stockColorPalette = lib.colors.hexToRGB
     '#444444', '#4E4E4E', '#585858', '#626262', '#6C6C6C', '#767676',
     '#808080', '#8A8A8A', '#949494', '#9E9E9E', '#A8A8A8', '#B2B2B2',
     '#BCBCBC', '#C6C6C6', '#D0D0D0', '#DADADA', '#E4E4E4', '#EEEEEE'
-   ]);
+   ].map(lib.colors.hexToRGB);
 
 /**
  * The current color palette, possibly with user changes.
@@ -749,664 +1103,664 @@ lib.colors.colorPalette = lib.colors.stockColorPalette;
  * Named colors according to the stock X11 rgb.txt file.
  */
 lib.colors.colorNames = {
-  "aliceblue": "rgb(240, 248, 255)",
-  "antiquewhite": "rgb(250, 235, 215)",
-  "antiquewhite1": "rgb(255, 239, 219)",
-  "antiquewhite2": "rgb(238, 223, 204)",
-  "antiquewhite3": "rgb(205, 192, 176)",
-  "antiquewhite4": "rgb(139, 131, 120)",
-  "aquamarine": "rgb(127, 255, 212)",
-  "aquamarine1": "rgb(127, 255, 212)",
-  "aquamarine2": "rgb(118, 238, 198)",
-  "aquamarine3": "rgb(102, 205, 170)",
-  "aquamarine4": "rgb(69, 139, 116)",
-  "azure": "rgb(240, 255, 255)",
-  "azure1": "rgb(240, 255, 255)",
-  "azure2": "rgb(224, 238, 238)",
-  "azure3": "rgb(193, 205, 205)",
-  "azure4": "rgb(131, 139, 139)",
-  "beige": "rgb(245, 245, 220)",
-  "bisque": "rgb(255, 228, 196)",
-  "bisque1": "rgb(255, 228, 196)",
-  "bisque2": "rgb(238, 213, 183)",
-  "bisque3": "rgb(205, 183, 158)",
-  "bisque4": "rgb(139, 125, 107)",
-  "black": "rgb(0, 0, 0)",
-  "blanchedalmond": "rgb(255, 235, 205)",
-  "blue": "rgb(0, 0, 255)",
-  "blue1": "rgb(0, 0, 255)",
-  "blue2": "rgb(0, 0, 238)",
-  "blue3": "rgb(0, 0, 205)",
-  "blue4": "rgb(0, 0, 139)",
-  "blueviolet": "rgb(138, 43, 226)",
-  "brown": "rgb(165, 42, 42)",
-  "brown1": "rgb(255, 64, 64)",
-  "brown2": "rgb(238, 59, 59)",
-  "brown3": "rgb(205, 51, 51)",
-  "brown4": "rgb(139, 35, 35)",
-  "burlywood": "rgb(222, 184, 135)",
-  "burlywood1": "rgb(255, 211, 155)",
-  "burlywood2": "rgb(238, 197, 145)",
-  "burlywood3": "rgb(205, 170, 125)",
-  "burlywood4": "rgb(139, 115, 85)",
-  "cadetblue": "rgb(95, 158, 160)",
-  "cadetblue1": "rgb(152, 245, 255)",
-  "cadetblue2": "rgb(142, 229, 238)",
-  "cadetblue3": "rgb(122, 197, 205)",
-  "cadetblue4": "rgb(83, 134, 139)",
-  "chartreuse": "rgb(127, 255, 0)",
-  "chartreuse1": "rgb(127, 255, 0)",
-  "chartreuse2": "rgb(118, 238, 0)",
-  "chartreuse3": "rgb(102, 205, 0)",
-  "chartreuse4": "rgb(69, 139, 0)",
-  "chocolate": "rgb(210, 105, 30)",
-  "chocolate1": "rgb(255, 127, 36)",
-  "chocolate2": "rgb(238, 118, 33)",
-  "chocolate3": "rgb(205, 102, 29)",
-  "chocolate4": "rgb(139, 69, 19)",
-  "coral": "rgb(255, 127, 80)",
-  "coral1": "rgb(255, 114, 86)",
-  "coral2": "rgb(238, 106, 80)",
-  "coral3": "rgb(205, 91, 69)",
-  "coral4": "rgb(139, 62, 47)",
-  "cornflowerblue": "rgb(100, 149, 237)",
-  "cornsilk": "rgb(255, 248, 220)",
-  "cornsilk1": "rgb(255, 248, 220)",
-  "cornsilk2": "rgb(238, 232, 205)",
-  "cornsilk3": "rgb(205, 200, 177)",
-  "cornsilk4": "rgb(139, 136, 120)",
-  "cyan": "rgb(0, 255, 255)",
-  "cyan1": "rgb(0, 255, 255)",
-  "cyan2": "rgb(0, 238, 238)",
-  "cyan3": "rgb(0, 205, 205)",
-  "cyan4": "rgb(0, 139, 139)",
-  "darkblue": "rgb(0, 0, 139)",
-  "darkcyan": "rgb(0, 139, 139)",
-  "darkgoldenrod": "rgb(184, 134, 11)",
-  "darkgoldenrod1": "rgb(255, 185, 15)",
-  "darkgoldenrod2": "rgb(238, 173, 14)",
-  "darkgoldenrod3": "rgb(205, 149, 12)",
-  "darkgoldenrod4": "rgb(139, 101, 8)",
-  "darkgray": "rgb(169, 169, 169)",
-  "darkgreen": "rgb(0, 100, 0)",
-  "darkgrey": "rgb(169, 169, 169)",
-  "darkkhaki": "rgb(189, 183, 107)",
-  "darkmagenta": "rgb(139, 0, 139)",
-  "darkolivegreen": "rgb(85, 107, 47)",
-  "darkolivegreen1": "rgb(202, 255, 112)",
-  "darkolivegreen2": "rgb(188, 238, 104)",
-  "darkolivegreen3": "rgb(162, 205, 90)",
-  "darkolivegreen4": "rgb(110, 139, 61)",
-  "darkorange": "rgb(255, 140, 0)",
-  "darkorange1": "rgb(255, 127, 0)",
-  "darkorange2": "rgb(238, 118, 0)",
-  "darkorange3": "rgb(205, 102, 0)",
-  "darkorange4": "rgb(139, 69, 0)",
-  "darkorchid": "rgb(153, 50, 204)",
-  "darkorchid1": "rgb(191, 62, 255)",
-  "darkorchid2": "rgb(178, 58, 238)",
-  "darkorchid3": "rgb(154, 50, 205)",
-  "darkorchid4": "rgb(104, 34, 139)",
-  "darkred": "rgb(139, 0, 0)",
-  "darksalmon": "rgb(233, 150, 122)",
-  "darkseagreen": "rgb(143, 188, 143)",
-  "darkseagreen1": "rgb(193, 255, 193)",
-  "darkseagreen2": "rgb(180, 238, 180)",
-  "darkseagreen3": "rgb(155, 205, 155)",
-  "darkseagreen4": "rgb(105, 139, 105)",
-  "darkslateblue": "rgb(72, 61, 139)",
-  "darkslategray": "rgb(47, 79, 79)",
-  "darkslategray1": "rgb(151, 255, 255)",
-  "darkslategray2": "rgb(141, 238, 238)",
-  "darkslategray3": "rgb(121, 205, 205)",
-  "darkslategray4": "rgb(82, 139, 139)",
-  "darkslategrey": "rgb(47, 79, 79)",
-  "darkturquoise": "rgb(0, 206, 209)",
-  "darkviolet": "rgb(148, 0, 211)",
-  "debianred": "rgb(215, 7, 81)",
-  "deeppink": "rgb(255, 20, 147)",
-  "deeppink1": "rgb(255, 20, 147)",
-  "deeppink2": "rgb(238, 18, 137)",
-  "deeppink3": "rgb(205, 16, 118)",
-  "deeppink4": "rgb(139, 10, 80)",
-  "deepskyblue": "rgb(0, 191, 255)",
-  "deepskyblue1": "rgb(0, 191, 255)",
-  "deepskyblue2": "rgb(0, 178, 238)",
-  "deepskyblue3": "rgb(0, 154, 205)",
-  "deepskyblue4": "rgb(0, 104, 139)",
-  "dimgray": "rgb(105, 105, 105)",
-  "dimgrey": "rgb(105, 105, 105)",
-  "dodgerblue": "rgb(30, 144, 255)",
-  "dodgerblue1": "rgb(30, 144, 255)",
-  "dodgerblue2": "rgb(28, 134, 238)",
-  "dodgerblue3": "rgb(24, 116, 205)",
-  "dodgerblue4": "rgb(16, 78, 139)",
-  "firebrick": "rgb(178, 34, 34)",
-  "firebrick1": "rgb(255, 48, 48)",
-  "firebrick2": "rgb(238, 44, 44)",
-  "firebrick3": "rgb(205, 38, 38)",
-  "firebrick4": "rgb(139, 26, 26)",
-  "floralwhite": "rgb(255, 250, 240)",
-  "forestgreen": "rgb(34, 139, 34)",
-  "gainsboro": "rgb(220, 220, 220)",
-  "ghostwhite": "rgb(248, 248, 255)",
-  "gold": "rgb(255, 215, 0)",
-  "gold1": "rgb(255, 215, 0)",
-  "gold2": "rgb(238, 201, 0)",
-  "gold3": "rgb(205, 173, 0)",
-  "gold4": "rgb(139, 117, 0)",
-  "goldenrod": "rgb(218, 165, 32)",
-  "goldenrod1": "rgb(255, 193, 37)",
-  "goldenrod2": "rgb(238, 180, 34)",
-  "goldenrod3": "rgb(205, 155, 29)",
-  "goldenrod4": "rgb(139, 105, 20)",
-  "gray": "rgb(190, 190, 190)",
-  "gray0": "rgb(0, 0, 0)",
-  "gray1": "rgb(3, 3, 3)",
-  "gray10": "rgb(26, 26, 26)",
-  "gray100": "rgb(255, 255, 255)",
-  "gray11": "rgb(28, 28, 28)",
-  "gray12": "rgb(31, 31, 31)",
-  "gray13": "rgb(33, 33, 33)",
-  "gray14": "rgb(36, 36, 36)",
-  "gray15": "rgb(38, 38, 38)",
-  "gray16": "rgb(41, 41, 41)",
-  "gray17": "rgb(43, 43, 43)",
-  "gray18": "rgb(46, 46, 46)",
-  "gray19": "rgb(48, 48, 48)",
-  "gray2": "rgb(5, 5, 5)",
-  "gray20": "rgb(51, 51, 51)",
-  "gray21": "rgb(54, 54, 54)",
-  "gray22": "rgb(56, 56, 56)",
-  "gray23": "rgb(59, 59, 59)",
-  "gray24": "rgb(61, 61, 61)",
-  "gray25": "rgb(64, 64, 64)",
-  "gray26": "rgb(66, 66, 66)",
-  "gray27": "rgb(69, 69, 69)",
-  "gray28": "rgb(71, 71, 71)",
-  "gray29": "rgb(74, 74, 74)",
-  "gray3": "rgb(8, 8, 8)",
-  "gray30": "rgb(77, 77, 77)",
-  "gray31": "rgb(79, 79, 79)",
-  "gray32": "rgb(82, 82, 82)",
-  "gray33": "rgb(84, 84, 84)",
-  "gray34": "rgb(87, 87, 87)",
-  "gray35": "rgb(89, 89, 89)",
-  "gray36": "rgb(92, 92, 92)",
-  "gray37": "rgb(94, 94, 94)",
-  "gray38": "rgb(97, 97, 97)",
-  "gray39": "rgb(99, 99, 99)",
-  "gray4": "rgb(10, 10, 10)",
-  "gray40": "rgb(102, 102, 102)",
-  "gray41": "rgb(105, 105, 105)",
-  "gray42": "rgb(107, 107, 107)",
-  "gray43": "rgb(110, 110, 110)",
-  "gray44": "rgb(112, 112, 112)",
-  "gray45": "rgb(115, 115, 115)",
-  "gray46": "rgb(117, 117, 117)",
-  "gray47": "rgb(120, 120, 120)",
-  "gray48": "rgb(122, 122, 122)",
-  "gray49": "rgb(125, 125, 125)",
-  "gray5": "rgb(13, 13, 13)",
-  "gray50": "rgb(127, 127, 127)",
-  "gray51": "rgb(130, 130, 130)",
-  "gray52": "rgb(133, 133, 133)",
-  "gray53": "rgb(135, 135, 135)",
-  "gray54": "rgb(138, 138, 138)",
-  "gray55": "rgb(140, 140, 140)",
-  "gray56": "rgb(143, 143, 143)",
-  "gray57": "rgb(145, 145, 145)",
-  "gray58": "rgb(148, 148, 148)",
-  "gray59": "rgb(150, 150, 150)",
-  "gray6": "rgb(15, 15, 15)",
-  "gray60": "rgb(153, 153, 153)",
-  "gray61": "rgb(156, 156, 156)",
-  "gray62": "rgb(158, 158, 158)",
-  "gray63": "rgb(161, 161, 161)",
-  "gray64": "rgb(163, 163, 163)",
-  "gray65": "rgb(166, 166, 166)",
-  "gray66": "rgb(168, 168, 168)",
-  "gray67": "rgb(171, 171, 171)",
-  "gray68": "rgb(173, 173, 173)",
-  "gray69": "rgb(176, 176, 176)",
-  "gray7": "rgb(18, 18, 18)",
-  "gray70": "rgb(179, 179, 179)",
-  "gray71": "rgb(181, 181, 181)",
-  "gray72": "rgb(184, 184, 184)",
-  "gray73": "rgb(186, 186, 186)",
-  "gray74": "rgb(189, 189, 189)",
-  "gray75": "rgb(191, 191, 191)",
-  "gray76": "rgb(194, 194, 194)",
-  "gray77": "rgb(196, 196, 196)",
-  "gray78": "rgb(199, 199, 199)",
-  "gray79": "rgb(201, 201, 201)",
-  "gray8": "rgb(20, 20, 20)",
-  "gray80": "rgb(204, 204, 204)",
-  "gray81": "rgb(207, 207, 207)",
-  "gray82": "rgb(209, 209, 209)",
-  "gray83": "rgb(212, 212, 212)",
-  "gray84": "rgb(214, 214, 214)",
-  "gray85": "rgb(217, 217, 217)",
-  "gray86": "rgb(219, 219, 219)",
-  "gray87": "rgb(222, 222, 222)",
-  "gray88": "rgb(224, 224, 224)",
-  "gray89": "rgb(227, 227, 227)",
-  "gray9": "rgb(23, 23, 23)",
-  "gray90": "rgb(229, 229, 229)",
-  "gray91": "rgb(232, 232, 232)",
-  "gray92": "rgb(235, 235, 235)",
-  "gray93": "rgb(237, 237, 237)",
-  "gray94": "rgb(240, 240, 240)",
-  "gray95": "rgb(242, 242, 242)",
-  "gray96": "rgb(245, 245, 245)",
-  "gray97": "rgb(247, 247, 247)",
-  "gray98": "rgb(250, 250, 250)",
-  "gray99": "rgb(252, 252, 252)",
-  "green": "rgb(0, 255, 0)",
-  "green1": "rgb(0, 255, 0)",
-  "green2": "rgb(0, 238, 0)",
-  "green3": "rgb(0, 205, 0)",
-  "green4": "rgb(0, 139, 0)",
-  "greenyellow": "rgb(173, 255, 47)",
-  "grey": "rgb(190, 190, 190)",
-  "grey0": "rgb(0, 0, 0)",
-  "grey1": "rgb(3, 3, 3)",
-  "grey10": "rgb(26, 26, 26)",
-  "grey100": "rgb(255, 255, 255)",
-  "grey11": "rgb(28, 28, 28)",
-  "grey12": "rgb(31, 31, 31)",
-  "grey13": "rgb(33, 33, 33)",
-  "grey14": "rgb(36, 36, 36)",
-  "grey15": "rgb(38, 38, 38)",
-  "grey16": "rgb(41, 41, 41)",
-  "grey17": "rgb(43, 43, 43)",
-  "grey18": "rgb(46, 46, 46)",
-  "grey19": "rgb(48, 48, 48)",
-  "grey2": "rgb(5, 5, 5)",
-  "grey20": "rgb(51, 51, 51)",
-  "grey21": "rgb(54, 54, 54)",
-  "grey22": "rgb(56, 56, 56)",
-  "grey23": "rgb(59, 59, 59)",
-  "grey24": "rgb(61, 61, 61)",
-  "grey25": "rgb(64, 64, 64)",
-  "grey26": "rgb(66, 66, 66)",
-  "grey27": "rgb(69, 69, 69)",
-  "grey28": "rgb(71, 71, 71)",
-  "grey29": "rgb(74, 74, 74)",
-  "grey3": "rgb(8, 8, 8)",
-  "grey30": "rgb(77, 77, 77)",
-  "grey31": "rgb(79, 79, 79)",
-  "grey32": "rgb(82, 82, 82)",
-  "grey33": "rgb(84, 84, 84)",
-  "grey34": "rgb(87, 87, 87)",
-  "grey35": "rgb(89, 89, 89)",
-  "grey36": "rgb(92, 92, 92)",
-  "grey37": "rgb(94, 94, 94)",
-  "grey38": "rgb(97, 97, 97)",
-  "grey39": "rgb(99, 99, 99)",
-  "grey4": "rgb(10, 10, 10)",
-  "grey40": "rgb(102, 102, 102)",
-  "grey41": "rgb(105, 105, 105)",
-  "grey42": "rgb(107, 107, 107)",
-  "grey43": "rgb(110, 110, 110)",
-  "grey44": "rgb(112, 112, 112)",
-  "grey45": "rgb(115, 115, 115)",
-  "grey46": "rgb(117, 117, 117)",
-  "grey47": "rgb(120, 120, 120)",
-  "grey48": "rgb(122, 122, 122)",
-  "grey49": "rgb(125, 125, 125)",
-  "grey5": "rgb(13, 13, 13)",
-  "grey50": "rgb(127, 127, 127)",
-  "grey51": "rgb(130, 130, 130)",
-  "grey52": "rgb(133, 133, 133)",
-  "grey53": "rgb(135, 135, 135)",
-  "grey54": "rgb(138, 138, 138)",
-  "grey55": "rgb(140, 140, 140)",
-  "grey56": "rgb(143, 143, 143)",
-  "grey57": "rgb(145, 145, 145)",
-  "grey58": "rgb(148, 148, 148)",
-  "grey59": "rgb(150, 150, 150)",
-  "grey6": "rgb(15, 15, 15)",
-  "grey60": "rgb(153, 153, 153)",
-  "grey61": "rgb(156, 156, 156)",
-  "grey62": "rgb(158, 158, 158)",
-  "grey63": "rgb(161, 161, 161)",
-  "grey64": "rgb(163, 163, 163)",
-  "grey65": "rgb(166, 166, 166)",
-  "grey66": "rgb(168, 168, 168)",
-  "grey67": "rgb(171, 171, 171)",
-  "grey68": "rgb(173, 173, 173)",
-  "grey69": "rgb(176, 176, 176)",
-  "grey7": "rgb(18, 18, 18)",
-  "grey70": "rgb(179, 179, 179)",
-  "grey71": "rgb(181, 181, 181)",
-  "grey72": "rgb(184, 184, 184)",
-  "grey73": "rgb(186, 186, 186)",
-  "grey74": "rgb(189, 189, 189)",
-  "grey75": "rgb(191, 191, 191)",
-  "grey76": "rgb(194, 194, 194)",
-  "grey77": "rgb(196, 196, 196)",
-  "grey78": "rgb(199, 199, 199)",
-  "grey79": "rgb(201, 201, 201)",
-  "grey8": "rgb(20, 20, 20)",
-  "grey80": "rgb(204, 204, 204)",
-  "grey81": "rgb(207, 207, 207)",
-  "grey82": "rgb(209, 209, 209)",
-  "grey83": "rgb(212, 212, 212)",
-  "grey84": "rgb(214, 214, 214)",
-  "grey85": "rgb(217, 217, 217)",
-  "grey86": "rgb(219, 219, 219)",
-  "grey87": "rgb(222, 222, 222)",
-  "grey88": "rgb(224, 224, 224)",
-  "grey89": "rgb(227, 227, 227)",
-  "grey9": "rgb(23, 23, 23)",
-  "grey90": "rgb(229, 229, 229)",
-  "grey91": "rgb(232, 232, 232)",
-  "grey92": "rgb(235, 235, 235)",
-  "grey93": "rgb(237, 237, 237)",
-  "grey94": "rgb(240, 240, 240)",
-  "grey95": "rgb(242, 242, 242)",
-  "grey96": "rgb(245, 245, 245)",
-  "grey97": "rgb(247, 247, 247)",
-  "grey98": "rgb(250, 250, 250)",
-  "grey99": "rgb(252, 252, 252)",
-  "honeydew": "rgb(240, 255, 240)",
-  "honeydew1": "rgb(240, 255, 240)",
-  "honeydew2": "rgb(224, 238, 224)",
-  "honeydew3": "rgb(193, 205, 193)",
-  "honeydew4": "rgb(131, 139, 131)",
-  "hotpink": "rgb(255, 105, 180)",
-  "hotpink1": "rgb(255, 110, 180)",
-  "hotpink2": "rgb(238, 106, 167)",
-  "hotpink3": "rgb(205, 96, 144)",
-  "hotpink4": "rgb(139, 58, 98)",
-  "indianred": "rgb(205, 92, 92)",
-  "indianred1": "rgb(255, 106, 106)",
-  "indianred2": "rgb(238, 99, 99)",
-  "indianred3": "rgb(205, 85, 85)",
-  "indianred4": "rgb(139, 58, 58)",
-  "ivory": "rgb(255, 255, 240)",
-  "ivory1": "rgb(255, 255, 240)",
-  "ivory2": "rgb(238, 238, 224)",
-  "ivory3": "rgb(205, 205, 193)",
-  "ivory4": "rgb(139, 139, 131)",
-  "khaki": "rgb(240, 230, 140)",
-  "khaki1": "rgb(255, 246, 143)",
-  "khaki2": "rgb(238, 230, 133)",
-  "khaki3": "rgb(205, 198, 115)",
-  "khaki4": "rgb(139, 134, 78)",
-  "lavender": "rgb(230, 230, 250)",
-  "lavenderblush": "rgb(255, 240, 245)",
-  "lavenderblush1": "rgb(255, 240, 245)",
-  "lavenderblush2": "rgb(238, 224, 229)",
-  "lavenderblush3": "rgb(205, 193, 197)",
-  "lavenderblush4": "rgb(139, 131, 134)",
-  "lawngreen": "rgb(124, 252, 0)",
-  "lemonchiffon": "rgb(255, 250, 205)",
-  "lemonchiffon1": "rgb(255, 250, 205)",
-  "lemonchiffon2": "rgb(238, 233, 191)",
-  "lemonchiffon3": "rgb(205, 201, 165)",
-  "lemonchiffon4": "rgb(139, 137, 112)",
-  "lightblue": "rgb(173, 216, 230)",
-  "lightblue1": "rgb(191, 239, 255)",
-  "lightblue2": "rgb(178, 223, 238)",
-  "lightblue3": "rgb(154, 192, 205)",
-  "lightblue4": "rgb(104, 131, 139)",
-  "lightcoral": "rgb(240, 128, 128)",
-  "lightcyan": "rgb(224, 255, 255)",
-  "lightcyan1": "rgb(224, 255, 255)",
-  "lightcyan2": "rgb(209, 238, 238)",
-  "lightcyan3": "rgb(180, 205, 205)",
-  "lightcyan4": "rgb(122, 139, 139)",
-  "lightgoldenrod": "rgb(238, 221, 130)",
-  "lightgoldenrod1": "rgb(255, 236, 139)",
-  "lightgoldenrod2": "rgb(238, 220, 130)",
-  "lightgoldenrod3": "rgb(205, 190, 112)",
-  "lightgoldenrod4": "rgb(139, 129, 76)",
-  "lightgoldenrodyellow": "rgb(250, 250, 210)",
-  "lightgray": "rgb(211, 211, 211)",
-  "lightgreen": "rgb(144, 238, 144)",
-  "lightgrey": "rgb(211, 211, 211)",
-  "lightpink": "rgb(255, 182, 193)",
-  "lightpink1": "rgb(255, 174, 185)",
-  "lightpink2": "rgb(238, 162, 173)",
-  "lightpink3": "rgb(205, 140, 149)",
-  "lightpink4": "rgb(139, 95, 101)",
-  "lightsalmon": "rgb(255, 160, 122)",
-  "lightsalmon1": "rgb(255, 160, 122)",
-  "lightsalmon2": "rgb(238, 149, 114)",
-  "lightsalmon3": "rgb(205, 129, 98)",
-  "lightsalmon4": "rgb(139, 87, 66)",
-  "lightseagreen": "rgb(32, 178, 170)",
-  "lightskyblue": "rgb(135, 206, 250)",
-  "lightskyblue1": "rgb(176, 226, 255)",
-  "lightskyblue2": "rgb(164, 211, 238)",
-  "lightskyblue3": "rgb(141, 182, 205)",
-  "lightskyblue4": "rgb(96, 123, 139)",
-  "lightslateblue": "rgb(132, 112, 255)",
-  "lightslategray": "rgb(119, 136, 153)",
-  "lightslategrey": "rgb(119, 136, 153)",
-  "lightsteelblue": "rgb(176, 196, 222)",
-  "lightsteelblue1": "rgb(202, 225, 255)",
-  "lightsteelblue2": "rgb(188, 210, 238)",
-  "lightsteelblue3": "rgb(162, 181, 205)",
-  "lightsteelblue4": "rgb(110, 123, 139)",
-  "lightyellow": "rgb(255, 255, 224)",
-  "lightyellow1": "rgb(255, 255, 224)",
-  "lightyellow2": "rgb(238, 238, 209)",
-  "lightyellow3": "rgb(205, 205, 180)",
-  "lightyellow4": "rgb(139, 139, 122)",
-  "limegreen": "rgb(50, 205, 50)",
-  "linen": "rgb(250, 240, 230)",
-  "magenta": "rgb(255, 0, 255)",
-  "magenta1": "rgb(255, 0, 255)",
-  "magenta2": "rgb(238, 0, 238)",
-  "magenta3": "rgb(205, 0, 205)",
-  "magenta4": "rgb(139, 0, 139)",
-  "maroon": "rgb(176, 48, 96)",
-  "maroon1": "rgb(255, 52, 179)",
-  "maroon2": "rgb(238, 48, 167)",
-  "maroon3": "rgb(205, 41, 144)",
-  "maroon4": "rgb(139, 28, 98)",
-  "mediumaquamarine": "rgb(102, 205, 170)",
-  "mediumblue": "rgb(0, 0, 205)",
-  "mediumorchid": "rgb(186, 85, 211)",
-  "mediumorchid1": "rgb(224, 102, 255)",
-  "mediumorchid2": "rgb(209, 95, 238)",
-  "mediumorchid3": "rgb(180, 82, 205)",
-  "mediumorchid4": "rgb(122, 55, 139)",
-  "mediumpurple": "rgb(147, 112, 219)",
-  "mediumpurple1": "rgb(171, 130, 255)",
-  "mediumpurple2": "rgb(159, 121, 238)",
-  "mediumpurple3": "rgb(137, 104, 205)",
-  "mediumpurple4": "rgb(93, 71, 139)",
-  "mediumseagreen": "rgb(60, 179, 113)",
-  "mediumslateblue": "rgb(123, 104, 238)",
-  "mediumspringgreen": "rgb(0, 250, 154)",
-  "mediumturquoise": "rgb(72, 209, 204)",
-  "mediumvioletred": "rgb(199, 21, 133)",
-  "midnightblue": "rgb(25, 25, 112)",
-  "mintcream": "rgb(245, 255, 250)",
-  "mistyrose": "rgb(255, 228, 225)",
-  "mistyrose1": "rgb(255, 228, 225)",
-  "mistyrose2": "rgb(238, 213, 210)",
-  "mistyrose3": "rgb(205, 183, 181)",
-  "mistyrose4": "rgb(139, 125, 123)",
-  "moccasin": "rgb(255, 228, 181)",
-  "navajowhite": "rgb(255, 222, 173)",
-  "navajowhite1": "rgb(255, 222, 173)",
-  "navajowhite2": "rgb(238, 207, 161)",
-  "navajowhite3": "rgb(205, 179, 139)",
-  "navajowhite4": "rgb(139, 121, 94)",
-  "navy": "rgb(0, 0, 128)",
-  "navyblue": "rgb(0, 0, 128)",
-  "oldlace": "rgb(253, 245, 230)",
-  "olivedrab": "rgb(107, 142, 35)",
-  "olivedrab1": "rgb(192, 255, 62)",
-  "olivedrab2": "rgb(179, 238, 58)",
-  "olivedrab3": "rgb(154, 205, 50)",
-  "olivedrab4": "rgb(105, 139, 34)",
-  "orange": "rgb(255, 165, 0)",
-  "orange1": "rgb(255, 165, 0)",
-  "orange2": "rgb(238, 154, 0)",
-  "orange3": "rgb(205, 133, 0)",
-  "orange4": "rgb(139, 90, 0)",
-  "orangered": "rgb(255, 69, 0)",
-  "orangered1": "rgb(255, 69, 0)",
-  "orangered2": "rgb(238, 64, 0)",
-  "orangered3": "rgb(205, 55, 0)",
-  "orangered4": "rgb(139, 37, 0)",
-  "orchid": "rgb(218, 112, 214)",
-  "orchid1": "rgb(255, 131, 250)",
-  "orchid2": "rgb(238, 122, 233)",
-  "orchid3": "rgb(205, 105, 201)",
-  "orchid4": "rgb(139, 71, 137)",
-  "palegoldenrod": "rgb(238, 232, 170)",
-  "palegreen": "rgb(152, 251, 152)",
-  "palegreen1": "rgb(154, 255, 154)",
-  "palegreen2": "rgb(144, 238, 144)",
-  "palegreen3": "rgb(124, 205, 124)",
-  "palegreen4": "rgb(84, 139, 84)",
-  "paleturquoise": "rgb(175, 238, 238)",
-  "paleturquoise1": "rgb(187, 255, 255)",
-  "paleturquoise2": "rgb(174, 238, 238)",
-  "paleturquoise3": "rgb(150, 205, 205)",
-  "paleturquoise4": "rgb(102, 139, 139)",
-  "palevioletred": "rgb(219, 112, 147)",
-  "palevioletred1": "rgb(255, 130, 171)",
-  "palevioletred2": "rgb(238, 121, 159)",
-  "palevioletred3": "rgb(205, 104, 137)",
-  "palevioletred4": "rgb(139, 71, 93)",
-  "papayawhip": "rgb(255, 239, 213)",
-  "peachpuff": "rgb(255, 218, 185)",
-  "peachpuff1": "rgb(255, 218, 185)",
-  "peachpuff2": "rgb(238, 203, 173)",
-  "peachpuff3": "rgb(205, 175, 149)",
-  "peachpuff4": "rgb(139, 119, 101)",
-  "peru": "rgb(205, 133, 63)",
-  "pink": "rgb(255, 192, 203)",
-  "pink1": "rgb(255, 181, 197)",
-  "pink2": "rgb(238, 169, 184)",
-  "pink3": "rgb(205, 145, 158)",
-  "pink4": "rgb(139, 99, 108)",
-  "plum": "rgb(221, 160, 221)",
-  "plum1": "rgb(255, 187, 255)",
-  "plum2": "rgb(238, 174, 238)",
-  "plum3": "rgb(205, 150, 205)",
-  "plum4": "rgb(139, 102, 139)",
-  "powderblue": "rgb(176, 224, 230)",
-  "purple": "rgb(160, 32, 240)",
-  "purple1": "rgb(155, 48, 255)",
-  "purple2": "rgb(145, 44, 238)",
-  "purple3": "rgb(125, 38, 205)",
-  "purple4": "rgb(85, 26, 139)",
-  "red": "rgb(255, 0, 0)",
-  "red1": "rgb(255, 0, 0)",
-  "red2": "rgb(238, 0, 0)",
-  "red3": "rgb(205, 0, 0)",
-  "red4": "rgb(139, 0, 0)",
-  "rosybrown": "rgb(188, 143, 143)",
-  "rosybrown1": "rgb(255, 193, 193)",
-  "rosybrown2": "rgb(238, 180, 180)",
-  "rosybrown3": "rgb(205, 155, 155)",
-  "rosybrown4": "rgb(139, 105, 105)",
-  "royalblue": "rgb(65, 105, 225)",
-  "royalblue1": "rgb(72, 118, 255)",
-  "royalblue2": "rgb(67, 110, 238)",
-  "royalblue3": "rgb(58, 95, 205)",
-  "royalblue4": "rgb(39, 64, 139)",
-  "saddlebrown": "rgb(139, 69, 19)",
-  "salmon": "rgb(250, 128, 114)",
-  "salmon1": "rgb(255, 140, 105)",
-  "salmon2": "rgb(238, 130, 98)",
-  "salmon3": "rgb(205, 112, 84)",
-  "salmon4": "rgb(139, 76, 57)",
-  "sandybrown": "rgb(244, 164, 96)",
-  "seagreen": "rgb(46, 139, 87)",
-  "seagreen1": "rgb(84, 255, 159)",
-  "seagreen2": "rgb(78, 238, 148)",
-  "seagreen3": "rgb(67, 205, 128)",
-  "seagreen4": "rgb(46, 139, 87)",
-  "seashell": "rgb(255, 245, 238)",
-  "seashell1": "rgb(255, 245, 238)",
-  "seashell2": "rgb(238, 229, 222)",
-  "seashell3": "rgb(205, 197, 191)",
-  "seashell4": "rgb(139, 134, 130)",
-  "sienna": "rgb(160, 82, 45)",
-  "sienna1": "rgb(255, 130, 71)",
-  "sienna2": "rgb(238, 121, 66)",
-  "sienna3": "rgb(205, 104, 57)",
-  "sienna4": "rgb(139, 71, 38)",
-  "skyblue": "rgb(135, 206, 235)",
-  "skyblue1": "rgb(135, 206, 255)",
-  "skyblue2": "rgb(126, 192, 238)",
-  "skyblue3": "rgb(108, 166, 205)",
-  "skyblue4": "rgb(74, 112, 139)",
-  "slateblue": "rgb(106, 90, 205)",
-  "slateblue1": "rgb(131, 111, 255)",
-  "slateblue2": "rgb(122, 103, 238)",
-  "slateblue3": "rgb(105, 89, 205)",
-  "slateblue4": "rgb(71, 60, 139)",
-  "slategray": "rgb(112, 128, 144)",
-  "slategray1": "rgb(198, 226, 255)",
-  "slategray2": "rgb(185, 211, 238)",
-  "slategray3": "rgb(159, 182, 205)",
-  "slategray4": "rgb(108, 123, 139)",
-  "slategrey": "rgb(112, 128, 144)",
-  "snow": "rgb(255, 250, 250)",
-  "snow1": "rgb(255, 250, 250)",
-  "snow2": "rgb(238, 233, 233)",
-  "snow3": "rgb(205, 201, 201)",
-  "snow4": "rgb(139, 137, 137)",
-  "springgreen": "rgb(0, 255, 127)",
-  "springgreen1": "rgb(0, 255, 127)",
-  "springgreen2": "rgb(0, 238, 118)",
-  "springgreen3": "rgb(0, 205, 102)",
-  "springgreen4": "rgb(0, 139, 69)",
-  "steelblue": "rgb(70, 130, 180)",
-  "steelblue1": "rgb(99, 184, 255)",
-  "steelblue2": "rgb(92, 172, 238)",
-  "steelblue3": "rgb(79, 148, 205)",
-  "steelblue4": "rgb(54, 100, 139)",
-  "tan": "rgb(210, 180, 140)",
-  "tan1": "rgb(255, 165, 79)",
-  "tan2": "rgb(238, 154, 73)",
-  "tan3": "rgb(205, 133, 63)",
-  "tan4": "rgb(139, 90, 43)",
-  "thistle": "rgb(216, 191, 216)",
-  "thistle1": "rgb(255, 225, 255)",
-  "thistle2": "rgb(238, 210, 238)",
-  "thistle3": "rgb(205, 181, 205)",
-  "thistle4": "rgb(139, 123, 139)",
-  "tomato": "rgb(255, 99, 71)",
-  "tomato1": "rgb(255, 99, 71)",
-  "tomato2": "rgb(238, 92, 66)",
-  "tomato3": "rgb(205, 79, 57)",
-  "tomato4": "rgb(139, 54, 38)",
-  "turquoise": "rgb(64, 224, 208)",
-  "turquoise1": "rgb(0, 245, 255)",
-  "turquoise2": "rgb(0, 229, 238)",
-  "turquoise3": "rgb(0, 197, 205)",
-  "turquoise4": "rgb(0, 134, 139)",
-  "violet": "rgb(238, 130, 238)",
-  "violetred": "rgb(208, 32, 144)",
-  "violetred1": "rgb(255, 62, 150)",
-  "violetred2": "rgb(238, 58, 140)",
-  "violetred3": "rgb(205, 50, 120)",
-  "violetred4": "rgb(139, 34, 82)",
-  "wheat": "rgb(245, 222, 179)",
-  "wheat1": "rgb(255, 231, 186)",
-  "wheat2": "rgb(238, 216, 174)",
-  "wheat3": "rgb(205, 186, 150)",
-  "wheat4": "rgb(139, 126, 102)",
-  "white": "rgb(255, 255, 255)",
-  "whitesmoke": "rgb(245, 245, 245)",
-  "yellow": "rgb(255, 255, 0)",
-  "yellow1": "rgb(255, 255, 0)",
-  "yellow2": "rgb(238, 238, 0)",
-  "yellow3": "rgb(205, 205, 0)",
-  "yellow4": "rgb(139, 139, 0)",
-  "yellowgreen": "rgb(154, 205, 50)"
+  'aliceblue': 'rgb(240, 248, 255)',
+  'antiquewhite': 'rgb(250, 235, 215)',
+  'antiquewhite1': 'rgb(255, 239, 219)',
+  'antiquewhite2': 'rgb(238, 223, 204)',
+  'antiquewhite3': 'rgb(205, 192, 176)',
+  'antiquewhite4': 'rgb(139, 131, 120)',
+  'aquamarine': 'rgb(127, 255, 212)',
+  'aquamarine1': 'rgb(127, 255, 212)',
+  'aquamarine2': 'rgb(118, 238, 198)',
+  'aquamarine3': 'rgb(102, 205, 170)',
+  'aquamarine4': 'rgb(69, 139, 116)',
+  'azure': 'rgb(240, 255, 255)',
+  'azure1': 'rgb(240, 255, 255)',
+  'azure2': 'rgb(224, 238, 238)',
+  'azure3': 'rgb(193, 205, 205)',
+  'azure4': 'rgb(131, 139, 139)',
+  'beige': 'rgb(245, 245, 220)',
+  'bisque': 'rgb(255, 228, 196)',
+  'bisque1': 'rgb(255, 228, 196)',
+  'bisque2': 'rgb(238, 213, 183)',
+  'bisque3': 'rgb(205, 183, 158)',
+  'bisque4': 'rgb(139, 125, 107)',
+  'black': 'rgb(0, 0, 0)',
+  'blanchedalmond': 'rgb(255, 235, 205)',
+  'blue': 'rgb(0, 0, 255)',
+  'blue1': 'rgb(0, 0, 255)',
+  'blue2': 'rgb(0, 0, 238)',
+  'blue3': 'rgb(0, 0, 205)',
+  'blue4': 'rgb(0, 0, 139)',
+  'blueviolet': 'rgb(138, 43, 226)',
+  'brown': 'rgb(165, 42, 42)',
+  'brown1': 'rgb(255, 64, 64)',
+  'brown2': 'rgb(238, 59, 59)',
+  'brown3': 'rgb(205, 51, 51)',
+  'brown4': 'rgb(139, 35, 35)',
+  'burlywood': 'rgb(222, 184, 135)',
+  'burlywood1': 'rgb(255, 211, 155)',
+  'burlywood2': 'rgb(238, 197, 145)',
+  'burlywood3': 'rgb(205, 170, 125)',
+  'burlywood4': 'rgb(139, 115, 85)',
+  'cadetblue': 'rgb(95, 158, 160)',
+  'cadetblue1': 'rgb(152, 245, 255)',
+  'cadetblue2': 'rgb(142, 229, 238)',
+  'cadetblue3': 'rgb(122, 197, 205)',
+  'cadetblue4': 'rgb(83, 134, 139)',
+  'chartreuse': 'rgb(127, 255, 0)',
+  'chartreuse1': 'rgb(127, 255, 0)',
+  'chartreuse2': 'rgb(118, 238, 0)',
+  'chartreuse3': 'rgb(102, 205, 0)',
+  'chartreuse4': 'rgb(69, 139, 0)',
+  'chocolate': 'rgb(210, 105, 30)',
+  'chocolate1': 'rgb(255, 127, 36)',
+  'chocolate2': 'rgb(238, 118, 33)',
+  'chocolate3': 'rgb(205, 102, 29)',
+  'chocolate4': 'rgb(139, 69, 19)',
+  'coral': 'rgb(255, 127, 80)',
+  'coral1': 'rgb(255, 114, 86)',
+  'coral2': 'rgb(238, 106, 80)',
+  'coral3': 'rgb(205, 91, 69)',
+  'coral4': 'rgb(139, 62, 47)',
+  'cornflowerblue': 'rgb(100, 149, 237)',
+  'cornsilk': 'rgb(255, 248, 220)',
+  'cornsilk1': 'rgb(255, 248, 220)',
+  'cornsilk2': 'rgb(238, 232, 205)',
+  'cornsilk3': 'rgb(205, 200, 177)',
+  'cornsilk4': 'rgb(139, 136, 120)',
+  'cyan': 'rgb(0, 255, 255)',
+  'cyan1': 'rgb(0, 255, 255)',
+  'cyan2': 'rgb(0, 238, 238)',
+  'cyan3': 'rgb(0, 205, 205)',
+  'cyan4': 'rgb(0, 139, 139)',
+  'darkblue': 'rgb(0, 0, 139)',
+  'darkcyan': 'rgb(0, 139, 139)',
+  'darkgoldenrod': 'rgb(184, 134, 11)',
+  'darkgoldenrod1': 'rgb(255, 185, 15)',
+  'darkgoldenrod2': 'rgb(238, 173, 14)',
+  'darkgoldenrod3': 'rgb(205, 149, 12)',
+  'darkgoldenrod4': 'rgb(139, 101, 8)',
+  'darkgray': 'rgb(169, 169, 169)',
+  'darkgreen': 'rgb(0, 100, 0)',
+  'darkgrey': 'rgb(169, 169, 169)',
+  'darkkhaki': 'rgb(189, 183, 107)',
+  'darkmagenta': 'rgb(139, 0, 139)',
+  'darkolivegreen': 'rgb(85, 107, 47)',
+  'darkolivegreen1': 'rgb(202, 255, 112)',
+  'darkolivegreen2': 'rgb(188, 238, 104)',
+  'darkolivegreen3': 'rgb(162, 205, 90)',
+  'darkolivegreen4': 'rgb(110, 139, 61)',
+  'darkorange': 'rgb(255, 140, 0)',
+  'darkorange1': 'rgb(255, 127, 0)',
+  'darkorange2': 'rgb(238, 118, 0)',
+  'darkorange3': 'rgb(205, 102, 0)',
+  'darkorange4': 'rgb(139, 69, 0)',
+  'darkorchid': 'rgb(153, 50, 204)',
+  'darkorchid1': 'rgb(191, 62, 255)',
+  'darkorchid2': 'rgb(178, 58, 238)',
+  'darkorchid3': 'rgb(154, 50, 205)',
+  'darkorchid4': 'rgb(104, 34, 139)',
+  'darkred': 'rgb(139, 0, 0)',
+  'darksalmon': 'rgb(233, 150, 122)',
+  'darkseagreen': 'rgb(143, 188, 143)',
+  'darkseagreen1': 'rgb(193, 255, 193)',
+  'darkseagreen2': 'rgb(180, 238, 180)',
+  'darkseagreen3': 'rgb(155, 205, 155)',
+  'darkseagreen4': 'rgb(105, 139, 105)',
+  'darkslateblue': 'rgb(72, 61, 139)',
+  'darkslategray': 'rgb(47, 79, 79)',
+  'darkslategray1': 'rgb(151, 255, 255)',
+  'darkslategray2': 'rgb(141, 238, 238)',
+  'darkslategray3': 'rgb(121, 205, 205)',
+  'darkslategray4': 'rgb(82, 139, 139)',
+  'darkslategrey': 'rgb(47, 79, 79)',
+  'darkturquoise': 'rgb(0, 206, 209)',
+  'darkviolet': 'rgb(148, 0, 211)',
+  'debianred': 'rgb(215, 7, 81)',
+  'deeppink': 'rgb(255, 20, 147)',
+  'deeppink1': 'rgb(255, 20, 147)',
+  'deeppink2': 'rgb(238, 18, 137)',
+  'deeppink3': 'rgb(205, 16, 118)',
+  'deeppink4': 'rgb(139, 10, 80)',
+  'deepskyblue': 'rgb(0, 191, 255)',
+  'deepskyblue1': 'rgb(0, 191, 255)',
+  'deepskyblue2': 'rgb(0, 178, 238)',
+  'deepskyblue3': 'rgb(0, 154, 205)',
+  'deepskyblue4': 'rgb(0, 104, 139)',
+  'dimgray': 'rgb(105, 105, 105)',
+  'dimgrey': 'rgb(105, 105, 105)',
+  'dodgerblue': 'rgb(30, 144, 255)',
+  'dodgerblue1': 'rgb(30, 144, 255)',
+  'dodgerblue2': 'rgb(28, 134, 238)',
+  'dodgerblue3': 'rgb(24, 116, 205)',
+  'dodgerblue4': 'rgb(16, 78, 139)',
+  'firebrick': 'rgb(178, 34, 34)',
+  'firebrick1': 'rgb(255, 48, 48)',
+  'firebrick2': 'rgb(238, 44, 44)',
+  'firebrick3': 'rgb(205, 38, 38)',
+  'firebrick4': 'rgb(139, 26, 26)',
+  'floralwhite': 'rgb(255, 250, 240)',
+  'forestgreen': 'rgb(34, 139, 34)',
+  'gainsboro': 'rgb(220, 220, 220)',
+  'ghostwhite': 'rgb(248, 248, 255)',
+  'gold': 'rgb(255, 215, 0)',
+  'gold1': 'rgb(255, 215, 0)',
+  'gold2': 'rgb(238, 201, 0)',
+  'gold3': 'rgb(205, 173, 0)',
+  'gold4': 'rgb(139, 117, 0)',
+  'goldenrod': 'rgb(218, 165, 32)',
+  'goldenrod1': 'rgb(255, 193, 37)',
+  'goldenrod2': 'rgb(238, 180, 34)',
+  'goldenrod3': 'rgb(205, 155, 29)',
+  'goldenrod4': 'rgb(139, 105, 20)',
+  'gray': 'rgb(190, 190, 190)',
+  'gray0': 'rgb(0, 0, 0)',
+  'gray1': 'rgb(3, 3, 3)',
+  'gray10': 'rgb(26, 26, 26)',
+  'gray100': 'rgb(255, 255, 255)',
+  'gray11': 'rgb(28, 28, 28)',
+  'gray12': 'rgb(31, 31, 31)',
+  'gray13': 'rgb(33, 33, 33)',
+  'gray14': 'rgb(36, 36, 36)',
+  'gray15': 'rgb(38, 38, 38)',
+  'gray16': 'rgb(41, 41, 41)',
+  'gray17': 'rgb(43, 43, 43)',
+  'gray18': 'rgb(46, 46, 46)',
+  'gray19': 'rgb(48, 48, 48)',
+  'gray2': 'rgb(5, 5, 5)',
+  'gray20': 'rgb(51, 51, 51)',
+  'gray21': 'rgb(54, 54, 54)',
+  'gray22': 'rgb(56, 56, 56)',
+  'gray23': 'rgb(59, 59, 59)',
+  'gray24': 'rgb(61, 61, 61)',
+  'gray25': 'rgb(64, 64, 64)',
+  'gray26': 'rgb(66, 66, 66)',
+  'gray27': 'rgb(69, 69, 69)',
+  'gray28': 'rgb(71, 71, 71)',
+  'gray29': 'rgb(74, 74, 74)',
+  'gray3': 'rgb(8, 8, 8)',
+  'gray30': 'rgb(77, 77, 77)',
+  'gray31': 'rgb(79, 79, 79)',
+  'gray32': 'rgb(82, 82, 82)',
+  'gray33': 'rgb(84, 84, 84)',
+  'gray34': 'rgb(87, 87, 87)',
+  'gray35': 'rgb(89, 89, 89)',
+  'gray36': 'rgb(92, 92, 92)',
+  'gray37': 'rgb(94, 94, 94)',
+  'gray38': 'rgb(97, 97, 97)',
+  'gray39': 'rgb(99, 99, 99)',
+  'gray4': 'rgb(10, 10, 10)',
+  'gray40': 'rgb(102, 102, 102)',
+  'gray41': 'rgb(105, 105, 105)',
+  'gray42': 'rgb(107, 107, 107)',
+  'gray43': 'rgb(110, 110, 110)',
+  'gray44': 'rgb(112, 112, 112)',
+  'gray45': 'rgb(115, 115, 115)',
+  'gray46': 'rgb(117, 117, 117)',
+  'gray47': 'rgb(120, 120, 120)',
+  'gray48': 'rgb(122, 122, 122)',
+  'gray49': 'rgb(125, 125, 125)',
+  'gray5': 'rgb(13, 13, 13)',
+  'gray50': 'rgb(127, 127, 127)',
+  'gray51': 'rgb(130, 130, 130)',
+  'gray52': 'rgb(133, 133, 133)',
+  'gray53': 'rgb(135, 135, 135)',
+  'gray54': 'rgb(138, 138, 138)',
+  'gray55': 'rgb(140, 140, 140)',
+  'gray56': 'rgb(143, 143, 143)',
+  'gray57': 'rgb(145, 145, 145)',
+  'gray58': 'rgb(148, 148, 148)',
+  'gray59': 'rgb(150, 150, 150)',
+  'gray6': 'rgb(15, 15, 15)',
+  'gray60': 'rgb(153, 153, 153)',
+  'gray61': 'rgb(156, 156, 156)',
+  'gray62': 'rgb(158, 158, 158)',
+  'gray63': 'rgb(161, 161, 161)',
+  'gray64': 'rgb(163, 163, 163)',
+  'gray65': 'rgb(166, 166, 166)',
+  'gray66': 'rgb(168, 168, 168)',
+  'gray67': 'rgb(171, 171, 171)',
+  'gray68': 'rgb(173, 173, 173)',
+  'gray69': 'rgb(176, 176, 176)',
+  'gray7': 'rgb(18, 18, 18)',
+  'gray70': 'rgb(179, 179, 179)',
+  'gray71': 'rgb(181, 181, 181)',
+  'gray72': 'rgb(184, 184, 184)',
+  'gray73': 'rgb(186, 186, 186)',
+  'gray74': 'rgb(189, 189, 189)',
+  'gray75': 'rgb(191, 191, 191)',
+  'gray76': 'rgb(194, 194, 194)',
+  'gray77': 'rgb(196, 196, 196)',
+  'gray78': 'rgb(199, 199, 199)',
+  'gray79': 'rgb(201, 201, 201)',
+  'gray8': 'rgb(20, 20, 20)',
+  'gray80': 'rgb(204, 204, 204)',
+  'gray81': 'rgb(207, 207, 207)',
+  'gray82': 'rgb(209, 209, 209)',
+  'gray83': 'rgb(212, 212, 212)',
+  'gray84': 'rgb(214, 214, 214)',
+  'gray85': 'rgb(217, 217, 217)',
+  'gray86': 'rgb(219, 219, 219)',
+  'gray87': 'rgb(222, 222, 222)',
+  'gray88': 'rgb(224, 224, 224)',
+  'gray89': 'rgb(227, 227, 227)',
+  'gray9': 'rgb(23, 23, 23)',
+  'gray90': 'rgb(229, 229, 229)',
+  'gray91': 'rgb(232, 232, 232)',
+  'gray92': 'rgb(235, 235, 235)',
+  'gray93': 'rgb(237, 237, 237)',
+  'gray94': 'rgb(240, 240, 240)',
+  'gray95': 'rgb(242, 242, 242)',
+  'gray96': 'rgb(245, 245, 245)',
+  'gray97': 'rgb(247, 247, 247)',
+  'gray98': 'rgb(250, 250, 250)',
+  'gray99': 'rgb(252, 252, 252)',
+  'green': 'rgb(0, 255, 0)',
+  'green1': 'rgb(0, 255, 0)',
+  'green2': 'rgb(0, 238, 0)',
+  'green3': 'rgb(0, 205, 0)',
+  'green4': 'rgb(0, 139, 0)',
+  'greenyellow': 'rgb(173, 255, 47)',
+  'grey': 'rgb(190, 190, 190)',
+  'grey0': 'rgb(0, 0, 0)',
+  'grey1': 'rgb(3, 3, 3)',
+  'grey10': 'rgb(26, 26, 26)',
+  'grey100': 'rgb(255, 255, 255)',
+  'grey11': 'rgb(28, 28, 28)',
+  'grey12': 'rgb(31, 31, 31)',
+  'grey13': 'rgb(33, 33, 33)',
+  'grey14': 'rgb(36, 36, 36)',
+  'grey15': 'rgb(38, 38, 38)',
+  'grey16': 'rgb(41, 41, 41)',
+  'grey17': 'rgb(43, 43, 43)',
+  'grey18': 'rgb(46, 46, 46)',
+  'grey19': 'rgb(48, 48, 48)',
+  'grey2': 'rgb(5, 5, 5)',
+  'grey20': 'rgb(51, 51, 51)',
+  'grey21': 'rgb(54, 54, 54)',
+  'grey22': 'rgb(56, 56, 56)',
+  'grey23': 'rgb(59, 59, 59)',
+  'grey24': 'rgb(61, 61, 61)',
+  'grey25': 'rgb(64, 64, 64)',
+  'grey26': 'rgb(66, 66, 66)',
+  'grey27': 'rgb(69, 69, 69)',
+  'grey28': 'rgb(71, 71, 71)',
+  'grey29': 'rgb(74, 74, 74)',
+  'grey3': 'rgb(8, 8, 8)',
+  'grey30': 'rgb(77, 77, 77)',
+  'grey31': 'rgb(79, 79, 79)',
+  'grey32': 'rgb(82, 82, 82)',
+  'grey33': 'rgb(84, 84, 84)',
+  'grey34': 'rgb(87, 87, 87)',
+  'grey35': 'rgb(89, 89, 89)',
+  'grey36': 'rgb(92, 92, 92)',
+  'grey37': 'rgb(94, 94, 94)',
+  'grey38': 'rgb(97, 97, 97)',
+  'grey39': 'rgb(99, 99, 99)',
+  'grey4': 'rgb(10, 10, 10)',
+  'grey40': 'rgb(102, 102, 102)',
+  'grey41': 'rgb(105, 105, 105)',
+  'grey42': 'rgb(107, 107, 107)',
+  'grey43': 'rgb(110, 110, 110)',
+  'grey44': 'rgb(112, 112, 112)',
+  'grey45': 'rgb(115, 115, 115)',
+  'grey46': 'rgb(117, 117, 117)',
+  'grey47': 'rgb(120, 120, 120)',
+  'grey48': 'rgb(122, 122, 122)',
+  'grey49': 'rgb(125, 125, 125)',
+  'grey5': 'rgb(13, 13, 13)',
+  'grey50': 'rgb(127, 127, 127)',
+  'grey51': 'rgb(130, 130, 130)',
+  'grey52': 'rgb(133, 133, 133)',
+  'grey53': 'rgb(135, 135, 135)',
+  'grey54': 'rgb(138, 138, 138)',
+  'grey55': 'rgb(140, 140, 140)',
+  'grey56': 'rgb(143, 143, 143)',
+  'grey57': 'rgb(145, 145, 145)',
+  'grey58': 'rgb(148, 148, 148)',
+  'grey59': 'rgb(150, 150, 150)',
+  'grey6': 'rgb(15, 15, 15)',
+  'grey60': 'rgb(153, 153, 153)',
+  'grey61': 'rgb(156, 156, 156)',
+  'grey62': 'rgb(158, 158, 158)',
+  'grey63': 'rgb(161, 161, 161)',
+  'grey64': 'rgb(163, 163, 163)',
+  'grey65': 'rgb(166, 166, 166)',
+  'grey66': 'rgb(168, 168, 168)',
+  'grey67': 'rgb(171, 171, 171)',
+  'grey68': 'rgb(173, 173, 173)',
+  'grey69': 'rgb(176, 176, 176)',
+  'grey7': 'rgb(18, 18, 18)',
+  'grey70': 'rgb(179, 179, 179)',
+  'grey71': 'rgb(181, 181, 181)',
+  'grey72': 'rgb(184, 184, 184)',
+  'grey73': 'rgb(186, 186, 186)',
+  'grey74': 'rgb(189, 189, 189)',
+  'grey75': 'rgb(191, 191, 191)',
+  'grey76': 'rgb(194, 194, 194)',
+  'grey77': 'rgb(196, 196, 196)',
+  'grey78': 'rgb(199, 199, 199)',
+  'grey79': 'rgb(201, 201, 201)',
+  'grey8': 'rgb(20, 20, 20)',
+  'grey80': 'rgb(204, 204, 204)',
+  'grey81': 'rgb(207, 207, 207)',
+  'grey82': 'rgb(209, 209, 209)',
+  'grey83': 'rgb(212, 212, 212)',
+  'grey84': 'rgb(214, 214, 214)',
+  'grey85': 'rgb(217, 217, 217)',
+  'grey86': 'rgb(219, 219, 219)',
+  'grey87': 'rgb(222, 222, 222)',
+  'grey88': 'rgb(224, 224, 224)',
+  'grey89': 'rgb(227, 227, 227)',
+  'grey9': 'rgb(23, 23, 23)',
+  'grey90': 'rgb(229, 229, 229)',
+  'grey91': 'rgb(232, 232, 232)',
+  'grey92': 'rgb(235, 235, 235)',
+  'grey93': 'rgb(237, 237, 237)',
+  'grey94': 'rgb(240, 240, 240)',
+  'grey95': 'rgb(242, 242, 242)',
+  'grey96': 'rgb(245, 245, 245)',
+  'grey97': 'rgb(247, 247, 247)',
+  'grey98': 'rgb(250, 250, 250)',
+  'grey99': 'rgb(252, 252, 252)',
+  'honeydew': 'rgb(240, 255, 240)',
+  'honeydew1': 'rgb(240, 255, 240)',
+  'honeydew2': 'rgb(224, 238, 224)',
+  'honeydew3': 'rgb(193, 205, 193)',
+  'honeydew4': 'rgb(131, 139, 131)',
+  'hotpink': 'rgb(255, 105, 180)',
+  'hotpink1': 'rgb(255, 110, 180)',
+  'hotpink2': 'rgb(238, 106, 167)',
+  'hotpink3': 'rgb(205, 96, 144)',
+  'hotpink4': 'rgb(139, 58, 98)',
+  'indianred': 'rgb(205, 92, 92)',
+  'indianred1': 'rgb(255, 106, 106)',
+  'indianred2': 'rgb(238, 99, 99)',
+  'indianred3': 'rgb(205, 85, 85)',
+  'indianred4': 'rgb(139, 58, 58)',
+  'ivory': 'rgb(255, 255, 240)',
+  'ivory1': 'rgb(255, 255, 240)',
+  'ivory2': 'rgb(238, 238, 224)',
+  'ivory3': 'rgb(205, 205, 193)',
+  'ivory4': 'rgb(139, 139, 131)',
+  'khaki': 'rgb(240, 230, 140)',
+  'khaki1': 'rgb(255, 246, 143)',
+  'khaki2': 'rgb(238, 230, 133)',
+  'khaki3': 'rgb(205, 198, 115)',
+  'khaki4': 'rgb(139, 134, 78)',
+  'lavender': 'rgb(230, 230, 250)',
+  'lavenderblush': 'rgb(255, 240, 245)',
+  'lavenderblush1': 'rgb(255, 240, 245)',
+  'lavenderblush2': 'rgb(238, 224, 229)',
+  'lavenderblush3': 'rgb(205, 193, 197)',
+  'lavenderblush4': 'rgb(139, 131, 134)',
+  'lawngreen': 'rgb(124, 252, 0)',
+  'lemonchiffon': 'rgb(255, 250, 205)',
+  'lemonchiffon1': 'rgb(255, 250, 205)',
+  'lemonchiffon2': 'rgb(238, 233, 191)',
+  'lemonchiffon3': 'rgb(205, 201, 165)',
+  'lemonchiffon4': 'rgb(139, 137, 112)',
+  'lightblue': 'rgb(173, 216, 230)',
+  'lightblue1': 'rgb(191, 239, 255)',
+  'lightblue2': 'rgb(178, 223, 238)',
+  'lightblue3': 'rgb(154, 192, 205)',
+  'lightblue4': 'rgb(104, 131, 139)',
+  'lightcoral': 'rgb(240, 128, 128)',
+  'lightcyan': 'rgb(224, 255, 255)',
+  'lightcyan1': 'rgb(224, 255, 255)',
+  'lightcyan2': 'rgb(209, 238, 238)',
+  'lightcyan3': 'rgb(180, 205, 205)',
+  'lightcyan4': 'rgb(122, 139, 139)',
+  'lightgoldenrod': 'rgb(238, 221, 130)',
+  'lightgoldenrod1': 'rgb(255, 236, 139)',
+  'lightgoldenrod2': 'rgb(238, 220, 130)',
+  'lightgoldenrod3': 'rgb(205, 190, 112)',
+  'lightgoldenrod4': 'rgb(139, 129, 76)',
+  'lightgoldenrodyellow': 'rgb(250, 250, 210)',
+  'lightgray': 'rgb(211, 211, 211)',
+  'lightgreen': 'rgb(144, 238, 144)',
+  'lightgrey': 'rgb(211, 211, 211)',
+  'lightpink': 'rgb(255, 182, 193)',
+  'lightpink1': 'rgb(255, 174, 185)',
+  'lightpink2': 'rgb(238, 162, 173)',
+  'lightpink3': 'rgb(205, 140, 149)',
+  'lightpink4': 'rgb(139, 95, 101)',
+  'lightsalmon': 'rgb(255, 160, 122)',
+  'lightsalmon1': 'rgb(255, 160, 122)',
+  'lightsalmon2': 'rgb(238, 149, 114)',
+  'lightsalmon3': 'rgb(205, 129, 98)',
+  'lightsalmon4': 'rgb(139, 87, 66)',
+  'lightseagreen': 'rgb(32, 178, 170)',
+  'lightskyblue': 'rgb(135, 206, 250)',
+  'lightskyblue1': 'rgb(176, 226, 255)',
+  'lightskyblue2': 'rgb(164, 211, 238)',
+  'lightskyblue3': 'rgb(141, 182, 205)',
+  'lightskyblue4': 'rgb(96, 123, 139)',
+  'lightslateblue': 'rgb(132, 112, 255)',
+  'lightslategray': 'rgb(119, 136, 153)',
+  'lightslategrey': 'rgb(119, 136, 153)',
+  'lightsteelblue': 'rgb(176, 196, 222)',
+  'lightsteelblue1': 'rgb(202, 225, 255)',
+  'lightsteelblue2': 'rgb(188, 210, 238)',
+  'lightsteelblue3': 'rgb(162, 181, 205)',
+  'lightsteelblue4': 'rgb(110, 123, 139)',
+  'lightyellow': 'rgb(255, 255, 224)',
+  'lightyellow1': 'rgb(255, 255, 224)',
+  'lightyellow2': 'rgb(238, 238, 209)',
+  'lightyellow3': 'rgb(205, 205, 180)',
+  'lightyellow4': 'rgb(139, 139, 122)',
+  'limegreen': 'rgb(50, 205, 50)',
+  'linen': 'rgb(250, 240, 230)',
+  'magenta': 'rgb(255, 0, 255)',
+  'magenta1': 'rgb(255, 0, 255)',
+  'magenta2': 'rgb(238, 0, 238)',
+  'magenta3': 'rgb(205, 0, 205)',
+  'magenta4': 'rgb(139, 0, 139)',
+  'maroon': 'rgb(176, 48, 96)',
+  'maroon1': 'rgb(255, 52, 179)',
+  'maroon2': 'rgb(238, 48, 167)',
+  'maroon3': 'rgb(205, 41, 144)',
+  'maroon4': 'rgb(139, 28, 98)',
+  'mediumaquamarine': 'rgb(102, 205, 170)',
+  'mediumblue': 'rgb(0, 0, 205)',
+  'mediumorchid': 'rgb(186, 85, 211)',
+  'mediumorchid1': 'rgb(224, 102, 255)',
+  'mediumorchid2': 'rgb(209, 95, 238)',
+  'mediumorchid3': 'rgb(180, 82, 205)',
+  'mediumorchid4': 'rgb(122, 55, 139)',
+  'mediumpurple': 'rgb(147, 112, 219)',
+  'mediumpurple1': 'rgb(171, 130, 255)',
+  'mediumpurple2': 'rgb(159, 121, 238)',
+  'mediumpurple3': 'rgb(137, 104, 205)',
+  'mediumpurple4': 'rgb(93, 71, 139)',
+  'mediumseagreen': 'rgb(60, 179, 113)',
+  'mediumslateblue': 'rgb(123, 104, 238)',
+  'mediumspringgreen': 'rgb(0, 250, 154)',
+  'mediumturquoise': 'rgb(72, 209, 204)',
+  'mediumvioletred': 'rgb(199, 21, 133)',
+  'midnightblue': 'rgb(25, 25, 112)',
+  'mintcream': 'rgb(245, 255, 250)',
+  'mistyrose': 'rgb(255, 228, 225)',
+  'mistyrose1': 'rgb(255, 228, 225)',
+  'mistyrose2': 'rgb(238, 213, 210)',
+  'mistyrose3': 'rgb(205, 183, 181)',
+  'mistyrose4': 'rgb(139, 125, 123)',
+  'moccasin': 'rgb(255, 228, 181)',
+  'navajowhite': 'rgb(255, 222, 173)',
+  'navajowhite1': 'rgb(255, 222, 173)',
+  'navajowhite2': 'rgb(238, 207, 161)',
+  'navajowhite3': 'rgb(205, 179, 139)',
+  'navajowhite4': 'rgb(139, 121, 94)',
+  'navy': 'rgb(0, 0, 128)',
+  'navyblue': 'rgb(0, 0, 128)',
+  'oldlace': 'rgb(253, 245, 230)',
+  'olivedrab': 'rgb(107, 142, 35)',
+  'olivedrab1': 'rgb(192, 255, 62)',
+  'olivedrab2': 'rgb(179, 238, 58)',
+  'olivedrab3': 'rgb(154, 205, 50)',
+  'olivedrab4': 'rgb(105, 139, 34)',
+  'orange': 'rgb(255, 165, 0)',
+  'orange1': 'rgb(255, 165, 0)',
+  'orange2': 'rgb(238, 154, 0)',
+  'orange3': 'rgb(205, 133, 0)',
+  'orange4': 'rgb(139, 90, 0)',
+  'orangered': 'rgb(255, 69, 0)',
+  'orangered1': 'rgb(255, 69, 0)',
+  'orangered2': 'rgb(238, 64, 0)',
+  'orangered3': 'rgb(205, 55, 0)',
+  'orangered4': 'rgb(139, 37, 0)',
+  'orchid': 'rgb(218, 112, 214)',
+  'orchid1': 'rgb(255, 131, 250)',
+  'orchid2': 'rgb(238, 122, 233)',
+  'orchid3': 'rgb(205, 105, 201)',
+  'orchid4': 'rgb(139, 71, 137)',
+  'palegoldenrod': 'rgb(238, 232, 170)',
+  'palegreen': 'rgb(152, 251, 152)',
+  'palegreen1': 'rgb(154, 255, 154)',
+  'palegreen2': 'rgb(144, 238, 144)',
+  'palegreen3': 'rgb(124, 205, 124)',
+  'palegreen4': 'rgb(84, 139, 84)',
+  'paleturquoise': 'rgb(175, 238, 238)',
+  'paleturquoise1': 'rgb(187, 255, 255)',
+  'paleturquoise2': 'rgb(174, 238, 238)',
+  'paleturquoise3': 'rgb(150, 205, 205)',
+  'paleturquoise4': 'rgb(102, 139, 139)',
+  'palevioletred': 'rgb(219, 112, 147)',
+  'palevioletred1': 'rgb(255, 130, 171)',
+  'palevioletred2': 'rgb(238, 121, 159)',
+  'palevioletred3': 'rgb(205, 104, 137)',
+  'palevioletred4': 'rgb(139, 71, 93)',
+  'papayawhip': 'rgb(255, 239, 213)',
+  'peachpuff': 'rgb(255, 218, 185)',
+  'peachpuff1': 'rgb(255, 218, 185)',
+  'peachpuff2': 'rgb(238, 203, 173)',
+  'peachpuff3': 'rgb(205, 175, 149)',
+  'peachpuff4': 'rgb(139, 119, 101)',
+  'peru': 'rgb(205, 133, 63)',
+  'pink': 'rgb(255, 192, 203)',
+  'pink1': 'rgb(255, 181, 197)',
+  'pink2': 'rgb(238, 169, 184)',
+  'pink3': 'rgb(205, 145, 158)',
+  'pink4': 'rgb(139, 99, 108)',
+  'plum': 'rgb(221, 160, 221)',
+  'plum1': 'rgb(255, 187, 255)',
+  'plum2': 'rgb(238, 174, 238)',
+  'plum3': 'rgb(205, 150, 205)',
+  'plum4': 'rgb(139, 102, 139)',
+  'powderblue': 'rgb(176, 224, 230)',
+  'purple': 'rgb(160, 32, 240)',
+  'purple1': 'rgb(155, 48, 255)',
+  'purple2': 'rgb(145, 44, 238)',
+  'purple3': 'rgb(125, 38, 205)',
+  'purple4': 'rgb(85, 26, 139)',
+  'red': 'rgb(255, 0, 0)',
+  'red1': 'rgb(255, 0, 0)',
+  'red2': 'rgb(238, 0, 0)',
+  'red3': 'rgb(205, 0, 0)',
+  'red4': 'rgb(139, 0, 0)',
+  'rosybrown': 'rgb(188, 143, 143)',
+  'rosybrown1': 'rgb(255, 193, 193)',
+  'rosybrown2': 'rgb(238, 180, 180)',
+  'rosybrown3': 'rgb(205, 155, 155)',
+  'rosybrown4': 'rgb(139, 105, 105)',
+  'royalblue': 'rgb(65, 105, 225)',
+  'royalblue1': 'rgb(72, 118, 255)',
+  'royalblue2': 'rgb(67, 110, 238)',
+  'royalblue3': 'rgb(58, 95, 205)',
+  'royalblue4': 'rgb(39, 64, 139)',
+  'saddlebrown': 'rgb(139, 69, 19)',
+  'salmon': 'rgb(250, 128, 114)',
+  'salmon1': 'rgb(255, 140, 105)',
+  'salmon2': 'rgb(238, 130, 98)',
+  'salmon3': 'rgb(205, 112, 84)',
+  'salmon4': 'rgb(139, 76, 57)',
+  'sandybrown': 'rgb(244, 164, 96)',
+  'seagreen': 'rgb(46, 139, 87)',
+  'seagreen1': 'rgb(84, 255, 159)',
+  'seagreen2': 'rgb(78, 238, 148)',
+  'seagreen3': 'rgb(67, 205, 128)',
+  'seagreen4': 'rgb(46, 139, 87)',
+  'seashell': 'rgb(255, 245, 238)',
+  'seashell1': 'rgb(255, 245, 238)',
+  'seashell2': 'rgb(238, 229, 222)',
+  'seashell3': 'rgb(205, 197, 191)',
+  'seashell4': 'rgb(139, 134, 130)',
+  'sienna': 'rgb(160, 82, 45)',
+  'sienna1': 'rgb(255, 130, 71)',
+  'sienna2': 'rgb(238, 121, 66)',
+  'sienna3': 'rgb(205, 104, 57)',
+  'sienna4': 'rgb(139, 71, 38)',
+  'skyblue': 'rgb(135, 206, 235)',
+  'skyblue1': 'rgb(135, 206, 255)',
+  'skyblue2': 'rgb(126, 192, 238)',
+  'skyblue3': 'rgb(108, 166, 205)',
+  'skyblue4': 'rgb(74, 112, 139)',
+  'slateblue': 'rgb(106, 90, 205)',
+  'slateblue1': 'rgb(131, 111, 255)',
+  'slateblue2': 'rgb(122, 103, 238)',
+  'slateblue3': 'rgb(105, 89, 205)',
+  'slateblue4': 'rgb(71, 60, 139)',
+  'slategray': 'rgb(112, 128, 144)',
+  'slategray1': 'rgb(198, 226, 255)',
+  'slategray2': 'rgb(185, 211, 238)',
+  'slategray3': 'rgb(159, 182, 205)',
+  'slategray4': 'rgb(108, 123, 139)',
+  'slategrey': 'rgb(112, 128, 144)',
+  'snow': 'rgb(255, 250, 250)',
+  'snow1': 'rgb(255, 250, 250)',
+  'snow2': 'rgb(238, 233, 233)',
+  'snow3': 'rgb(205, 201, 201)',
+  'snow4': 'rgb(139, 137, 137)',
+  'springgreen': 'rgb(0, 255, 127)',
+  'springgreen1': 'rgb(0, 255, 127)',
+  'springgreen2': 'rgb(0, 238, 118)',
+  'springgreen3': 'rgb(0, 205, 102)',
+  'springgreen4': 'rgb(0, 139, 69)',
+  'steelblue': 'rgb(70, 130, 180)',
+  'steelblue1': 'rgb(99, 184, 255)',
+  'steelblue2': 'rgb(92, 172, 238)',
+  'steelblue3': 'rgb(79, 148, 205)',
+  'steelblue4': 'rgb(54, 100, 139)',
+  'tan': 'rgb(210, 180, 140)',
+  'tan1': 'rgb(255, 165, 79)',
+  'tan2': 'rgb(238, 154, 73)',
+  'tan3': 'rgb(205, 133, 63)',
+  'tan4': 'rgb(139, 90, 43)',
+  'thistle': 'rgb(216, 191, 216)',
+  'thistle1': 'rgb(255, 225, 255)',
+  'thistle2': 'rgb(238, 210, 238)',
+  'thistle3': 'rgb(205, 181, 205)',
+  'thistle4': 'rgb(139, 123, 139)',
+  'tomato': 'rgb(255, 99, 71)',
+  'tomato1': 'rgb(255, 99, 71)',
+  'tomato2': 'rgb(238, 92, 66)',
+  'tomato3': 'rgb(205, 79, 57)',
+  'tomato4': 'rgb(139, 54, 38)',
+  'turquoise': 'rgb(64, 224, 208)',
+  'turquoise1': 'rgb(0, 245, 255)',
+  'turquoise2': 'rgb(0, 229, 238)',
+  'turquoise3': 'rgb(0, 197, 205)',
+  'turquoise4': 'rgb(0, 134, 139)',
+  'violet': 'rgb(238, 130, 238)',
+  'violetred': 'rgb(208, 32, 144)',
+  'violetred1': 'rgb(255, 62, 150)',
+  'violetred2': 'rgb(238, 58, 140)',
+  'violetred3': 'rgb(205, 50, 120)',
+  'violetred4': 'rgb(139, 34, 82)',
+  'wheat': 'rgb(245, 222, 179)',
+  'wheat1': 'rgb(255, 231, 186)',
+  'wheat2': 'rgb(238, 216, 174)',
+  'wheat3': 'rgb(205, 186, 150)',
+  'wheat4': 'rgb(139, 126, 102)',
+  'white': 'rgb(255, 255, 255)',
+  'whitesmoke': 'rgb(245, 245, 245)',
+  'yellow': 'rgb(255, 255, 0)',
+  'yellow1': 'rgb(255, 255, 0)',
+  'yellow2': 'rgb(238, 238, 0)',
+  'yellow3': 'rgb(205, 205, 0)',
+  'yellow4': 'rgb(139, 139, 0)',
+  'yellowgreen': 'rgb(154, 205, 50)',
 };
 // SOURCE FILE: libdot/js/lib_f.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
@@ -1430,6 +1784,10 @@ lib.f = {};
  *                       name: "Google+" });
  *
  * Will result in "Hello, Google%2B".
+ *
+ * @param {string} str String containing variable references.
+ * @param {!Object<string, string>} vars Variables to substitute in.
+ * @return {string} String with references substituted.
  */
 lib.f.replaceVars = function(str, vars) {
   return str.replace(/%([a-z]*)\(([^\)]+)\)/gi, function(match, fn, varname) {
@@ -1469,6 +1827,12 @@ lib.f.replaceVars.functions = {
   }
 };
 
+/**
+ * Convert a relative path to a fully qulified URI.
+ *
+ * @param {string} path Relative path
+ * @return {string} Fully qualified URI.
+ */
 lib.f.getURL = function(path) {
   if (lib.f.getURL.chromeSupported())
     return chrome.runtime.getURL(path);
@@ -1476,6 +1840,11 @@ lib.f.getURL = function(path) {
   return path;
 };
 
+/**
+ * Determine whether the runtime is Chrome (or equiv).
+ *
+ * @return {boolean} True if chrome.runtime.getURL is supported.
+ */
 lib.f.getURL.chromeSupported = function() {
   return window.chrome && chrome.runtime && chrome.runtime.getURL;
 };
@@ -1483,9 +1852,10 @@ lib.f.getURL.chromeSupported = function() {
 /**
  * Clamp a given integer to a specified range.
  *
- * @param {integer} v The value to be clamped.
- * @param {integer} min The minimum acceptable value.
- * @param {integer} max The maximum acceptable value.
+ * @param {number} v The value to be clamped.
+ * @param {number} min The minimum acceptable value.
+ * @param {number} max The maximum acceptable value.
+ * @return {number} The clamped value.
  */
 lib.f.clamp = function(v, min, max) {
   if (v < min)
@@ -1498,37 +1868,12 @@ lib.f.clamp = function(v, min, max) {
 /**
  * Left pad a number to a given length with leading zeros.
  *
- * @param {string|integer} number The number to pad.
- * @param {integer} length The desired length.
+ * @param {string|number} number The number to pad.
+ * @param {number} length The desired length.
  * @return {string} The padded number as a string.
  */
 lib.f.zpad = function(number, length) {
   return String(number).padStart(length, '0');
-};
-
-/**
- * Return a string containing a given number of space characters.
- *
- * This method maintains a static cache of the largest amount of whitespace
- * ever requested.  It shouldn't be used to generate an insanely huge amount of
- * whitespace.
- *
- * @param {integer} length The desired amount of whitespace.
- * @param {string} A string of spaces of the requested length.
- */
-lib.f.getWhitespace = function(length) {
-  if (length <= 0)
-    return '';
-
-  var f = this.getWhitespace;
-  if (!f.whitespace)
-    f.whitespace = '          ';
-
-  while (length > f.whitespace.length) {
-    f.whitespace += f.whitespace;
-  }
-
-  return f.whitespace.substr(0, length);
 };
 
 /**
@@ -1549,6 +1894,7 @@ lib.f.getWhitespace = function(length) {
  * @param {number=} ignoreFrames How many inner stack frames to ignore.  The
  *     innermost 'getStack' call is always ignored.
  * @param {number=} count How many frames to return.
+ * @return {!Array<string>} The stack frames.
  */
 lib.f.getStack = function(ignoreFrames = 0, count = undefined) {
   const stackArray = (new Error()).stack.split('\n');
@@ -1608,7 +1954,7 @@ lib.f.randomInt = function(min, max) {
 /**
  * Get the current OS.
  *
- * @return {Promise<string>} A promise that resolves to a constant in
+ * @return {!Promise<string>} A promise that resolves to a constant in
  *     runtime.PlatformOs.
  */
 lib.f.getOs = function() {
@@ -1653,11 +1999,10 @@ lib.f.getOs = function() {
  * @return {number} The milestone number if we're running on Chrome, else NaN.
  */
 lib.f.getChromeMilestone = function() {
-  // admin.tools: cannot manipulate window or document level directly
   if (window.navigator && navigator.userAgent) {
     const ary = navigator.userAgent.match(/\sChrome\/(\d+)/);
     if (ary)
-      return parseInt(ary[1]);
+      return parseInt(ary[1], 10);
   }
 
   // Returning NaN will make all number comparisons fail.
@@ -1670,8 +2015,8 @@ lib.f.getChromeMilestone = function() {
  * This object might live in different locations, and it isn't always defined
  * (if there hasn't been a "last error").  Wrap all that ugliness here.
  *
- * @param {string=} defaultMsg The default message if no error is found.
- * @return {string} The last error message from the browser.
+ * @param {?string=} defaultMsg The default message if no error is found.
+ * @return {?string} The last error message from the browser.
  */
 lib.f.lastError = function(defaultMsg = null) {
   let lastError;
@@ -1696,11 +2041,12 @@ lib.f.lastError = function(defaultMsg = null) {
  * @param {string=} url The URL to point the new window to.
  * @param {string=} name The name of the new window.
  * @param {string=} features The window features to enable.
- * @return {Window} The newly opened window.
+ * @return {?Window} The newly opened window.
  */
 lib.f.openWindow = function(url, name=undefined, features=undefined) {
   // We create the window first without the URL loaded.
   const win = window.open(undefined, name, features);
+
   // If the system is blocking window.open, don't crash.
   if (win !== null) {
     // Clear the opener setting before redirecting.
@@ -1730,19 +2076,27 @@ lib.i18n = {};
 /**
  * Convenience shortcut to the browser i18n object.
  */
-// admin.tools: cannot manipulate window or document level directly
 lib.i18n.browser_ =
     window.browser && browser.i18n ? browser.i18n :
     window.chrome && chrome.i18n ? chrome.i18n :
     null;
 
 /**
+ * Return whether the browser supports i18n natively.
+ *
+ * @return {boolean} True if browser.i18n or chrome.i18n exists.
+ */
+lib.i18n.browserSupported = function() {
+  return lib.i18n.browser_ !== null;
+};
+
+/**
  * Get the list of accepted UI languages.
  *
  * https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/i18n/getAcceptLanguages
  *
- * @param {function(Array)} callback Function to invoke with the results.  The
- *     parameter is a list of locale names.
+ * @param {function(!Array<string>)} callback Function to invoke with the
+ *     results.  The parameter is a list of locale names.
  */
 lib.i18n.getAcceptLanguages = function(callback) {
   if (lib.i18n.browser_) {
@@ -1760,7 +2114,7 @@ lib.i18n.getAcceptLanguages = function(callback) {
  * https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/i18n/getMessage
  *
  * @param {string} msgname The id for this localized string.
- * @param {string[]=} substitutions Any replacements in the string.
+ * @param {?Array<string>=} substitutions Any replacements in the string.
  * @param {string=} fallback Translation if the message wasn't found.
  * @return {string} The translated message.
  */
@@ -1783,7 +2137,7 @@ lib.i18n.getMessage = function(msgname, substitutions = [], fallback = '') {
  * always replaced/removed regardless of the specified substitutions.
  *
  * @param {string} msg String containing the message and argument references.
- * @param {string[]=} args Array containing the argument values.
+ * @param {?Array<string>=} args Array containing the argument values.
  * @return {string} The message with replacements expanded.
  */
 lib.i18n.replaceReferences = function(msg, args = []) {
@@ -1814,36 +2168,59 @@ lib.i18n.replaceReferences = function(msg, args = []) {
  *     3. The client code may be part of a library packaged in a third-party
  *        Chrome extension.
  *
- * @param {Array} languages List of languages to load, in the order they
- *     should be loaded.  Newer messages replace older ones.  'en' is
- *     automatically added as the first language if it is not already present.
+ * @param {!Array<string>} languages List of languages to load, in the order
+ *     they are preferred.  The first language found will be used.  'en' is
+ *     automatically added as the last language if it is not already present.
+ * @param {boolean=} useCrlf If true, '\n' in messages are substituted for
+ *     '\r\n'.  This fixes the translation process which discards '\r'
+ *     characters.
+ * @constructor
  */
-lib.MessageManager = function(languages) {
+lib.MessageManager = function(languages, useCrlf = false) {
   this.languages_ = languages.map((el) => el.replace(/-/g, '_'));
 
   if (this.languages_.indexOf('en') == -1)
-    this.languages_.unshift('en');
+    this.languages_.push('en');
 
-  this.messages = {};
+  this.useCrlf = useCrlf;
+
+  /**
+   * @private {!Object<string, string>}
+   * @const
+   */
+  this.messages_ = {};
 };
+
+/**
+ * @typedef {!Object<string, {
+ *     message: string,
+ *     description: (string|undefined),
+ *     placeholders: ({content: string, example: string}|undefined),
+ * }>}
+ */
+lib.MessageManager.Messages;
 
 /**
  * Add message definitions to the message manager.
  *
  * This takes an object of the same format of a Chrome messages.json file.  See
  * <https://developer.chrome.com/extensions/i18n-messages>.
+ *
+ * @param {!lib.MessageManager.Messages} defs The message to add to the
+ *     database.
  */
 lib.MessageManager.prototype.addMessages = function(defs) {
   for (var key in defs) {
     var def = defs[key];
 
     if (!def.placeholders) {
-      this.messages[key] = def.message;
+      // Upper case key into this.messages_ since our translated
+      // bundles are lower case, but we request msg as upper.
+      this.messages_[key.toUpperCase()] = def.message;
     } else {
       // Replace "$NAME$" placeholders with "$1", etc.
-      this.messages[key] = def.message.replace(
-          /\$([a-z][^\s\$]+)\$/ig,
-          function(m, name) {
+      this.messages_[key.toUpperCase()] =
+          def.message.replace(/\$([a-z][^\s\$]+)\$/ig, function(m, name) {
             return defs[key].placeholders[name.toLowerCase()].content;
           });
     }
@@ -1855,97 +2232,90 @@ lib.MessageManager.prototype.addMessages = function(defs) {
  *
  * @param {string} pattern A url pattern containing a "$1" where the locale
  *     name should go.
- * @param {function(Array,Array)} onComplete Function to be called when loading
- *     is complete.  The two arrays are the list of successful and failed
- *     locale names.  If the first parameter is length 0, no locales were
- *     loaded.
  */
-lib.MessageManager.prototype.findAndLoadMessages = function(
-    pattern, onComplete) {
-  var languages = this.languages_.concat();
-  var loaded = [];
-  var failed = [];
-
-  function onLanguageComplete(state) {
-    if (state) {
-      loaded = languages.shift();
-    } else {
-      failed = languages.shift();
-    }
-
-    if (languages.length) {
-      tryNextLanguage();
-    } else {
-      onComplete(loaded, failed);
-    }
+lib.MessageManager.prototype.findAndLoadMessages = async function(pattern) {
+  if (lib.i18n.browserSupported()) {
+    return;
   }
 
-  var tryNextLanguage = function() {
-    this.loadMessages(this.replaceReferences(pattern, languages),
-                      onLanguageComplete.bind(this, true),
-                      onLanguageComplete.bind(this, false));
-  }.bind(this);
-
-  tryNextLanguage();
+  for (const lang of this.languages_) {
+    const url = lib.i18n.replaceReferences(pattern, lang);
+    try {
+      await this.loadMessages(url);
+      return;
+    } catch (e) {
+      console.warn(
+          `Error fetching ${lang} messages at ${url}`, e,
+          'Trying all languages:', this.languages_);
+    }
+  }
 };
 
 /**
  * Load messages from a messages.json file.
+ *
+ * @param {string} url The URL to load the messages from.
+ * @return {!Promise<void>}
  */
-lib.MessageManager.prototype.loadMessages = function(
-    url, onSuccess, opt_onError) {
-  var xhr = new XMLHttpRequest();
+lib.MessageManager.prototype.loadMessages = function(url) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      try {
+        this.addMessages(/** @type {!lib.MessageManager.Messages} */ (
+            JSON.parse(xhr.responseText)));
+        resolve();
+      } catch (e) {
+        // Error parsing JSON.
+        reject(e);
+      }
+    };
+    xhr.onerror = () => reject(xhr);
 
-  xhr.onload = () => {
-    this.addMessages(JSON.parse(xhr.responseText));
-    onSuccess();
-  };
-  if (opt_onError)
-    xhr.onerror = () => opt_onError(xhr);
-
-  xhr.open('GET', url);
-  xhr.send();
+    xhr.open('GET', url);
+    xhr.send();
+  });
 };
-
-/**
- * Per-instance copy of replaceReferences.
- */
-lib.MessageManager.prototype.replaceReferences = lib.i18n.replaceReferences;
 
 /**
  * Get a message by name, optionally replacing arguments too.
  *
  * @param {string} msgname String containing the name of the message to get.
- * @param {Array} opt_args Optional array containing the argument values.
- * @param {string} opt_default Optional value to return if the msgname is not
+ * @param {!Array<string>=} args Optional array containing the argument values.
+ * @param {string=} fallback Optional value to return if the msgname is not
  *     found.  Returns the message name by default.
+ * @return {string} The formatted translation.
  */
-lib.MessageManager.prototype.get = function(msgname, opt_args, opt_default) {
+lib.MessageManager.prototype.get = function(msgname, args, fallback) {
   // First try the integrated browser getMessage.  We prefer that over any
   // registered messages as only the browser supports translations.
-  let message = lib.i18n.getMessage(msgname, opt_args);
-  if (message)
-    return message;
-
-  // Look it up in the registered cache next.
-  message = this.messages[msgname];
+  let message = lib.i18n.getMessage(msgname, args);
   if (!message) {
-    console.warn('Unknown message: ' + msgname);
-    message = opt_default === undefined ? msgname : opt_default;
-    // Register the message with the default to avoid multiple warnings.
-    this.messages[msgname] = message;
+    // Look it up in the registered cache next.
+    message = this.messages_[msgname];
+    if (!message) {
+      console.warn('Unknown message: ' + msgname);
+      message = fallback === undefined ? msgname : fallback;
+      // Register the message with the default to avoid multiple warnings.
+      this.messages_[msgname] = message;
+    }
+    message = lib.i18n.replaceReferences(message, args);
   }
-
-  return this.replaceReferences(message, opt_args);
+  if (this.useCrlf) {
+    message = message.replace(/\n/g, '\r\n');
+  }
+  return message;
 };
 
 /**
- * Process all of the "i18n" html attributes found in a given dom fragment.
+ * Process all of the "i18n" html attributes found in a given element.
  *
  * The real work happens in processI18nAttribute.
+ *
+ * @param {!Element} node The element whose nodes will be translated.
  */
-lib.MessageManager.prototype.processI18nAttributes = function(dom) {
-  var nodes = dom.querySelectorAll('[i18n]');
+lib.MessageManager.prototype.processI18nAttributes = function(node) {
+  var nodes = node.querySelectorAll('[i18n]');
 
   for (var i = 0; i < nodes.length; i++)
     this.processI18nAttribute(nodes[i]);
@@ -1970,6 +2340,8 @@ lib.MessageManager.prototype.processI18nAttributes = function(dom) {
  * The aria-label message name will be computed as "SEND_BUTTON_ARIA_LABEL".
  * Notice that the "id" attribute was appended to the target attribute, and
  * the result converted to UPPER_AND_UNDER style.
+ *
+ * @param {!Element} node The element to translate.
  */
 lib.MessageManager.prototype.processI18nAttribute = function(node) {
   // Convert the "lower-and-dashes" attribute names into
@@ -2027,15 +2399,15 @@ lib.MessageManager.prototype.processI18nAttribute = function(node) {
  * may be a chrome api to store sync-able name/value pairs, and we'd want
  * that.
  *
- * @param {lib.Storage.*} storage The storage object to use as a backing
+ * @param {!lib.Storage} storage The storage object to use as a backing
  *     store.
- * @param {string} opt_prefix The optional prefix to be used for all preference
+ * @param {string=} prefix The optional prefix to be used for all preference
  *     names.  The '/' character should be used to separate levels of hierarchy,
  *     if you're going to have that kind of thing.  If provided, the prefix
  *     should start with a '/'.  If not provided, it defaults to '/'.
+ * @constructor
  */
-lib.PreferenceManager = function(storage, opt_prefix) {
-  // console.log("storage/opt_prefix:", storage, opt_prefix);
+lib.PreferenceManager = function(storage, prefix = '/') {
   this.storage = storage;
   this.storageObserver_ = this.onStorageChange_.bind(this);
 
@@ -2044,7 +2416,6 @@ lib.PreferenceManager = function(storage, opt_prefix) {
 
   this.trace = false;
 
-  var prefix = opt_prefix || '/';
   if (!prefix.endsWith('/'))
     prefix += '/';
 
@@ -2054,6 +2425,7 @@ lib.PreferenceManager = function(storage, opt_prefix) {
   // to elide redundant storage writes (for quota reasons).
   this.isImportingJson_ = false;
 
+  /** @type {!Object<string, !lib.PreferenceManager.Record>} */
   this.prefRecords_ = {};
   this.globalObservers_ = [];
 
@@ -2081,6 +2453,8 @@ lib.PreferenceManager = function(storage, opt_prefix) {
  * be taken from the default value defined with the preference.
  *
  * Equality tests against this value MUST use '===' or '!==' to be accurate.
+ *
+ * @type {symbol}
  */
 lib.PreferenceManager.prototype.DEFAULT_VALUE = Symbol('DEFAULT_VALUE');
 
@@ -2089,6 +2463,10 @@ lib.PreferenceManager.prototype.DEFAULT_VALUE = Symbol('DEFAULT_VALUE');
  *
  * These objects are managed by the PreferenceManager, you shouldn't need to
  * handle them directly.
+ *
+ * @param {string} name The name of the new preference (used for indexing).
+ * @param {*} defaultValue The default value for this preference.
+ * @constructor
  */
 lib.PreferenceManager.Record = function(name, defaultValue) {
   this.name = name;
@@ -2099,6 +2477,8 @@ lib.PreferenceManager.Record = function(name, defaultValue) {
 
 /**
  * A local copy of the DEFAULT_VALUE constant to make it less verbose.
+ *
+ * @type {symbol}
  */
 lib.PreferenceManager.Record.prototype.DEFAULT_VALUE =
     lib.PreferenceManager.prototype.DEFAULT_VALUE;
@@ -2106,9 +2486,9 @@ lib.PreferenceManager.Record.prototype.DEFAULT_VALUE =
 /**
  * Register a callback to be invoked when this preference changes.
  *
- * @param {function(value, string, lib.PreferenceManager} observer The function
- *     to invoke.  It will receive the new value, the name of the preference,
- *     and a reference to the PreferenceManager as parameters.
+ * @param {function(string, string, !lib.PreferenceManager)} observer The
+ *     function to invoke.  It will receive the new value, the name of the
+ *     preference, and a reference to the PreferenceManager as parameters.
  */
 lib.PreferenceManager.Record.prototype.addObserver = function(observer) {
   this.observers.push(observer);
@@ -2117,7 +2497,7 @@ lib.PreferenceManager.Record.prototype.addObserver = function(observer) {
 /**
  * Unregister an observer callback.
  *
- * @param {function} observer A previously registered callback.
+ * @param {function()} observer A previously registered callback.
  */
 lib.PreferenceManager.Record.prototype.removeObserver = function(observer) {
   var i = this.observers.indexOf(observer);
@@ -2127,6 +2507,8 @@ lib.PreferenceManager.Record.prototype.removeObserver = function(observer) {
 
 /**
  * Fetch the value of this preference.
+ *
+ * @return {*} The value for this preference.
  */
 lib.PreferenceManager.Record.prototype.get = function() {
   if (this.currentValue === this.DEFAULT_VALUE) {
@@ -2187,7 +2569,7 @@ lib.PreferenceManager.prototype.activate = function() {
  * This function is asynchronous, if you need to read preference values, you
  * *must* wait for the callback.
  *
- * @param {function()} opt_callback Optional function to invoke when the read
+ * @param {function()=} opt_callback Optional function to invoke when the read
  *     has completed.
  */
 lib.PreferenceManager.prototype.readStorage = function(opt_callback) {
@@ -2233,10 +2615,10 @@ lib.PreferenceManager.prototype.readStorage = function(opt_callback) {
  *
  * @param {string} name The name of the preference.  This will be prefixed by
  *     the prefix of this PreferenceManager before written to local storage.
- * @param {string|number|boolean|Object|Array|null} value The default value of
+ * @param {string|number|boolean|!Object|!Array|null} value The default value of
  *     this preference.  Anything that can be represented in JSON is a valid
  *     default value.
- * @param {function(value, string, lib.PreferenceManager} opt_observer A
+ * @param {function(*, string, !lib.PreferenceManager)=} opt_onChange A
  *     function to invoke when the preference changes.  It will receive the new
  *     value, the name of the preference, and a reference to the
  *     PreferenceManager as parameters.
@@ -2259,7 +2641,7 @@ lib.PreferenceManager.prototype.definePreference = function(
 /**
  * Define multiple preferences with a single function call.
  *
- * @param {Array} defaults An array of 3-element arrays.  Each three element
+ * @param {!Array<*>} defaults An array of 3-element arrays.  Each three element
  *     array should contain the [key, value, onChange] parameters for a
  *     preference.
  */
@@ -2282,10 +2664,10 @@ lib.PreferenceManager.prototype.definePreferences = function(defaults) {
  *     preference on this PreferenceManager used to store the ordered list of
  *     child ids.  It is also used in get/add/remove operations to identify the
  *     list of children to operate on.
- * @param {function} childFactory A function that will be used to generate
- *     instances of these children.  The factory function will receive the
- *     parent lib.PreferenceManager object and a unique id for the new child
- *     preferences.
+ * @param {function(!lib.PreferenceManager, string)} childFactory A function
+ *     that will be used to generate instances of these children.  The factory
+ *     function will receive the parent lib.PreferenceManager object and a
+ *     unique id for the new child preferences.
  */
 lib.PreferenceManager.prototype.defineChildren = function(
     listName, childFactory) {
@@ -2300,9 +2682,23 @@ lib.PreferenceManager.prototype.defineChildren = function(
 /**
  * Register to observe preference changes.
  *
- * @param {Function} global A callback that will happen for every preference.
+ * @param {string} name The name of preference you wish to observe..
+ * @param {function()} observer The callback.
+ */
+lib.PreferenceManager.prototype.addObserver = function(name, observer) {
+  if (!(name in this.prefRecords_)) {
+    throw new Error(`Unknown preference: ${name}`);
+  }
+
+  this.prefRecords_[name].addObserver(observer);
+};
+
+/**
+ * Register to observe preference changes.
+ *
+ * @param {?function()} global A callback that will happen for every preference.
  *     Pass null if you don't need one.
- * @param {Object} map A map of preference specific callbacks.  Pass null if
+ * @param {!Object} map A map of preference specific callbacks.  Pass null if
  *     you don't need any.
  */
 lib.PreferenceManager.prototype.addObservers = function(global, map) {
@@ -2316,11 +2712,22 @@ lib.PreferenceManager.prototype.addObservers = function(global, map) {
     return;
 
   for (var name in map) {
-    if (!(name in this.prefRecords_))
-      throw new Error('Unknown preference: ' + name);
-
-    this.prefRecords_[name].addObserver(map[name]);
+    this.addObserver(name, map[name]);
   }
+};
+
+/**
+ * Remove preference observer.
+ *
+ * @param {string} name The name of preference you wish to stop observing.
+ * @param {function()} observer The observer to remove.
+ */
+lib.PreferenceManager.prototype.removeObserver = function(name, observer) {
+  if (!(name in this.prefRecords_)) {
+    throw new Error(`Unknown preference: ${name}`);
+  }
+
+  this.prefRecords_[name].removeObserver(observer);
 };
 
 /**
@@ -2366,8 +2773,9 @@ lib.PreferenceManager.prototype.notifyChange_ = function(name) {
  * and use it.
  *
  * @param {string} listName The child list to create the new instance from.
- * @param {string} opt_hint Optional hint to include in the child id.
- * @param {string} opt_id Optional id to override the generated id.
+ * @param {?string=} opt_hint Optional hint to include in the child id.
+ * @param {string=} opt_id Optional id to override the generated id.
+ * @return {!lib.PreferenceManager} The new child preference manager.
  */
 lib.PreferenceManager.prototype.createChild = function(listName, opt_hint,
                                                        opt_id) {
@@ -2432,8 +2840,9 @@ lib.PreferenceManager.prototype.removeChild = function(listName, id) {
  *
  * @param {string} listName The child list to look in.
  * @param {string} id The child ID.
- * @param {*} opt_default The optional default value to return if the child
+ * @param {!lib.PreferenceManager=} opt_default The value to return if the child
  *     is not found.
+ * @return {!lib.PreferenceManager} The specified child PreferenceManager.
  */
 lib.PreferenceManager.prototype.getChild = function(listName, id, opt_default) {
   if (!(listName in this.childLists_))
@@ -2451,50 +2860,6 @@ lib.PreferenceManager.prototype.getChild = function(listName, id, opt_default) {
 };
 
 /**
- * Calculate the difference between two lists of child ids.
- *
- * Given two arrays of child ids, this function will return an object
- * with "added", "removed", and "common" properties.  Each property is
- * a map of child-id to `true`.  For example, given...
- *
- *    a = ['child-x', 'child-y']
- *    b = ['child-y']
- *
- *    diffChildLists(a, b) =>
- *      { added: { 'child-x': true }, removed: {}, common: { 'child-y': true } }
- *
- * The added/removed properties assume that `a` is the current list.
- *
- * @param {Array[string]} a The most recent list of child ids.
- * @param {Array[string]} b An older list of child ids.
- * @return {Object} An object with added/removed/common properties.
- */
-lib.PreferenceManager.diffChildLists = function(a, b) {
-  var rv = {
-    added: {},
-    removed: {},
-    common: {},
-  };
-
-  for (var i = 0; i < a.length; i++) {
-    if (b.indexOf(a[i]) != -1) {
-      rv.common[a[i]] = true;
-    } else {
-      rv.added[a[i]] = true;
-    }
-  }
-
-  for (var i = 0; i < b.length; i++) {
-    if ((b[i] in rv.added) || (b[i] in rv.common))
-      continue;
-
-    rv.removed[b[i]] = true;
-  }
-
-  return rv;
-};
-
-/**
  * Synchronize a list of child PreferenceManagers instances with the current
  * list stored in prefs.
  *
@@ -2503,8 +2868,7 @@ lib.PreferenceManager.diffChildLists = function(a, b) {
  * be deleted.
  *
  * @param {string} listName The child list to synchronize.
- * @param {function()} opt_callback Optional function to invoke when the sync
- *     is complete.
+ * @param {function()=} opt_callback Function to invoke when the sync finishes.
  */
 lib.PreferenceManager.prototype.syncChildList = function(
     listName, opt_callback) {
@@ -2521,8 +2885,6 @@ lib.PreferenceManager.prototype.syncChildList = function(
   // The known managers at the start of the sync.  Any manager still in this
   // list at the end should be discarded.
   var oldIds = Object.keys(this.childLists_[listName]);
-
-  var rv = lib.PreferenceManager.diffChildLists(currentIds, oldIds);
 
   for (var i = 0; i < currentIds.length; i++) {
     var id = currentIds[i];
@@ -2615,6 +2977,7 @@ lib.PreferenceManager.prototype.resetAll = function() {
  *
  * @param {*} a A value to compare.
  * @param {*} b A value to compare.
+ * @return {boolean} Whether the two are not equal.
  */
 lib.PreferenceManager.prototype.diff = function(a, b) {
   // If the types are different.
@@ -2672,7 +3035,7 @@ lib.PreferenceManager.prototype.changeDefault = function(name, newValue) {
 /**
  * Change the default value of multiple preferences.
  *
- * @param {Object} map A map of name -> value pairs specifying the new default
+ * @param {!Object} map A map of name -> value pairs specifying the new default
  *     values.
  */
 lib.PreferenceManager.prototype.changeDefaults = function(map) {
@@ -2693,6 +3056,8 @@ lib.PreferenceManager.prototype.changeDefaults = function(map) {
  * @param {function()=} onComplete Callback when the set call completes.
  * @param {boolean=} saveToStorage Whether to commit the change to the backing
  *     storage or only the in-memory record copy.
+ * @return {!Promise<void>} Promise which resolves once all observers are
+ *     notified.
  */
 lib.PreferenceManager.prototype.set = function(
     name, newValue, onComplete=undefined, saveToStorage=true) {
@@ -2703,7 +3068,7 @@ lib.PreferenceManager.prototype.set = function(
   var oldValue = record.get();
 
   if (!this.diff(oldValue, newValue))
-    return;
+    return Promise.resolve();
 
   if (this.diff(record.defaultValue, newValue)) {
     record.currentValue = newValue;
@@ -2721,15 +3086,18 @@ lib.PreferenceManager.prototype.set = function(
   // currentValue until the storage event, a pref read immediately after a write
   // would return the previous value.
   //
-  // The notification is in a timeout so clients don't accidentally depend on
+  // The notification is async so clients don't accidentally depend on
   // a synchronous notification.
-  setTimeout(this.notifyChange_.bind(this, name), 0);
+  return Promise.resolve().then(() => {
+    this.notifyChange_(name);
+  });
 };
 
 /**
  * Get the value of a preference.
  *
- * @param {string} key The preference to get.
+ * @param {string} name The preference to get.
+ * @return {*} The preference's value.
  */
 lib.PreferenceManager.prototype.get = function(name) {
   var record = this.prefRecords_[name];
@@ -2740,9 +3108,47 @@ lib.PreferenceManager.prototype.get = function(name) {
 };
 
 /**
+ * Get the boolean value of a preference.
+ *
+ * @param {string} name The preference to get.
+ * @return {boolean}
+ */
+lib.PreferenceManager.prototype.getBoolean = function(name) {
+  const result = this.get(name);
+  lib.assert(typeof result == 'boolean');
+  return result;
+};
+
+/**
+ * Get the number value of a preference.
+ *
+ * @param {string} name The preference to get.
+ * @return {number}
+ */
+lib.PreferenceManager.prototype.getNumber = function(name) {
+  const result = this.get(name);
+  lib.assert(typeof result == 'number');
+  return result;
+};
+
+/**
+ * Get the string value of a preference.
+ *
+ * @param {string} name The preference to get.
+ * @return {string}
+ */
+lib.PreferenceManager.prototype.getString = function(name) {
+  const result = this.get(name);
+  lib.assert(typeof result == 'string');
+  return result;
+};
+
+/**
  * Return all non-default preferences as a JSON object.
  *
  * This includes any nested preference managers as well.
+ *
+ * @return {!Object} The JSON preferences.
  */
 lib.PreferenceManager.prototype.exportAsJson = function() {
   var rv = {};
@@ -2770,15 +3176,19 @@ lib.PreferenceManager.prototype.exportAsJson = function() {
  * Import a JSON blob of preferences previously generated with exportAsJson.
  *
  * This will create nested preference managers as well.
+ *
+ * @param {!Object} json The JSON settings to import.
+ * @param {function()=} onComplete Callback when all imports have finished.
  */
-lib.PreferenceManager.prototype.importFromJson = function(json, opt_onComplete) {
+lib.PreferenceManager.prototype.importFromJson = function(json, onComplete) {
   this.isImportingJson_ = true;
 
   let pendingWrites = 0;
   const onWriteStorage = () => {
     if (--pendingWrites < 1) {
-      if (opt_onComplete)
-        opt_onComplete();
+      if (onComplete) {
+        onComplete();
+      }
 
       // We've delayed updates to the child arrays, so flush them now.
       for (let name in json)
@@ -2811,12 +3221,15 @@ lib.PreferenceManager.prototype.importFromJson = function(json, opt_onComplete) 
 
   // If we didn't update any children, no async work has been queued, so make
   // the completion callback directly.
-  if (pendingWrites == 0 && opt_onComplete)
-    opt_onComplete();
+  if (pendingWrites == 0 && onComplete) {
+    onComplete();
+  }
 };
 
 /**
  * Called when one of the child list preferences changes.
+ *
+ * @param {string} listName The child list to synchronize.
  */
 lib.PreferenceManager.prototype.onChildListChange_ = function(listName) {
   this.syncChildList(listName);
@@ -2824,6 +3237,8 @@ lib.PreferenceManager.prototype.onChildListChange_ = function(listName) {
 
 /**
  * Called when a key in the storage changes.
+ *
+ * @param {!Object} map Dictionary of changed settings.
  */
 lib.PreferenceManager.prototype.onStorageChange_ = function(map) {
   for (var key in map) {
@@ -2844,7 +3259,7 @@ lib.PreferenceManager.prototype.onStorageChange_ = function(map) {
     var newValue = map[key].newValue;
     var currentValue = record.currentValue;
     if (currentValue === record.DEFAULT_VALUE)
-      currentValue = (void 0);
+      currentValue = undefined;
 
     if (this.diff(currentValue, newValue)) {
       if (typeof newValue == 'undefined' || newValue === null) {
@@ -2877,13 +3292,16 @@ lib.resource = {
   resources_: {}
 };
 
+/** @typedef {{type: string, name: string, data: *}} */
+lib.resource.ResourceRecord;
+
 /**
  * Add a resource.
  *
  * @param {string} name A name for the resource.  You should prefix this to
- *   avoid collisions with resources from a shared library.
+ *     avoid collisions with resources from a shared library.
  * @param {string} type A mime type for the resource, or "raw" if not
- *   applicable.
+ *     applicable.
  * @param {*} data The value of the resource.
  */
 lib.resource.add = function(name, type, data) {
@@ -2900,16 +3318,14 @@ lib.resource.add = function(name, type, data) {
  * The resource data is stored on the "data" property of the returned object.
  *
  * @param {string} name The name of the resource to get.
- * @param {*} opt_defaultValue The optional value to return if the resource is
- *   not defined.
- * @return {object} An object with "type", "name", and "data" properties.
+ * @param {!lib.resource.ResourceRecord=} defaultValue The value to return if
+ *     the resource is not defined.
+ * @return {!lib.resource.ResourceRecord} The matching resource if it exists.
  */
-lib.resource.get = function(name, opt_defaultValue) {
+lib.resource.get = function(name, defaultValue) {
   if (!(name in lib.resource.resources_)) {
-    if (typeof opt_defaultValue == 'undefined')
-      throw 'Unknown resource: ' + name;
-
-    return opt_defaultValue;
+    lib.assert(defaultValue !== undefined);
+    return defaultValue;
   }
 
   return lib.resource.resources_[name];
@@ -2919,16 +3335,12 @@ lib.resource.get = function(name, opt_defaultValue) {
  * Retrieve resource data.
  *
  * @param {string} name The name of the resource to get.
- * @param {*} opt_defaultValue The optional value to return if the resource is
- *   not defined.
+ * @param {*=} defaultValue The value to return if the resource is not defined.
  * @return {*} The resource data.
  */
-lib.resource.getData = function(name, opt_defaultValue) {
+lib.resource.getData = function(name, defaultValue) {
   if (!(name in lib.resource.resources_)) {
-    if (typeof opt_defaultValue == 'undefined')
-      throw 'Unknown resource: ' + name;
-
-    return opt_defaultValue;
+    return defaultValue;
   }
 
   return lib.resource.resources_[name].data;
@@ -2938,12 +3350,12 @@ lib.resource.getData = function(name, opt_defaultValue) {
  * Retrieve resource as a data: url.
  *
  * @param {string} name The name of the resource to get.
- * @param {*} opt_defaultValue The optional value to return if the resource is
- *   not defined.
- * @return {*} A data: url encoded version of the resource.
+ * @param {!lib.resource.ResourceRecord=} defaultValue The value to return if
+ *     the resource is not defined.
+ * @return {string} A data: url encoded version of the resource.
  */
-lib.resource.getDataUrl = function(name, opt_defaultValue) {
-  var resource = lib.resource.get(name, opt_defaultValue);
+lib.resource.getDataUrl = function(name, defaultValue) {
+  var resource = lib.resource.get(name, defaultValue);
   return 'data:' + resource.type + ',' + resource.data;
 };
 // SOURCE FILE: libdot/js/lib_storage.js
@@ -2954,8 +3366,93 @@ lib.resource.getDataUrl = function(name, opt_defaultValue) {
 /**
  * Namespace for implementations of persistent, possibly cloud-backed
  * storage.
+ *
+ * @interface
  */
-lib.Storage = new Object();
+lib.Storage = function() {};
+
+/**
+ * Register a function to observe storage changes.
+ *
+ * @param {function(!Object)} callback The function to invoke when the storage
+ *     changes.
+ */
+lib.Storage.prototype.addObserver = function(callback) {};
+
+/**
+ * Unregister a change observer.
+ *
+ * @param {function(!Object)} callback A previously registered callback.
+ */
+lib.Storage.prototype.removeObserver = function(callback) {};
+
+/**
+ * Delete everything in this storage.
+ *
+ * @param {function()=} callback The function to invoke when the delete has
+ *     completed.
+ */
+lib.Storage.prototype.clear = function(callback) {};
+
+/**
+ * Return the current value of a storage item.
+ *
+ * @param {string} key The key to look up.
+ * @param {function(*)} callback The function to invoke when the value has
+ *     been retrieved.
+ */
+lib.Storage.prototype.getItem = function(key, callback) {};
+
+/**
+ * Fetch the values of multiple storage items.
+ *
+ * @param {?Array<string>} keys The keys to look up.  Pass null for all keys.
+ * @param {function(!Object)} callback The function to invoke when the values
+ *     have been retrieved.
+ */
+lib.Storage.prototype.getItems = function(keys, callback) {};
+
+/**
+ * Set a value in storage.
+ *
+ * @param {string} key The key for the value to be stored.
+ * @param {*} value The value to be stored.  Anything that can be serialized
+ *     with JSON is acceptable.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ */
+lib.Storage.prototype.setItem = function(key, value, callback) {};
+
+/**
+ * Set multiple values in storage.
+ *
+ * @param {!Object} obj A map of key/values to set in storage.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ */
+lib.Storage.prototype.setItems = function(obj, callback) {};
+
+/**
+ * Remove an item from storage.
+ *
+ * @param {string} key The key to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ */
+lib.Storage.prototype.removeItem = function(key, callback) {};
+
+/**
+ * Remove multiple items from storage.
+ *
+ * @param {!Array<string>} ary The keys to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ */
+lib.Storage.prototype.removeItems = function(ary, callback) {};
 // SOURCE FILE: libdot/js/lib_storage_chrome.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -2964,6 +3461,10 @@ lib.Storage = new Object();
 /**
  * chrome.storage based class with an async interface that is interchangeable
  * with other lib.Storage.* implementations.
+ *
+ * @param {!StorageArea} storage The backing storage.
+ * @implements {lib.Storage}
+ * @constructor
  */
 lib.Storage.Chrome = function(storage) {
   this.storage_ = storage;
@@ -2974,6 +3475,11 @@ lib.Storage.Chrome = function(storage) {
 
 /**
  * Called by the storage implementation when the storage is modified.
+ *
+ * @param {!Array<*>} changes Object mapping each key that changed to its
+ *     corresponding storage.StorageChange for that item.
+ * @param {string} areaname The name of the storage area ("sync", "local",
+ *     or "managed") the changes are for.
  */
 lib.Storage.Chrome.prototype.onChanged_ = function(changes, areaname) {
   if (chrome.storage[areaname] != this.storage_)
@@ -2987,8 +3493,9 @@ lib.Storage.Chrome.prototype.onChanged_ = function(changes, areaname) {
 /**
  * Register a function to observe storage changes.
  *
- * @param {function(map)} callback The function to invoke when the storage
+ * @param {function(!Object)} callback The function to invoke when the storage
  *     changes.
+ * @override
  */
 lib.Storage.Chrome.prototype.addObserver = function(callback) {
   this.observers_.push(callback);
@@ -2997,7 +3504,8 @@ lib.Storage.Chrome.prototype.addObserver = function(callback) {
 /**
  * Unregister a change observer.
  *
- * @param {function} observer A previously registered callback.
+ * @param {function(!Object)} callback A previously registered callback.
+ * @override
  */
 lib.Storage.Chrome.prototype.removeObserver = function(callback) {
   var i = this.observers_.indexOf(callback);
@@ -3008,34 +3516,38 @@ lib.Storage.Chrome.prototype.removeObserver = function(callback) {
 /**
  * Delete everything in this storage.
  *
- * @param {function(map)} callback The function to invoke when the delete
- *     has completed.
+ * @param {function()=} callback The function to invoke when the delete has
+ *     completed.
+ * @override
  */
-lib.Storage.Chrome.prototype.clear = function(opt_callback) {
+lib.Storage.Chrome.prototype.clear = function(callback) {
   this.storage_.clear();
 
-  if (opt_callback)
-    setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Return the current value of a storage item.
  *
  * @param {string} key The key to look up.
- * @param {function(value) callback The function to invoke when the value has
+ * @param {function(*)} callback The function to invoke when the value has
  *     been retrieved.
+ * @override
  */
 lib.Storage.Chrome.prototype.getItem = function(key, callback) {
   this.storage_.get(key, callback);
 };
+
 /**
  * Fetch the values of multiple storage items.
  *
- * @param {Array} keys The keys to look up.
- * @param {function(map) callback The function to invoke when the values have
- *     been retrieved.
+ * @param {?Array<string>} keys The keys to look up.  Pass null for all keys.
+ * @param {function(!Object)} callback The function to invoke when the values
+ *     have been retrieved.
+ * @override
  */
-
 lib.Storage.Chrome.prototype.getItems = function(keys, callback) {
   this.storage_.get(keys, callback);
 };
@@ -3046,11 +3558,12 @@ lib.Storage.Chrome.prototype.getItems = function(keys, callback) {
  * @param {string} key The key for the value to be stored.
  * @param {*} value The value to be stored.  Anything that can be serialized
  *     with JSON is acceptable.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the
+ *     value since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Chrome.prototype.setItem = function(key, value, opt_callback) {
+lib.Storage.Chrome.prototype.setItem = function(key, value, callback) {
   const onComplete = () => {
     const err = lib.f.lastError();
     if (err) {
@@ -3065,8 +3578,9 @@ lib.Storage.Chrome.prototype.setItem = function(key, value, opt_callback) {
       }
     }
 
-    if (opt_callback)
-      opt_callback();
+    if (callback) {
+      callback();
+    }
   };
 
   var obj = {};
@@ -3077,37 +3591,40 @@ lib.Storage.Chrome.prototype.setItem = function(key, value, opt_callback) {
 /**
  * Set multiple values in storage.
  *
- * @param {Object} map A map of key/values to set in storage.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {!Object} obj A map of key/values to set in storage.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the
+ *     value since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Chrome.prototype.setItems = function(obj, opt_callback) {
-  this.storage_.set(obj, opt_callback);
+lib.Storage.Chrome.prototype.setItems = function(obj, callback) {
+  this.storage_.set(obj, callback);
 };
 
 /**
  * Remove an item from storage.
  *
  * @param {string} key The key to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Chrome.prototype.removeItem = function(key, opt_callback) {
-  this.storage_.remove(key, opt_callback);
+lib.Storage.Chrome.prototype.removeItem = function(key, callback) {
+  this.storage_.remove(key, callback);
 };
 
 /**
  * Remove multiple items from storage.
  *
- * @param {Array} keys The keys to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {!Array<string>} keys The keys to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Chrome.prototype.removeItems = function(keys, opt_callback) {
-  this.storage_.remove(keys, opt_callback);
+lib.Storage.Chrome.prototype.removeItems = function(keys, callback) {
+  this.storage_.remove(keys, callback);
 };
 // SOURCE FILE: libdot/js/lib_storage_local.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
@@ -3117,6 +3634,9 @@ lib.Storage.Chrome.prototype.removeItems = function(keys, opt_callback) {
 /**
  * window.localStorage based class with an async interface that is
  * interchangeable with other lib.Storage.* implementations.
+ *
+ * @implements {lib.Storage}
+ * @constructor
  */
 lib.Storage.Local = function() {
   this.observers_ = [];
@@ -3126,6 +3646,8 @@ lib.Storage.Local = function() {
 
 /**
  * Called by the storage implementation when the storage is modified.
+ *
+ * @param {!Event} e The setting that has changed.
  */
 lib.Storage.Local.prototype.onStorage_ = function(e) {
   if (e.storageArea != this.storage_)
@@ -3150,8 +3672,9 @@ lib.Storage.Local.prototype.onStorage_ = function(e) {
 /**
  * Register a function to observe storage changes.
  *
- * @param {function(map)} callback The function to invoke when the storage
+ * @param {function(!Object)} callback The function to invoke when the storage
  *     changes.
+ * @override
  */
 lib.Storage.Local.prototype.addObserver = function(callback) {
   this.observers_.push(callback);
@@ -3160,7 +3683,8 @@ lib.Storage.Local.prototype.addObserver = function(callback) {
 /**
  * Unregister a change observer.
  *
- * @param {function} observer A previously registered callback.
+ * @param {function(!Object)} callback A previously registered callback.
+ * @override
  */
 lib.Storage.Local.prototype.removeObserver = function(callback) {
   var i = this.observers_.indexOf(callback);
@@ -3171,22 +3695,25 @@ lib.Storage.Local.prototype.removeObserver = function(callback) {
 /**
  * Delete everything in this storage.
  *
- * @param {function(map)} callback The function to invoke when the delete
- *     has completed.
+ * @param {function()=} callback The function to invoke when the delete has
+ *     completed.
+ * @override
  */
-lib.Storage.Local.prototype.clear = function(opt_callback) {
+lib.Storage.Local.prototype.clear = function(callback) {
   this.storage_.clear();
 
-  if (opt_callback)
-    setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Return the current value of a storage item.
  *
  * @param {string} key The key to look up.
- * @param {function(value) callback The function to invoke when the value has
+ * @param {function(*)} callback The function to invoke when the value has
  *     been retrieved.
+ * @override
  */
 lib.Storage.Local.prototype.getItem = function(key, callback) {
   var value = this.storage_.getItem(key);
@@ -3205,12 +3732,19 @@ lib.Storage.Local.prototype.getItem = function(key, callback) {
 /**
  * Fetch the values of multiple storage items.
  *
- * @param {Array} keys The keys to look up.
- * @param {function(map) callback The function to invoke when the values have
- *     been retrieved.
+ * @param {?Array<string>} keys The keys to look up.  Pass null for all keys.
+ * @param {function(!Object)} callback The function to invoke when the values
+ *     have been retrieved.
+ * @override
  */
 lib.Storage.Local.prototype.getItems = function(keys, callback) {
   var rv = {};
+  if (!keys) {
+    keys = [];
+    for (let i = 0; i < this.storage_.length; i++) {
+      keys.push(this.storage_.key(i));
+    }
+  }
 
   for (var i = keys.length - 1; i >= 0; i--) {
     var key = keys[i];
@@ -3236,64 +3770,72 @@ lib.Storage.Local.prototype.getItems = function(keys, callback) {
  * @param {string} key The key for the value to be stored.
  * @param {*} value The value to be stored.  Anything that can be serialized
  *     with JSON is acceptable.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Local.prototype.setItem = function(key, value, opt_callback) {
+lib.Storage.Local.prototype.setItem = function(key, value, callback) {
   this.storage_.setItem(key, JSON.stringify(value));
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Set multiple values in storage.
  *
- * @param {Object} map A map of key/values to set in storage.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {!Object} obj A map of key/values to set in storage.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Local.prototype.setItems = function(obj, opt_callback) {
+lib.Storage.Local.prototype.setItems = function(obj, callback) {
   for (var key in obj) {
     this.storage_.setItem(key, JSON.stringify(obj[key]));
   }
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Remove an item from storage.
  *
  * @param {string} key The key to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Local.prototype.removeItem = function(key, opt_callback) {
+lib.Storage.Local.prototype.removeItem = function(key, callback) {
   this.storage_.removeItem(key);
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Remove multiple items from storage.
  *
- * @param {Array} keys The keys to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {!Array<string>} ary The keys to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Local.prototype.removeItems = function(ary, opt_callback) {
+lib.Storage.Local.prototype.removeItems = function(ary, callback) {
   for (var i = 0; i < ary.length; i++) {
     this.storage_.removeItem(ary[i]);
   }
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 // SOURCE FILE: libdot/js/lib_storage_memory.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
@@ -3303,6 +3845,9 @@ lib.Storage.Local.prototype.removeItems = function(ary, opt_callback) {
 /**
  * In-memory storage class with an async interface that is interchangeable with
  * other lib.Storage.* implementations.
+ *
+ * @constructor
+ * @implements {lib.Storage}
  */
 lib.Storage.Memory = function() {
   this.observers_ = [];
@@ -3312,8 +3857,9 @@ lib.Storage.Memory = function() {
 /**
  * Register a function to observe storage changes.
  *
- * @param {function(map)} callback The function to invoke when the storage
+ * @param {function(!Object)} callback The function to invoke when the storage
  *     changes.
+ * @override
  */
 lib.Storage.Memory.prototype.addObserver = function(callback) {
   this.observers_.push(callback);
@@ -3322,7 +3868,8 @@ lib.Storage.Memory.prototype.addObserver = function(callback) {
 /**
  * Unregister a change observer.
  *
- * @param {function} observer A previously registered callback.
+ * @param {function(!Object)} callback A previously registered callback.
+ * @override
  */
 lib.Storage.Memory.prototype.removeObserver = function(callback) {
   var i = this.observers_.indexOf(callback);
@@ -3333,13 +3880,14 @@ lib.Storage.Memory.prototype.removeObserver = function(callback) {
 /**
  * Delete everything in this storage.
  *
- * @param {function(map)} callback The function to invoke when the delete
- *     has completed.
+ * @param {function()=} callback The function to invoke when the delete has
+ *     completed.
+ * @override
  */
-lib.Storage.Memory.prototype.clear = function(opt_callback) {
+lib.Storage.Memory.prototype.clear = function(callback) {
   var e = {};
   for (var key in this.storage_) {
-    e[key] = {oldValue: this.storage_[key], newValue: (void 0)};
+    e[key] = {oldValue: this.storage_[key], newValue: undefined};
   }
 
   this.storage_ = {};
@@ -3350,16 +3898,18 @@ lib.Storage.Memory.prototype.clear = function(opt_callback) {
     }
   }.bind(this), 0);
 
-  if (opt_callback)
-    setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Return the current value of a storage item.
  *
  * @param {string} key The key to look up.
- * @param {function(value) callback The function to invoke when the value has
+ * @param {function(*)} callback The function to invoke when the value has
  *     been retrieved.
+ * @override
  */
 lib.Storage.Memory.prototype.getItem = function(key, callback) {
   var value = this.storage_[key];
@@ -3378,12 +3928,16 @@ lib.Storage.Memory.prototype.getItem = function(key, callback) {
 /**
  * Fetch the values of multiple storage items.
  *
- * @param {Array} keys The keys to look up.
- * @param {function(map) callback The function to invoke when the values have
- *     been retrieved.
+ * @param {?Array<string>} keys The keys to look up.  Pass null for all keys.
+ * @param {function(!Object)} callback The function to invoke when the values
+ *     have been retrieved.
+ * @override
  */
 lib.Storage.Memory.prototype.getItems = function(keys, callback) {
   var rv = {};
+  if (!keys) {
+    keys = Object.keys(this.storage_);
+  }
 
   for (var i = keys.length - 1; i >= 0; i--) {
     var key = keys[i];
@@ -3409,11 +3963,12 @@ lib.Storage.Memory.prototype.getItems = function(keys, callback) {
  * @param {string} key The key for the value to be stored.
  * @param {*} value The value to be stored.  Anything that can be serialized
  *     with JSON is acceptable.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Memory.prototype.setItem = function(key, value, opt_callback) {
+lib.Storage.Memory.prototype.setItem = function(key, value, callback) {
   var oldValue = this.storage_[key];
   this.storage_[key] = JSON.stringify(value);
 
@@ -3426,19 +3981,21 @@ lib.Storage.Memory.prototype.setItem = function(key, value, opt_callback) {
     }
   }.bind(this), 0);
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Set multiple values in storage.
  *
- * @param {Object} map A map of key/values to set in storage.
- * @param {function()} opt_callback Optional function to invoke when the
- *     set is complete.  You don't have to wait for the set to complete in order
- *     to read the value, since the local cache is updated synchronously.
+ * @param {!Object} obj A map of key/values to set in storage.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
  */
-lib.Storage.Memory.prototype.setItems = function(obj, opt_callback) {
+lib.Storage.Memory.prototype.setItems = function(obj, callback) {
   var e = {};
 
   for (var key in obj) {
@@ -3452,40 +4009,273 @@ lib.Storage.Memory.prototype.setItems = function(obj, opt_callback) {
     }
   }.bind(this));
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Remove an item from storage.
  *
  * @param {string} key The key to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     The local cache is updated synchronously, so reads will immediately
+ *     return undefined for this item even before removeItem completes.
+ * @override
  */
-lib.Storage.Memory.prototype.removeItem = function(key, opt_callback) {
+lib.Storage.Memory.prototype.removeItem = function(key, callback) {
   delete this.storage_[key];
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
 };
 
 /**
  * Remove multiple items from storage.
  *
- * @param {Array} keys The keys to be removed.
- * @param {function()} opt_callback Optional function to invoke when the
- *     remove is complete.  You don't have to wait for the set to complete in
- *     order to read the value, since the local cache is updated synchronously.
+ * @param {!Array<string>} ary The keys to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     The local cache is updated synchronously, so reads will immediately
+ *     return undefined for these items even before removeItems completes.
+ * @override
  */
-lib.Storage.Memory.prototype.removeItems = function(ary, opt_callback) {
+lib.Storage.Memory.prototype.removeItems = function(ary, callback) {
   for (var i = 0; i < ary.length; i++) {
     delete this.storage_[ary[i]];
   }
 
-  if (opt_callback)
-  setTimeout(opt_callback, 0);
+  if (callback) {
+    setTimeout(callback, 0);
+  }
+};
+// SOURCE FILE: libdot/js/lib_storage_terminal_private.js
+// Copyright 2019 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+/**
+ * Storage implementation using chrome.settingsPrivate.
+ *
+ * @param {function()} callback Callback invoked when object is ready.
+ * @constructor
+ * @implements {lib.Storage}
+ */
+lib.Storage.TerminalPrivate = function(callback) {
+  /**
+   * @const
+   * @private
+   */
+  this.observers_ = [];
+  /** @private {!Object<string, *>} */
+  this.prefValue_ = {};
+
+  // Load.
+  chrome.terminalPrivate.getSettings((settings) => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message);
+    } else {
+      this.prefValue_ = settings;
+    }
+    chrome.terminalPrivate.onSettingsChanged.addListener(
+        this.onSettingsChanged_.bind(this));
+    callback();
+  });
+};
+
+/**
+ * Called when settings change.
+ *
+ * @param {!Object<string, *>} settings
+ * @private
+ */
+lib.Storage.TerminalPrivate.prototype.onSettingsChanged_ = function(settings) {
+  // Check what is deleted.
+  const e = {};
+  for (const key in this.prefValue_) {
+    if (!settings.hasOwnProperty(key)) {
+      e[key] = {oldValue: this.prefValue_[key], newValue: undefined};
+    }
+  }
+  for (const key in e) {
+    delete this.prefValue_[key];
+  }
+
+  // Check what has changed.
+  for (const key in settings) {
+    const oldValue = this.prefValue_[key];
+    const newValue = settings[key];
+    if (newValue === oldValue ||
+        JSON.stringify(newValue) === JSON.stringify(oldValue)) {
+      continue;
+    }
+    e[key] = {oldValue, newValue};
+    this.prefValue_[key] = newValue;
+  }
+
+  setTimeout(() => {
+    for (const observer of this.observers_) {
+      observer(e);
+    }
+  }, 0);
+};
+
+/**
+ * Set pref then run callback.
+ *
+ * @param {function()=} callback Callback to run once pref is set.
+ * @private
+ */
+lib.Storage.TerminalPrivate.prototype.setPref_ = function(callback) {
+  chrome.terminalPrivate.setSettings(this.prefValue_, () => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message);
+    }
+    if (callback) {
+      callback();
+    }
+  });
+};
+
+/**
+ * Register a function to observe storage changes.
+ *
+ * @param {function(!Object)} callback The function to invoke when the storage
+ *     changes.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.addObserver = function(callback) {
+  this.observers_.push(callback);
+};
+
+/**
+ * Unregister a change observer.
+ *
+ * @param {function(!Object)} callback A previously registered callback.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.removeObserver = function(callback) {
+  const i = this.observers_.indexOf(callback);
+  if (i !== -1) {
+    this.observers_.splice(i, 1);
+  }
+};
+
+/**
+ * Delete everything in this storage.
+ *
+ * @param {function()=} callback The function to invoke when the delete has
+ *     completed.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.clear = function(callback) {
+  this.prefValue_= {};
+  this.setPref_(callback);
+};
+
+/**
+ * Return the current value of a storage item.
+ *
+ * @param {string} key The key to look up.
+ * @param {function(*)} callback The function to invoke when the value has
+ *     been retrieved.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.getItem = function(key, callback) {
+  setTimeout(() => callback(this.prefValue_[key]), 0);
+};
+
+/**
+ * Fetch the values of multiple storage items.
+ *
+ * @param {?Array<string>} keys The keys to look up.  Pass null for all keys.
+ * @param {function(!Object)} callback The function to invoke when the values
+ *     have been retrieved.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.getItems = function(keys, callback) {
+  const rv = {};
+  if (!keys) {
+    keys = Object.keys(this.prefValue_);
+  }
+
+  for (const key of keys) {
+    if (this.prefValue_.hasOwnProperty(key)) {
+      rv[key] = this.prefValue_[key];
+    }
+  }
+
+  setTimeout(() => callback(rv), 0);
+};
+
+/**
+ * Set a value in storage.
+ *
+ * @param {string} key The key for the value to be stored.
+ * @param {*} value The value to be stored.  Anything that can be serialized
+ *     with JSON is acceptable.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.setItem = function(key, value, callback) {
+  this.setItems({[key]: value}, callback);
+};
+
+/**
+ * Set multiple values in storage.
+ *
+ * @param {!Object} obj A map of key/values to set in storage.
+ * @param {function()=} callback Function to invoke when the set is complete.
+ *     You don't have to wait for the set to complete in order to read the value
+ *     since the local cache is updated synchronously.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.setItems = function(obj, callback) {
+  const e = {};
+
+  for (const key in obj) {
+    e[key] = {oldValue: this.prefValue_[key], newValue: obj[key]};
+    this.prefValue_[key] = obj[key];
+  }
+
+  setTimeout(() => {
+    for (const observer of this.observers_) {
+      observer(e);
+    }
+  });
+
+  this.setPref_(callback);
+};
+
+/**
+ * Remove an item from storage.
+ *
+ * @param {string} key The key to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     The local cache is updated synchronously, so reads will immediately
+ *     return undefined for this item even before removeItem completes.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.removeItem = function(key, callback) {
+  this.removeItems([key], callback);
+};
+
+/**
+ * Remove multiple items from storage.
+ *
+ * @param {!Array<string>} keys The keys to be removed.
+ * @param {function()=} callback Function to invoke when the remove is complete.
+ *     The local cache is updated synchronously, so reads will immediately
+ *     return undefined for these items even before removeItems completes.
+ * @override
+ */
+lib.Storage.TerminalPrivate.prototype.removeItems = function(keys, callback) {
+  for (const key of keys) {
+    delete this.prefValue_[key];
+  }
+  this.setPref_(callback);
 };
 // SOURCE FILE: libdot/third_party/fast-text-encoding/text.js
 /*
@@ -3525,7 +4315,8 @@ if (scope['TextEncoder'] && scope['TextDecoder']) {
 function FastTextEncoder(utfLabel='utf-8') {
   if (utfLabel !== 'utf-8') {
     throw new RangeError(
-      `Failed to construct 'TextEncoder': The encoding label provided ('${utfLabel}') is invalid.`);
+        `Failed to construct 'TextEncoder': ` +
+        `The encoding label provided ('${utfLabel}') is invalid.`);
   }
 }
 
@@ -3543,7 +4334,6 @@ FastTextEncoder.prototype.encode = function(string, options={stream: false}) {
 
   let pos = 0;
   const len = string.length;
-  const out = [];
 
   let at = 0;  // output position
   let tlen = Math.max(32, len + (len >> 1) + 7);  // 1.5x size
@@ -3589,7 +4379,7 @@ FastTextEncoder.prototype.encode = function(string, options={stream: false}) {
       target[at++] = ((value >> 12) & 0x3f) | 0x80;
       target[at++] = ((value >>  6) & 0x3f) | 0x80;
     } else {
-      // FIXME: do we care
+      // TODO: do we care
       continue;
     }
 
@@ -3597,7 +4387,7 @@ FastTextEncoder.prototype.encode = function(string, options={stream: false}) {
   }
 
   return target.slice(0, at);
-}
+};
 
 /**
  * @constructor
@@ -3607,10 +4397,13 @@ FastTextEncoder.prototype.encode = function(string, options={stream: false}) {
 function FastTextDecoder(utfLabel='utf-8', options={fatal: false}) {
   if (utfLabel !== 'utf-8') {
     throw new RangeError(
-      `Failed to construct 'TextDecoder': The encoding label provided ('${utfLabel}') is invalid.`);
+        `Failed to construct 'TextDecoder': ` +
+        `The encoding label provided ('${utfLabel}') is invalid.`);
   }
   if (options.fatal) {
-    throw new Error(`Failed to construct 'TextDecoder': the 'fatal' option is unsupported.`);
+    throw new Error(
+        `Failed to construct 'TextDecoder': ` +
+        `the 'fatal' option is unsupported.`);
   }
 }
 
@@ -3623,6 +4416,7 @@ Object.defineProperty(FastTextDecoder.prototype, 'ignoreBOM', {value: false});
 /**
  * @param {(!ArrayBuffer|!ArrayBufferView)} buffer
  * @param {{stream: boolean}=} options
+ * @return {string}
  */
 FastTextDecoder.prototype.decode = function(buffer, options={stream: false}) {
   if (options['stream']) {
@@ -3655,26 +4449,28 @@ FastTextDecoder.prototype.decode = function(buffer, options={stream: false}) {
       const byte4 = bytes[pos++] & 0x3f;
 
       // this can be > 0xffff, so possibly generate surrogates
-      let codepoint = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0c) | (byte3 << 0x06) | byte4;
+      let codepoint =
+          ((byte1 & 0x07) << 0x12) | (byte2 << 0x0c) | (byte3 << 0x06) | byte4;
       if (codepoint > 0xffff) {
         // codepoint &= ~0x10000;
         codepoint -= 0x10000;
-        out.push((codepoint >>> 10) & 0x3ff | 0xd800)
+        out.push((codepoint >>> 10) & 0x3ff | 0xd800);
         codepoint = 0xdc00 | codepoint & 0x3ff;
       }
       out.push(codepoint);
     } else {
-      // FIXME: we're ignoring this
+      // TODO: we're ignoring this
     }
   }
 
   return String.fromCharCode.apply(null, out);
-}
+};
 
 scope['TextEncoder'] = FastTextEncoder;
 scope['TextDecoder'] = FastTextDecoder;
-
-}(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this)));
+}(typeof window !== 'undefined' ?
+      window :
+      (typeof global !== 'undefined' ? global : this)));
 // SOURCE FILE: libdot/third_party/intl-segmenter/intl-segmenter.js
 // Rough polyfill for Intl.Segmenter proposal
 //
@@ -3899,13 +4695,16 @@ scope['TextDecoder'] = FastTextDecoder;
         string, segment(this._locale, this._granularity, string));
     }
   };
-}(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this)));
+}(typeof window !== 'undefined' ?
+      window :
+      (typeof global !== 'undefined' ? global : this)));
 // SOURCE FILE: libdot/third_party/wcwidth/lib_wc.js
 // Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
 // Use of lib.wc source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 /**
+ * @fileoverview
  * This JavaScript library is ported from the wcwidth.js module of node.js.
  * The original implementation can be found at:
  * https://npmjs.org/package/wcwidth.js
@@ -4260,8 +5059,8 @@ lib.wc.unambiguous = [
 /**
  * Binary search to check if the given unicode character is in the table.
  *
- * @param {integer} ucs A unicode character code.
- * @param {Object} table A sorted list of internals to match against.
+ * @param {number} ucs A unicode character code.
+ * @param {!Object} table A sorted list of internals to match against.
  * @return {boolean} True if the given character is in the table.
  */
 lib.wc.binaryTableSearch_ = function(ucs, table) {
@@ -4287,8 +5086,7 @@ lib.wc.binaryTableSearch_ = function(ucs, table) {
 /**
  * Binary search to check if the given unicode character is a space character.
  *
- * @param {integer} ucs A unicode character code.
- *
+ * @param {number} ucs A unicode character code.
  * @return {boolean} True if the given character is a space character; false
  *     otherwise.
  */
@@ -4300,10 +5098,9 @@ lib.wc.isSpace = function(ucs) {
  * Auxiliary function for checking if the given unicode character is a East
  * Asian Ambiguous character.
  *
- * @param {integer} ucs A unicode character code.
- *
+ * @param {number} ucs A unicode character code.
  * @return {boolean} True if the given character is a East Asian Ambiguous
- * character.
+ *     character.
  */
 lib.wc.isCjkAmbiguous = function(ucs) {
   return lib.wc.binaryTableSearch_(ucs, lib.wc.ambiguous);
@@ -4312,9 +5109,8 @@ lib.wc.isCjkAmbiguous = function(ucs) {
 /**
  * Determine the column width of the given character.
  *
- * @param {integer} ucs A unicode character code.
- *
- * @return {integer} The column width of the given character.
+ * @param {number} ucs A unicode character code.
+ * @return {number} The column width of the given character.
  */
 lib.wc.charWidth = function(ucs) {
   if (lib.wc.regardCjkAmbiguous) {
@@ -4328,9 +5124,8 @@ lib.wc.charWidth = function(ucs) {
  * Determine the column width of the given character without considering East
  * Asian Ambiguous characters.
  *
- * @param {integer} ucs A unicode character code.
- *
- * @return {integer} The column width of the given character.
+ * @param {number} ucs A unicode character code.
+ * @return {number} The column width of the given character.
  */
 lib.wc.charWidthDisregardAmbiguous = function(ucs) {
   // Optimize for ASCII characters.
@@ -4359,9 +5154,8 @@ lib.wc.charWidthDisregardAmbiguous = function(ucs) {
  * Determine the column width of the given character considering East Asian
  * Ambiguous characters.
  *
- * @param {integer} ucs A unicode character code.
- *
- * @return {integer} The column width of the given character.
+ * @param {number} ucs A unicode character code.
+ * @return {number} The column width of the given character.
  */
 lib.wc.charWidthRegardAmbiguous = function(ucs) {
   if (lib.wc.isCjkAmbiguous(ucs))
@@ -4374,8 +5168,7 @@ lib.wc.charWidthRegardAmbiguous = function(ucs) {
  * Determine the column width of the given string.
  *
  * @param {string} str A string.
- *
- * @return {integer} The column width of the given string.
+ * @return {number} The column width of the given string.
  */
 lib.wc.strWidth = function(str) {
   var width, rv = 0;
@@ -4396,9 +5189,8 @@ lib.wc.strWidth = function(str) {
  * Get the substring at the given column offset of the given column width.
  *
  * @param {string} str The string to get substring from.
- * @param {integer} start The starting column offset to get substring.
- * @param {integer} opt_width The column width of the substring.
- *
+ * @param {number} start The starting column offset to get substring.
+ * @param {number=} opt_width The column width of the substring.
  * @return {string} The substring.
  */
 lib.wc.substr = function(str, start, opt_width) {
@@ -4439,293 +5231,20 @@ lib.wc.substr = function(str, start, opt_width) {
  * Get substring at the given start and end column offset.
  *
  * @param {string} str The string to get substring from.
- * @param {integer} start The starting column offset.
- * @param {integer} end The ending column offset.
- *
+ * @param {number} start The starting column offset.
+ * @param {number} end The ending column offset.
  * @return {string} The substring.
  */
 lib.wc.substring = function(str, start, end) {
   return lib.wc.substr(str, start, end - start);
 };
 lib.resource.add('libdot/changelog/version', 'text/plain',
-'1.26'
+'4.0.0'
 );
 
 lib.resource.add('libdot/changelog/date', 'text/plain',
-'2019-01-19'
+'2019-11-28'
 );
-
-// This file was generated by libdot/bin/concat.sh.
-// It has been marked read-only for your safety.  Rather than
-// edit it directly, please modify one of these source files.
-//
-// hterm\audio\bell.ogg
-// hterm\images\icon-96.png
-
-'use strict';
-
-lib.resource.add('hterm/audio/bell', 'audio/ogg;base64',
-'T2dnUwACAAAAAAAAAADhqW5KAAAAAMFvEjYBHgF2b3JiaXMAAAAAAYC7AAAAAAAAAHcBAAAAAAC4' +
-'AU9nZ1MAAAAAAAAAAAAA4aluSgEAAAAAesI3EC3//////////////////8kDdm9yYmlzHQAAAFhp' +
-'cGguT3JnIGxpYlZvcmJpcyBJIDIwMDkwNzA5AAAAAAEFdm9yYmlzKUJDVgEACAAAADFMIMWA0JBV' +
-'AAAQAABgJCkOk2ZJKaWUoSh5mJRISSmllMUwiZiUicUYY4wxxhhjjDHGGGOMIDRkFQAABACAKAmO' +
-'o+ZJas45ZxgnjnKgOWlOOKcgB4pR4DkJwvUmY26mtKZrbs4pJQgNWQUAAAIAQEghhRRSSCGFFGKI' +
-'IYYYYoghhxxyyCGnnHIKKqigggoyyCCDTDLppJNOOumoo4466ii00EILLbTSSkwx1VZjrr0GXXxz' +
-'zjnnnHPOOeecc84JQkNWAQAgAAAEQgYZZBBCCCGFFFKIKaaYcgoyyIDQkFUAACAAgAAAAABHkRRJ' +
-'sRTLsRzN0SRP8ixREzXRM0VTVE1VVVVVdV1XdmXXdnXXdn1ZmIVbuH1ZuIVb2IVd94VhGIZhGIZh' +
-'GIZh+H3f933f930gNGQVACABAKAjOZbjKaIiGqLiOaIDhIasAgBkAAAEACAJkiIpkqNJpmZqrmmb' +
-'tmirtm3LsizLsgyEhqwCAAABAAQAAAAAAKBpmqZpmqZpmqZpmqZpmqZpmqZpmmZZlmVZlmVZlmVZ' +
-'lmVZlmVZlmVZlmVZlmVZlmVZlmVZlmVZlmVZQGjIKgBAAgBAx3Ecx3EkRVIkx3IsBwgNWQUAyAAA' +
-'CABAUizFcjRHczTHczzHczxHdETJlEzN9EwPCA1ZBQAAAgAIAAAAAABAMRzFcRzJ0SRPUi3TcjVX' +
-'cz3Xc03XdV1XVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVYHQkFUAAAQAACGdZpZq' +
-'gAgzkGEgNGQVAIAAAAAYoQhDDAgNWQUAAAQAAIih5CCa0JrzzTkOmuWgqRSb08GJVJsnuamYm3PO' +
-'OeecbM4Z45xzzinKmcWgmdCac85JDJqloJnQmnPOeRKbB62p0ppzzhnnnA7GGWGcc85p0poHqdlY' +
-'m3POWdCa5qi5FJtzzomUmye1uVSbc84555xzzjnnnHPOqV6czsE54Zxzzonam2u5CV2cc875ZJzu' +
-'zQnhnHPOOeecc84555xzzglCQ1YBAEAAAARh2BjGnYIgfY4GYhQhpiGTHnSPDpOgMcgppB6NjkZK' +
-'qYNQUhknpXSC0JBVAAAgAACEEFJIIYUUUkghhRRSSCGGGGKIIaeccgoqqKSSiirKKLPMMssss8wy' +
-'y6zDzjrrsMMQQwwxtNJKLDXVVmONteaec645SGultdZaK6WUUkoppSA0ZBUAAAIAQCBkkEEGGYUU' +
-'UkghhphyyimnoIIKCA1ZBQAAAgAIAAAA8CTPER3RER3RER3RER3RER3P8RxREiVREiXRMi1TMz1V' +
-'VFVXdm1Zl3Xbt4Vd2HXf133f141fF4ZlWZZlWZZlWZZlWZZlWZZlCUJDVgEAIAAAAEIIIYQUUkgh' +
-'hZRijDHHnINOQgmB0JBVAAAgAIAAAAAAR3EUx5EcyZEkS7IkTdIszfI0T/M00RNFUTRNUxVd0RV1' +
-'0xZlUzZd0zVl01Vl1XZl2bZlW7d9WbZ93/d93/d93/d93/d939d1IDRkFQAgAQCgIzmSIimSIjmO' +
-'40iSBISGrAIAZAAABACgKI7iOI4jSZIkWZImeZZniZqpmZ7pqaIKhIasAgAAAQAEAAAAAACgaIqn' +
-'mIqniIrniI4oiZZpiZqquaJsyq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7ruq7rukBo' +
-'yCoAQAIAQEdyJEdyJEVSJEVyJAcIDVkFAMgAAAgAwDEcQ1Ikx7IsTfM0T/M00RM90TM9VXRFFwgN' +
-'WQUAAAIACAAAAAAAwJAMS7EczdEkUVIt1VI11VItVVQ9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV' +
-'VVVVVVVVVVVV1TRN0zSB0JCVAAAZAAAjQQYZhBCKcpBCbj1YCDHmJAWhOQahxBiEpxAzDDkNInSQ' +
-'QSc9uJI5wwzz4FIoFURMg40lN44gDcKmXEnlOAhCQ1YEAFEAAIAxyDHEGHLOScmgRM4xCZ2UyDkn' +
-'pZPSSSktlhgzKSWmEmPjnKPSScmklBhLip2kEmOJrQAAgAAHAIAAC6HQkBUBQBQAAGIMUgophZRS' +
-'zinmkFLKMeUcUko5p5xTzjkIHYTKMQadgxAppRxTzinHHITMQeWcg9BBKAAAIMABACDAQig0ZEUA' +
-'ECcA4HAkz5M0SxQlSxNFzxRl1xNN15U0zTQ1UVRVyxNV1VRV2xZNVbYlTRNNTfRUVRNFVRVV05ZN' +
-'VbVtzzRl2VRV3RZV1bZl2xZ+V5Z13zNNWRZV1dZNVbV115Z9X9ZtXZg0zTQ1UVRVTRRV1VRV2zZV' +
-'17Y1UXRVUVVlWVRVWXZlWfdVV9Z9SxRV1VNN2RVVVbZV2fVtVZZ94XRVXVdl2fdVWRZ+W9eF4fZ9' +
-'4RhV1dZN19V1VZZ9YdZlYbd13yhpmmlqoqiqmiiqqqmqtm2qrq1bouiqoqrKsmeqrqzKsq+rrmzr' +
-'miiqrqiqsiyqqiyrsqz7qizrtqiquq3KsrCbrqvrtu8LwyzrunCqrq6rsuz7qizruq3rxnHrujB8' +
-'pinLpqvquqm6um7runHMtm0co6rqvirLwrDKsu/rui+0dSFRVXXdlF3jV2VZ921fd55b94WybTu/' +
-'rfvKceu60vg5z28cubZtHLNuG7+t+8bzKz9hOI6lZ5q2baqqrZuqq+uybivDrOtCUVV9XZVl3zdd' +
-'WRdu3zeOW9eNoqrquirLvrDKsjHcxm8cuzAcXds2jlvXnbKtC31jyPcJz2vbxnH7OuP2daOvDAnH' +
-'jwAAgAEHAIAAE8pAoSErAoA4AQAGIecUUxAqxSB0EFLqIKRUMQYhc05KxRyUUEpqIZTUKsYgVI5J' +
-'yJyTEkpoKZTSUgehpVBKa6GU1lJrsabUYu0gpBZKaS2U0lpqqcbUWowRYxAy56RkzkkJpbQWSmkt' +
-'c05K56CkDkJKpaQUS0otVsxJyaCj0kFIqaQSU0mptVBKa6WkFktKMbYUW24x1hxKaS2kEltJKcYU' +
-'U20txpojxiBkzknJnJMSSmktlNJa5ZiUDkJKmYOSSkqtlZJSzJyT0kFIqYOOSkkptpJKTKGU1kpK' +
-'sYVSWmwx1pxSbDWU0lpJKcaSSmwtxlpbTLV1EFoLpbQWSmmttVZraq3GUEprJaUYS0qxtRZrbjHm' +
-'GkppraQSW0mpxRZbji3GmlNrNabWam4x5hpbbT3WmnNKrdbUUo0txppjbb3VmnvvIKQWSmktlNJi' +
-'ai3G1mKtoZTWSiqxlZJabDHm2lqMOZTSYkmpxZJSjC3GmltsuaaWamwx5ppSi7Xm2nNsNfbUWqwt' +
-'xppTS7XWWnOPufVWAADAgAMAQIAJZaDQkJUAQBQAAEGIUs5JaRByzDkqCULMOSepckxCKSlVzEEI' +
-'JbXOOSkpxdY5CCWlFksqLcVWaykptRZrLQAAoMABACDABk2JxQEKDVkJAEQBACDGIMQYhAYZpRiD' +
-'0BikFGMQIqUYc05KpRRjzknJGHMOQioZY85BKCmEUEoqKYUQSkklpQIAAAocAAACbNCUWByg0JAV' +
-'AUAUAABgDGIMMYYgdFQyKhGETEonqYEQWgutddZSa6XFzFpqrbTYQAithdYySyXG1FpmrcSYWisA' +
-'AOzAAQDswEIoNGQlAJAHAEAYoxRjzjlnEGLMOegcNAgx5hyEDirGnIMOQggVY85BCCGEzDkIIYQQ' +
-'QuYchBBCCKGDEEIIpZTSQQghhFJK6SCEEEIppXQQQgihlFIKAAAqcAAACLBRZHOCkaBCQ1YCAHkA' +
-'AIAxSjkHoZRGKcYglJJSoxRjEEpJqXIMQikpxVY5B6GUlFrsIJTSWmw1dhBKaS3GWkNKrcVYa64h' +
-'pdZirDXX1FqMteaaa0otxlprzbkAANwFBwCwAxtFNicYCSo0ZCUAkAcAgCCkFGOMMYYUYoox55xD' +
-'CCnFmHPOKaYYc84555RijDnnnHOMMeecc845xphzzjnnHHPOOeecc44555xzzjnnnHPOOeecc845' +
-'55xzzgkAACpwAAAIsFFkc4KRoEJDVgIAqQAAABFWYowxxhgbCDHGGGOMMUYSYowxxhhjbDHGGGOM' +
-'McaYYowxxhhjjDHGGGOMMcYYY4wxxhhjjDHGGGOMMcYYY4wxxhhjjDHGGGOMMcYYY4wxxhhjjDHG' +
-'GFtrrbXWWmuttdZaa6211lprrQBAvwoHAP8HG1ZHOCkaCyw0ZCUAEA4AABjDmHOOOQYdhIYp6KSE' +
-'DkIIoUNKOSglhFBKKSlzTkpKpaSUWkqZc1JSKiWlllLqIKTUWkottdZaByWl1lJqrbXWOgiltNRa' +
-'a6212EFIKaXWWostxlBKSq212GKMNYZSUmqtxdhirDGk0lJsLcYYY6yhlNZaazHGGGstKbXWYoy1' +
-'xlprSam11mKLNdZaCwDgbnAAgEiwcYaVpLPC0eBCQ1YCACEBAARCjDnnnHMQQgghUoox56CDEEII' +
-'IURKMeYcdBBCCCGEjDHnoIMQQgghhJAx5hx0EEIIIYQQOucchBBCCKGEUkrnHHQQQgghlFBC6SCE' +
-'EEIIoYRSSikdhBBCKKGEUkopJYQQQgmllFJKKaWEEEIIoYQSSimllBBCCKWUUkoppZQSQgghlFJK' +
-'KaWUUkIIoZRQSimllFJKCCGEUkoppZRSSgkhhFBKKaWUUkopIYQSSimllFJKKaUAAIADBwCAACPo' +
-'JKPKImw04cIDUGjISgCADAAAcdhq6ynWyCDFnISWS4SQchBiLhFSijlHsWVIGcUY1ZQxpRRTUmvo' +
-'nGKMUU+dY0oxw6yUVkookYLScqy1dswBAAAgCAAwECEzgUABFBjIAIADhAQpAKCwwNAxXAQE5BIy' +
-'CgwKx4Rz0mkDABCEyAyRiFgMEhOqgaJiOgBYXGDIB4AMjY20iwvoMsAFXdx1IIQgBCGIxQEUkICD' +
-'E2544g1PuMEJOkWlDgIAAAAA4AAAHgAAkg0gIiKaOY4Ojw+QEJERkhKTE5QAAAAAALABgA8AgCQF' +
-'iIiIZo6jw+MDJERkhKTE5AQlAAAAAAAAAAAACAgIAAAAAAAEAAAACAhPZ2dTAAQYOwAAAAAAAOGp' +
-'bkoCAAAAmc74DRgyNjM69TAzOTk74dnLubewsbagmZiNp4d0KbsExSY/I3XUTwJgkeZdn1HY4zoj' +
-'33/q9DFtv3Ui1/jmx7lCUtPt18/sYf9MkgAsAGRBd3gMGP4sU+qCPYBy9VrA3YqJosW3W2/ef1iO' +
-'/u3cg8ZG/57jU+pPmbGEJUgkfnaI39DbPqxddZphbMRmCc5rKlkUMkyx8iIoug5dJv1OYH9a59c+' +
-'3Gevqc7Z2XFdDjL/qHztRfjWEWxJ/aiGezjohu9HsCZdQBKbiH0VtU/3m85lDG2T/+xkZcYnX+E+' +
-'aqzv/xTgOoTFG+x7SNqQ4N+oAABSxuVXw77Jd5bmmTmuJakX7509HH0kGYKvARPpwfOSAPySPAc2' +
-'EkneDwB2HwAAJlQDYK5586N79GJCjx4+p6aDUd27XSvRyXLJkIC5YZ1jLv5lpOhZTz0s+DmnF1di' +
-'ptrnM6UDgIW11Xh8cHTd0/SmbgOAdxcyWwMAAGIrZ3fNSfZbzKiYrK4+tPqtnMVLOeWOG2kVvUY+' +
-'p2PJ/hkCl5aFRO4TLGYPZcIU3vYM1hohS4jHFlnyW/2T5J7kGsShXWT8N05V+3C/GPqJ1QdWisGP' +
-'xEzHqXISBPIinWDUt7IeJv/f5OtzBxpTzZZQ+CYEhHXfqG4aABQli72GJhN4oJv+hXcApAJSErAW' +
-'8G2raAX4NUcABnVt77CzZAB+LsHcVe+Q4h+QB1wh/ZrJTPxSBdI8mgTeAdTsQOoFUEng9BHcVPhx' +
-'SRRYkKWZJXOFYP6V4AEripJoEjXgA2wJRZHSExmJDm8F0A6gEXsg5a4ZsALItrMB7+fh7UKLvYWS' +
-'dtsDwFf1mzYzS1F82N1h2Oyt2e76B1QdS0SAsQigLPMOgJS9JRC7hFXA6kUsLFNKD5cA5cTRvgSq' +
-'Pc3Fl99xW3QTi/MHR8DEm6WnvaVQATwRqRKjywQ9BrrhugR2AKTsPQeQckrAOgDOhbTESyrXQ50C' +
-'kNpXdtWjW7W2/3UjeX3U95gIdalfRAoAmqUEiwp53hCdcCwlg47fcbfzlmQMAgaBkh7c+fcDgF+i' +
-'fwDXfzegLPcLYJsAAJQArTXjnh/uXGy3v1Hk3pV6/3t5ruW81f6prfbM2Q3WNVy98BwUtbCwhFhA' +
-'WuPev6Oe/4ZaFQUcgKrVs4defzh1TADA1DEh5b3VlDaECw5b+bPfkKos3tIAue3vJZOih3ga3l6O' +
-'3PSfIkrLv0PAS86PPdL7g8oc2KteNFKKzKRehOv2gJoFLBPXmaXvPBQILgJon0bbWBszrYZYYwE7' +
-'jl2j+vTdU7Vpk21LiU0QajPkywAAHqbUC0/YsYOdb4e6BOp7E0cCi04Ao/TgD8ZVAMid6h/A8IeB' +
-'Nkp6/xsAACZELEYIk+yvI6Qz1NN6lIftB/6IMWjWJNOqPTMedAmyaj6Es0QBklJpiSWWHnQ2CoYb' +
-'GWAmt+0gLQBFKCBnp2QUUQZ/1thtZDBJUpFWY82z34ocorB62oX7qB5y0oPAv/foxH25wVmgIHf2' +
-'xFOr8leZcBq1Kx3ZvCq9Bga639AxuHuPNL/71YCF4EywJpqHFAX6XF0sjVbuANnvvdLcrufYwOM/' +
-'iDa6iA468AYAAB6mNBMXcgTD8HSRqJ4vw8CjAlCEPACASlX/APwPOJKl9xQAAAPmnev2eWp33Xgy' +
-'w3Dvfz6myGk3oyP8YTKsCOvzAgALQi0o1c6Nzs2O2Pg2h4ACIJAgAGP0aNn5x0BDgVfH7u2TtyfD' +
-'cRIuYAyQhBF/lvSRAttgA6TPbWZA9gaUrZWAUEAA+Dx47Q3/r87HxUUqZmB0BmUuMlojFjHt1gDu' +
-'nnvuX8MImsjSq5WkzSzGS62OEIlOufWWezxWpv6FBgDgJVltfXFYtNAAnqU0xQoD0YLiXo5cF5QV' +
-'4CnY1tBLAkZCOABAhbk/AM+/AwSCCdlWAAAMcFjS7owb8GVDzveDiZvznbt2tF4bL5odN1YKl88T' +
-'AEABCZvufq9YCTBtMwVAQUEAwGtNltzSaHvADYC3TxLVjqiRA+OZAMhzcqEgRcAOwoCgvdTxsTHL' +
-'QEF6+oOb2+PAI8ciPQcXg7pOY+LjxQSv2fjmFuj34gGwz310/bGK6z3xgT887eomWULEaDd04wHe' +
-'tYxdjcgV2SxvSwn0VoZXJRqkRC5ASQ/muVoAUsX7AgAQMBNaVwAAlABRxT/1PmfqLqSRNDbhXb07' +
-'berpB3b94jpuWEZjBCD2OcdXFpCKEgCDfcFPMw8AAADUwT4lnUm50lmwrpMMhPQIKj6u0E8fr2vG' +
-'BngMNdIlrZsigjahljud6AFVg+tzXwUnXL3TJLpajaWKA4VAAAAMiFfqJgKAZ08XrtS3dxtQNYcp' +
-'PvYEG8ClvrQRJgBephwnNWJjtGqmp6VEPSvBe7EBiU3qgJbQAwD4Le8LAMDMhHbNAAAlgK+tFs5O' +
-'+YyJc9yCnJa3rxLPulGnxwsXV9Fsk2k4PisCAHC8FkwbGE9gJQAAoMnyksj0CdFMZLLgoz8M+Fxz' +
-'iwYBgIx+zHiCBAKAlBKNpF1sO9JpVcyEi9ar15YlHgrut5fPJnkdJ6vEwZPyAHQBIEDUrlMcBAAd' +
-'2KAS0Qq+JwRsE4AJZtMnAD6GnOYwYlOIZvtzUNdjreB7fiMkWI0CmBB6AIAKc38A9osEFlTSGECB' +
-'+cbeRDC0aRpLHqNPplcK/76Lxn2rpmqyXsYJWRi/FQAAAKBQk9MCAOibrQBQADCDsqpooPutd+05' +
-'Ce9g6iEdiYXgVmQAI4+4wskEBEiBloNQ6Ki0/KTQ0QjWfjxzi+AeuXKoMjEVfQOZzr0y941qLgM2' +
-'AExvbZOqcxZ6J6krlrj4y2j9AdgKDx6GnJsVLhbc42uq584+ouSdNBpoCiCVHrz+WzUA/DDtD8AT' +
-'gA3h0lMCAAzcFv+S+fSSNkeYWlTpb34mf2RfmqqJeMeklhHAfu7VoAEACgAApKRktL+KkQDWMwYC' +
-'UAAAAHCKsp80xhp91UjqQBw3x45cetqkjQEyu3G9B6N+R650Uq8OVig7wOm6Wun0ea4lKDPoabJs' +
-'6aLqgbhPzpv4KR4iODilw88ZpY7q1IOMcbASAOAVtmcCnobcrkG4KGS7/ZnskVWRNF9J0RUHKOnB' +
-'yy9WA8Dv6L4AAARMCQUA4GritfVM2lcZfH3Q3T/vZ47J2YHhcmBazjfdyuV25gLAzrc0cwAAAAAY' +
-'Ch6PdwAAAGyWjFW4yScjaWa2mGcofHxWxewKALglWBpLUvwwk+UOh5eNGyUOs1/EF+pZr+ud5Ozo' +
-'GwYdAABg2p52LiSgAY/ZVlOmilEgHn6G3OcwYjzI7vOj1t6xsx4S3lBY96EUQBF6AIBAmPYH4PoG' +
-'YCoJAADWe+OZJZi7/x76/yH7Lzf9M5XzRKnFPmveMsilQHwVAAAAAKB3LQD8PCIAAADga0QujBLy' +
-'wzeJ4a6Z/ERVBAUlAEDqvoM7BQBAuAguzFqILtmjH3Kd4wfKobnOhA3z85qWoRPm9hwoOHoDAAlC' +
-'bwDAA56FHAuXflHo3fe2ttG9XUDeA9YmYCBQ0oPr/1QC8IvuCwAAApbUAQCK22MmE3O78VAbHQT9' +
-'PIPNoT9zNc3l2Oe7TAVLANBufT8MAQAAAGzT4PS8AQAAoELGHb2uaCwwEv1EWhFriUkbAaAZ27/f' +
-'VZnTZXbWz3BwWpjUaMZKRj7dZ0J//gUeTdpVEwAAZOFsNxKAjQSgA+ABPoY8Jj5y2wje81jsXc/1' +
-'TOQWTDYZBmAkNDiqVwuA2NJ9AQAAEBKAt9Vrsfs/2N19MO91S9rd8EHTZHnzC5MYmfQEACy/FBcA' +
-'AADA5c4gi4z8RANs/m6FNXVo9DV46JG1BBDukqlw/Va5G7QbuGVSI+2aZaoLXJrdVj2zlC9Z5QEA' +
-'EFz/5QzgVZwAAAAA/oXcxyC6WfTu+09Ve/c766J4VTAGUFmA51+VANKi/QPoPwYgYAkA715OH4S0' +
-'s5KDHvj99MMq8TPFc3roKZnGOoT1bmIhVgc7XAMBAAAAAMAW1VbQw3gapzOpJd+Kd2fc4iSO62fJ' +
-'v9+movui1wUNPAj059N3OVxzk4gV73PmE8FIA2F5mRq37Evc76vLXfF4rD5UJJAw46hW6LZCb5sN' +
-'Ldx+kzMCAAB+hfy95+965ZCLP7B3/VlTHCvDEKtQhTm4KiCgAEAbrfbWTPssAAAAXpee1tVrozYY' +
-'n41wD1aeYtkKfswN5/SXPO0JDnhO/4laUortv/s412fybe/nONdncoCHnBVliu0CQGBWlPY/5Kwo' +
-'m2L/kruPM6Q7oz4tvDQy+bZ3HzOi+gNHA4DZEgA='
-);
-
-lib.resource.add('hterm/images/icon-96', 'image/png;base64',
-'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAStklEQVR42u1dBXjrupL+RzIGmjIf' +
-'vAcu42NmZub3lpmZmZmZmRkuMzPDYaYyJG0Sa9b2p2z1eQtp7bzefpv/nKnkkSw7Gg1IshNsDtpo' +
-'o4022mijDWp/tlTgzbpJSqYvMoFTC9vjRD5JLb9RYaRkpk22SS28P8pacAaPdZ41KYMCI89YB6wN' +
-'3JzQJM3UIGqurfTlKQTAZtqENid5SlNdU804VmbbWQtA6HMkAAdADsBeAJ7mxwIhIhFSXJ9iRPw4' +
-'JYDEcqmGWEp1HhCI8gAtpXF7scB1ZRH9E3HObANCNy1AoGTegNDnCdE41tfQDH2t+CINQEpJ9Xp9' +
-'7oUDh3+nXK48DYAMIWQmANIkNTn6vP69e3d/zctfeu0nXNexmVn3F0gDAMxMlBoHuht0qnsEEekC' +
-'42SdGHmNxgVjgk4bPN04Yui8bhc534cQBH35RKrPN9sGdLnB1/Wuv+HW4f+6/tZvBHAaAJvmKr0A' +
-'jJGvyQMw8pLrrvqeT378Ax8UwrKeevoFgEhfjcGGO2JO+iuTt1SW5DHzyraDExyTlWwHjCQ/CAJc' +
-'ecU+XHn5xWDmVCGQFAKljsLbx8Ynvv3Bhx7/EQCzurimU04jADLsvK3r73/7W1//g1/6hU++uVqt' +
-'0X/dcBcKxRIsy9Ji34DPow2et6FzgcXFKk6fOY83vu4VEFKkDiYHB3roSz73sc+Oj08eOHzk+B9o' +
-'MyQABGk0gCIyOt9xHPvaD3/wnT/5VV/+meumpmbwD/98A0qdvVEBNhvMDCJaVXtM01GtVlEs+LBt' +
-'C1ngzW98tX/m7Llv/emf+83HarX6vbrfGECQRgBmlLP9Ix961499+zd/5XVj45P407/8FxQ7uiGl' +
-'QK1Ww1ZCvR6gXq3AsgQ8zwYzUkMIgXe+/Q1Dd9x5/6duv/P+R7QjprQaIHQd/8orLvnCJz/2/pfm' +
-'cj7+6rf+DK5XgOu6sT3dQtBawqjW6lhYXIRlSTAjE/T39eLSS/ZeEwqgE8CiYUV4vQIgTULTyFve' +
-'9Or3WJZN/3n9HTh3fgrFjhJmZmawFaGUwkJlEffc9xh83wMYqcFg7Noxinw+l9OBikirAabz7eju' +
-'6sxJKTE7W4bn5+D7PrYmtI/gAFJasCwb4IzaBMHzXE8LgBJC4I1GQRKAa4Xo6upEsZiH53nIRYLe' +
-'olDMCIIq+nq70dFRAGckgFKpAD+UgBaAgfRRkGvbliwUcoh8ABHFYSfWMnBrxOzL12PwKufzSvV5' +
-'5Tpmi5a0IASBQCgWcujs7ABn5AQic+b5rhNlAVAmTliTEwnA990wIxEEdUQYnxjHidMnAUIcBYAB' +
-'RqNDdC7BM8t0VtfTnGRd8FKdRIjJcVlCsAbPPA5UAK4rXLJjP7aNbkO9XoPrOrEQWHEm69Kua0ca' +
-'YEspvCBQ5toSp9EASCkt27ZF1PlCxBOZOPo5feY0Xpg8jHe/7V3YNjhqjDRac3mMVl1Oo40vtREt' +
-'W+2FYwdw/S03YHJ6EkODQ1hcXIQUcaeBlUIWsCwZ+QDLdZxcubKAtBpgNmzZliUa6yLMKiRGoBR2' +
-'79yN6666FlJYABgvRhAIncUSHn/iCdQrAZjjSAiKFQQRVEhZIRJASJEACICmlAKQUtqhBETjw5ij' +
-'uFqr4oWjBwHmF7/jVUHc6aRNXxAoZA3PdYXruvlldJfTaIATaQA4KU/CzNwMDp84DOYXf+hZXiij' +
-'hJz+DK0QAEd+RYTOOAcgMw0g24oskNYAIoCXxDpbnsOxM8fB5qacwKZD+3WQcS+VxQrYYXNVNGMh' +
-'I1odiIRQSHb8BmbCpgZYjmVLYi0ANmxQNKpOj50FFOB3WnDzEpOnFkGbuOXPimG5Ap0jLqZOLiKo' +
-'MyIsVhfB9lLEpFSQ+S26jh2Fo/n0YagRCUlLRhpAAIMIyWl9vBinAkbfoIPXf+0wnrlxAs/dPInK' +
-'VB1CUOsFkdhD6Nnp49oP98EvWfjvnzqGak0hVlwwFJsaoADK9vq2Y0eOOKUGJLTAjjQgFgBAy/gT' +
-'vbGIyXC0nX66jJd+YgC7X1nCo39/AccfmUVQU1F5y0d9rsvGJW/txuXv7oGqMx7+2/OoVxWIzE5S' +
-'OkfaBBGyhGPHc4G8YYjT+wDLDgUgJbQPWDGuL0/VcefvnMLRB2dw3Uf78dZv345D90zjsX++gPGj' +
-'C7peC8yNI7DjpSVcE476rlEPB++awmP/dCEaEMtqbAP1Fqzkhn0VaUAegMzABJkaIMG8epNEiE3R' +
-'0funce75Mi4NR+MV7+3B6NUFPPnvY3jupslISJkKoW9PDld/sA+7Xt6B8SMV3Pjzx3Di0TkENQaJ' +
-'5A1qM8VRljKPgpg58pcNHyCz0ADSTnhNDTBBglCZruPhvz+PY4/M4Jqwg6772AB2vqwDd/zmKYwd' +
-'WQAJpMalb+vGSz81AA6Ah/76HJ69KfI7tej6K7RPUKwaWQT1FmiAlJEJykXZZh5cE02FoaEJkpYE' +
-'wGsKwNQGAnDhQAUP/915TJ5YwPCleZSG3WwWvwgYvryAYr8Tm5wn/2Mc5cm481c9RzXWobQPyBpS' +
-'ikgDGgJAVvMARzY0AARwc7Y5Ckn3vK4TV7+/D5YncN+fnsWpJ+cgsnDICnj0n85DSOCSUBO6Rl08' +
-'8g8XcObZ+VgjSKweKRG1xgcIEQnA9QE46aMgwwlHAmBuOFFepeMRd8rI1cU4FBzYn8exh2bw6D9e' +
-'wNihCjgrR0wI21vAzb9yIrT/pfha7/y+nXj+5gk8EWrDzJlF/WxQUgMUwEtREGW/5RlpgJdaABq0' +
-'pAGicYFVFaBzxMGV7+vFvtd3YfpsFbf+6ok4KqovxqFoph+YBBAsMg7cPonTT83jsnd247J39IQR' +
-'UUcceR28cxrVcrBUX2sAa1Nar7dCAwhevCkDN7UADB9gSyEBaBVYYeT37PTw9u/aAbcg8Pi/XMAz' +
-'109gfqLhFAktgX46LbrOg395DscemAnD0X68+suGQ+3L4Y7fOhVHRA00nDBRa3wAEGuAA8DbqABI' +
-'kyEA2xFSrBHHM2xf4Ozz82HIOb5kbgSh1TDv69wLZdz0S8dxUTgRHLwkD2HRkgCIdBi6NBPmVpgg' +
-'L7krBkrnA6xIA0Qjfl4x9Bw7XInDzHo1hblJbZYoNkvP3zqFw/fPIKgqGNC7aNoEtUQDEJkg23Ec' +
-'v1qtrhkFiWYeTYzCUCEEeI15QDTSgjpnMerTmyUB1CsKrGACyvABQb1VAnAt13V8NAHRxGqotEMI' +
-'QUbJFgGtMhNuqQa4Ui9HbEgDKFknioKIhC4kbGUwFBhsOGHO/AqhCxAh5dOsBZFBMoqCGhpARJv7' +
-'ihul35oEt84E6U0ZCv1APp0T1tACsIhEpquZQhJsT2C9UAGjtqA2vDnPzOD/NUEqymcOJ94TcPJZ' +
-'zYSFHYKIjHlA+iXk/kvyeO1XDENYtK6J16kn53H375+OBbFukBkFtWoewHAdJ1qQKwAQWcyEtQaQ' +
-'4QPSmk6KZ6gXDlVAcn0x9vTpxTSjdhkBcOYmSO+KNTZlKK0GWHYoASJkZoJIABPHFnDbb5zEFxts' +
-'hqEtMkG2rfcEtAZsJAoimBpgGRqg062KVmsAmBH2V2NfWKZ1woxYAyIBwFABXma+nE30wytV4rU/' +
-'OK9xLWaGUmpJAHE+awEDUsrGnoCERsooyJYALfPaOEHNByBl7BGwKQsy8kYLUZ1kOTXyZprgUYJH' +
-'SBzrctLHDZ6huflCLt61qtWDWAMawsgOWgCe5+v+JYN4vT6AtAbIpSCIGuEcRoaG8TrXRcwzCeZ7' +
-'u2gcm4QIZn0QEudC5wGYdYxUt2PyjRSAyWsc6mvW6hW0CnpXzAdgQ6NZAdByJsgKBQAQGCp+oQFQ' +
-'8ePdhUIBxWJxXfrJYKQHNRUMMK9kuwhzc3O4eO+eeLQqpbLfFfMaAgAnhdDccrSpAZYtAUApxujI' +
-'EN725lfg3//7bvT19cOyLJhg44/ZCTo1y40yI79qmT4/5un2jTx0+XLtmAOAlUJXVx6ve83LdFkr' +
-'dsWMTZkUTpikjFyAJUxHFr6oDc918cDDT6KyMB8xzVFpmBpAGGZHiCgVZgoRphSlQkCQTvXxEhFk' +
-'lMolXnyseY28NMtlIjXaCzsHO7aPoFDIQ6nWCMDzXS2AdJvybMl4HiaSLyK89S2vxRte/wrU6vXG' +
-'IFrzOxdWTZcaMNtCgq15a9vNtWyTMjUncwEguSu2ISesO3vp3YDkE2ZSypiyQMO0JO331gTFryoJ' +
-'IXylVLrFOCtEpAHmaG5jbQ3Qb8r45XKFN2qCOCJpSUsxi/n5SlOP8rXB0WpoUgC8HgGwQYqI7AMH' +
-'j1G9zk2Ea20wgI5iPhqs8dMk6/26GrOyiqharc16nlffvn3EaWtAc/BcBw8+/Ojc+PjkKaMvuWkN' +
-'ME+YnZ17+rnnDxweHOi9iCM+gzbLOXLrG8piu46JIO5/4NHD9XpwbEPfEqjJ01R0XecDYcz8lvhF' +
-'MSEkwJIBaU76AZA+SsST5oHOmidqvsHQieYk6ya/ucysT/pPon6yLum/5tXN4uV45ocAKHEeWFdQ' +
-'YcpKKb4wNnH/xMTUjwGYArBofLHfuhfjeO+eXbu+/ms+946JyWl16NAxWmV80AZGImW+M0z/dxWU' +
-'NbvJNQzaqNK4ro13v/NN9C//doP4gz/+mxKAWWNQb2hHzL/s0n1XDfT3W3fe8wRAVmLytCE56HM3' +
-'LL/E+bRqb+niFZ9rSvD0nnHzd2Y+M3vs5Ckwc/S9QQMABgGc0cvS9fU8migi0uUDey7asfvQ4eMQ' +
-'louuzs74Am0sL4TZQhHHTpzG8FB/qdRR3DU9M/sUgJqmphfjhJaa9H1v9/Ztw/1PPn0QtWoNs7Oz' +
-'WBltATiOixMnzuCS/bvtgTBwCQXg6s5fNLdTmnkuSAKww0WrS7q6St7E5Ax6egbWWHpow3EcnDs/' +
-'EX8v6fDw4J4XDhzxASwAEOvSAF2Wu2j3jssAQqVSQ6+ULTQ/W3+pQy/dYHauEi9Sbhsd2gGgqB2x' +
-'BEDN+gCpy3rCCGjP5OQ0FHO0idGeDTexHRkoxvjEJHZsGxkE0APgnO5TYc6x1hKAIKJtu3dtGzp1' +
-'+hyKxY5oB6wpDWibIRenTp3D6OhQl5RyMAiC5w0TRCtpACW+rM8aGR7cPzTYX3ziqQPw/dzmm4gt' +
-'YOaYGZ7n4cTJs3jVK67xw++l23723AVtURLhaFIDEuGnG47+S33fo8mpWZQ6XUxPT6ONtfeD7dgR' +
-'j6NQyNHQ0MCOUAA2ANmMBpAhhGJo//eFy6lgFsjn823zsw6cnhyHUhw74kcfe8ozfMCKAkjOAYb2' +
-'7tk5cubsBTiuF3v35h1w2xwpRmgxZrBj+/AIgA4AY7pfsZYGyIi6uzv3hHOArocefQbMwNTUVFsD' +
-'mjdDIUmcDgfv6OhwH4CIjie0gJfVAF3J2bVjWzgB65TnL0ygs7NrnROwthZUqzWcPHUOV1y2txiu' +
-'JA/Pzc0/spYJEob5ye/Zs/NiZka5XEVPr4821gfP9xAN3nA9yB4c6Nt+cG5eLvPGDCdNUKNS7769' +
-'u3ZGX1NfqwfR+s//C/PDnH5TRq+kxun8fBkdxQJGhgd2Hjx01BBAwgQl7L/I5fyd4RJE3+TUdNjI' +
-'PKSc0AJg/T+JxNNnK5Uly3VuterJOpzh3hmts5DWKExy3/j6l2J4eAAjI4PbjG9UF6YQrMaBWRCu' +
-'fu4fHRn0Bvp7USzkUS4vmD9as+IP3cSHWL5eXGTUizk6v/IDubodM7+++qs+ENbsg2RxLlE/5pr1' +
-'Ew8H25aFnp6u2CFvGx0e0JHQGdMEJTWgkTo7d4xe3NfXg1KpiLe86TWg9ONtc3eKuVX3yatei5m1' +
-'AIa6pRT9QaCeb2YporBzx7Zd0chnRkgKbaSLsMLZcK6/rzecU53n5TSAEkw/HPkFy86BpJtq3LRB' +
-'IK6jq7NDhPOqPi0A0+cuuxq6EMas5bGJaVQWFWgTbrqVTdEX9f4ZvmfB9/3Il5bW2hNmnZbDB4om' +
-'Lpw/h7n5RYCa+3E0ToY4Jp9XiGSYk/WMvHmlxDEn7yN5ffN4mTzrM808G+0leJqVbG81njbfjFJH' +
-'Hr4no4lZ3fjRT06GoWxQ+eFHn7rTz/1Tv5QSrBQpZrAmfVMaQJyNOXHOPESjztJfs54uxFJWl5q1' +
-'zYuZRzD+RzAPEufoJFln2TyMv8axwUheJPGRVSMFEHe4ZckqMy8cOXLin5f7xVUyyPypwhKAHp13' +
-'IjJCVW4iHGAz30Q5mmx3I+dwyvbWE36x0ck1AFW9Gb+g06qmWkMQVuLEQEtuVldyjR/vFJqyjxNb' +
-'6+mTA6DV96HMvkx0ej2pAZZxoBL5QJ8oDKIW3jxnfA5twj1xUhPMjjd9wGpOOEgIgUzaxFG8RZ4F' +
-'Tgxos9N1atajtd+S1LytA26p8NKbQE7/0+BtpNakNtpoo4022vgf7lRPtKCE39oAAAAASUVORK5C' +
-'YII='
-);
-
-lib.resource.add('hterm/concat/date', 'text/plain',
-'Mon, 17 Jun 2019 10:35:22 +0000'
-);
-
-lib.resource.add('hterm/changelog/version', 'text/plain',
-'1.84'
-);
-
-lib.resource.add('hterm/changelog/date', 'text/plain',
-'2019-01-19'
-);
-
-lib.resource.add('hterm/git/HEAD', 'text/plain',
-'234142542d397fd244059df7c3c2bb745a26e9f7'
-);
-
-// This file was generated by libdot/bin/concat.sh.
-// It has been marked read-only for your safety.  Rather than
-// edit it directly, please modify one of these source files.
-//
-// hterm/js/hterm.js
-// hterm/js/hterm_accessibility_reader.js
-// hterm/js/hterm_contextmenu.js
-// hterm/js/hterm_frame.js
-// hterm/js/hterm_keyboard.js
-// hterm/js/hterm_keyboard_bindings.js
-// hterm/js/hterm_keyboard_keymap.js
-// hterm/js/hterm_keyboard_keypattern.js
-// hterm/js/hterm_options.js
-// hterm/js/hterm_parser.js
-// hterm/js/hterm_parser_identifiers.js
-// hterm/js/hterm_preference_manager.js
-// hterm/js/hterm_pubsub.js
-// hterm/js/hterm_screen.js
-// hterm/js/hterm_scrollport.js
-// hterm/js/hterm_terminal.js
-// hterm/js/hterm_terminal_io.js
-// hterm/js/hterm_text_attributes.js
-// hterm/js/hterm_vt.js
-// hterm/js/hterm_vt_character_map.js
-// hterm\audio\bell.ogg
-// hterm\images\icon-96.png
-
-'use strict';
 
 // SOURCE FILE: hterm/js/hterm.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
@@ -4782,99 +5301,112 @@ hterm.notifyCopyMessage = '\u2702';
  */
 hterm.desktopNotificationTitle = '\u266A %(title) \u266A';
 
-/**
- * The hterm init function, registered with lib.registerInit().
- *
- * This is called during lib.init().
- *
- * @param {function} onInit The function lib.init() wants us to invoke when
- *     initialization is complete.
- */
-lib.registerInit('hterm', function(onInit) {
-  // console.log(new Error().stack);
-  function initOs(os) {
-    hterm.os = os;
+/** @type {?lib.MessageManager} */
+hterm.messageManager = null;
 
-    onInit();
-  }
+lib.registerInit(
+    'hterm',
+    /**
+     * The hterm init function, registered with lib.registerInit().
+     *
+     * This is called during lib.init().
+     *
+     * @param {function()} onInit The function lib.init() wants us to invoke
+     *     when initialization is complete.
+     */
+    function(onInit) {
+      function initOs(os) {
+        hterm.os = os;
 
-  function initMessageManager() {
-    lib.i18n.getAcceptLanguages((languages) => {
-      if (!hterm.messageManager)
-        hterm.messageManager = new lib.MessageManager(languages);
+        onInit();
+      }
 
-      // If OS detection fails, then we'll still set the value to something.
-      // The OS logic in hterm tends to be best effort anyways.
-      lib.f.getOs().then(initOs).catch(initOs);
+      function initMessageManager() {
+        lib.i18n.getAcceptLanguages((languages) => {
+          if (!hterm.messageManager)
+            hterm.messageManager = new lib.MessageManager(languages);
+
+          // If OS detection fails, then we'll still set the value to something.
+          // The OS logic in hterm tends to be best effort anyways.
+          lib.f.getOs().then(initOs).catch(initOs);
+        });
+      }
+
+      function onWindow(window) {
+        hterm.windowType = window.type;
+        initMessageManager();
+      }
+
+      function onTab(tab) {
+        if (tab && window.chrome) {
+          chrome.windows.get(tab.windowId, null, onWindow);
+        } else {
+          // TODO(rginda): This is where we end up for a v1 app's background
+          // page. Maybe windowType = 'none' would be more appropriate, or
+          // something.
+          hterm.windowType = 'normal';
+          initMessageManager();
+        }
+      }
+
+      if (!hterm.defaultStorage) {
+        if (window.chrome && chrome.storage && chrome.storage.sync) {
+          hterm.defaultStorage = new lib.Storage.Chrome(chrome.storage.sync);
+        } else {
+          hterm.defaultStorage = new lib.Storage.Local();
+        }
+      }
+
+      // The chrome.tabs API is not supported in packaged apps, and detecting if
+      // you're a packaged app is a little awkward.
+      var isPackagedApp = false;
+      if (window.chrome && chrome.runtime && chrome.runtime.getManifest) {
+        var manifest = chrome.runtime.getManifest();
+        isPackagedApp = manifest.app && manifest.app.background;
+      }
+
+      if (isPackagedApp) {
+        // Packaged apps are never displayed in browser tabs.
+        setTimeout(onWindow.bind(null, {type: 'popup'}), 0);
+      } else {
+        if (window.chrome && chrome.tabs) {
+          // The getCurrent method gets the tab that is "currently running", not
+          // the topmost or focused tab.
+          chrome.tabs.getCurrent(onTab);
+        } else {
+          setTimeout(onWindow.bind(null, {type: 'normal'}), 0);
+        }
+      }
     });
-  }
-
-  function onWindow(window) {
-    hterm.windowType = window.type;
-    initMessageManager();
-  }
-
-  function onTab(tab) {
-    if (tab && window.chrome) {
-      chrome.windows.get(tab.windowId, null, onWindow);
-    } else {
-      // TODO(rginda): This is where we end up for a v1 app's background page.
-      // Maybe windowType = 'none' would be more appropriate, or something.
-      hterm.windowType = 'normal';
-      initMessageManager();
-    }
-  }
-
-  if (!hterm.defaultStorage) {
-    if (window.chrome && chrome.storage && chrome.storage.sync) {
-      hterm.defaultStorage = new lib.Storage.Chrome(chrome.storage.sync);
-    } else {
-      hterm.defaultStorage = new lib.Storage.Local();
-    }
-  }
-
-  // The chrome.tabs API is not supported in packaged apps, and detecting if
-  // you're a packaged app is a little awkward.
-  var isPackagedApp = false;
-  if (window.chrome && chrome.runtime && chrome.runtime.getManifest) {
-    var manifest = chrome.runtime.getManifest();
-    isPackagedApp = manifest.app && manifest.app.background;
-  }
-
-  if (isPackagedApp) {
-    // Packaged apps are never displayed in browser tabs.
-    setTimeout(onWindow.bind(null, {type: 'popup'}), 0);
-  } else {
-    if (window.chrome && chrome.tabs) {
-      // The getCurrent method gets the tab that is "currently running", not the
-      // topmost or focused tab.
-      chrome.tabs.getCurrent(onTab);
-    } else {
-      setTimeout(onWindow.bind(null, {type: 'normal'}), 0);
-    }
-  }
-});
 
 /**
- * Return decimal { width, height } for a given dom node.
+ * Return decimal { width, height } for a given DOM element.
+ *
+ * @param {!Element} element The element whose size to lookup.
+ * @return {!DOMRect} The size of the element.
  */
-hterm.getClientSize = function(dom) {
-  // console.log("getClientSize called with dom: ", dom.id, dom.getBoundingClientRect().width);
-  return dom.getBoundingClientRect();
+hterm.getClientSize = function(element) {
+  return element.getBoundingClientRect();
 };
 
 /**
- * Return decimal width for a given dom node.
+ * Return decimal width for a given DOM element.
+ *
+ * @param {!Element} element The element whose width to lookup.
+ * @return {number} The width of the element.
  */
-hterm.getClientWidth = function(dom) {
-  return dom.getBoundingClientRect().width;
+hterm.getClientWidth = function(element) {
+  return element.getBoundingClientRect().width;
 };
 
 /**
- * Return decimal height for a given dom node.
+ * Return decimal height for a given DOM element.
+ *
+ * @param {!Element} element The element whose height to lookup.
+ * @return {number} The height of the element.
  */
-hterm.getClientHeight = function(dom) {
-  return dom.getBoundingClientRect().height;
+hterm.getClientHeight = function(element) {
+  return element.getBoundingClientRect().height;
 };
 
 /**
@@ -4882,8 +5414,9 @@ hterm.getClientHeight = function(dom) {
  *
  * We'll create selections on demand based on the content to copy.
  *
- * @param {HTMLDocument} document The document with the selection to copy.
+ * @param {!Document} document The document with the selection to copy.
  * @param {string} str The string data to copy out.
+ * @return {!Promise<void>}
  */
 hterm.copySelectionToClipboard = function(document, str) {
   // Request permission if need be.
@@ -4995,7 +5528,7 @@ hterm.copySelectionToClipboard = function(document, str) {
  * "clipboardRead" permission.  In other environments, this might always
  * fail as the browser frequently blocks access for security reasons.
  *
- * @param {HTMLDocument} The document to paste into.
+ * @param {!Document} document The document to paste into.
  * @return {boolean} True if the paste succeeded.
  */
 hterm.pasteFromClipboard = function(document) {
@@ -5012,7 +5545,7 @@ hterm.pasteFromClipboard = function(document) {
  * Return a formatted message in the current locale.
  *
  * @param {string} name The name of the message to return.
- * @param {Array<string>=} args The message arguments, if required.
+ * @param {!Array<string>=} args The message arguments, if required.
  * @param {string=} string The default message text.
  * @return {string} The localized message.
  */
@@ -5023,9 +5556,11 @@ hterm.msg = function(name, args = [], string) {
 /**
  * Create a new notification.
  *
- * @param {Object} params Various parameters for the notification.
- * @param {string} params.title The title (defaults to the window's title).
- * @param {string} params.body The message body (main text).
+ * @param {{title:(string|undefined), body:(string|undefined)}=} params Various
+ *     parameters for the notification.
+ *     title The title (defaults to the window's title).
+ *     body The message body (main text).
+ * @return {!Notification}
  */
 hterm.notify = function(params) {
   var def = (curr, fallback) => curr !== undefined ? curr : fallback;
@@ -5047,7 +5582,7 @@ hterm.notify = function(params) {
   var n = new Notification(title, options);
   n.onclick = function() {
     window.focus();
-    this.close();
+    n.close();
   };
   return n;
 };
@@ -5072,8 +5607,9 @@ hterm.openUrl = function(url) {
  *
  * Instances of this class have public read/write members for width and height.
  *
- * @param {integer} width The width of this record.
- * @param {integer} height The height of this record.
+ * @param {number} width The width of this record.
+ * @param {number} height The height of this record.
+ * @constructor
  */
 hterm.Size = function(width, height) {
   this.width = width;
@@ -5083,8 +5619,8 @@ hterm.Size = function(width, height) {
 /**
  * Adjust the width and height of this record.
  *
- * @param {integer} width The new width of this record.
- * @param {integer} height The new height of this record.
+ * @param {number} width The new width of this record.
+ * @param {number} height The new height of this record.
  */
 hterm.Size.prototype.resize = function(width, height) {
   this.width = width;
@@ -5094,8 +5630,8 @@ hterm.Size.prototype.resize = function(width, height) {
 /**
  * Return a copy of this record.
  *
- * @return {hterm.Size} A new hterm.Size instance with the same width and
- * height.
+ * @return {!hterm.Size} A new hterm.Size instance with the same width and
+ *     height.
  */
 hterm.Size.prototype.clone = function() {
   return new hterm.Size(this.width, this.height);
@@ -5104,7 +5640,7 @@ hterm.Size.prototype.clone = function() {
 /**
  * Set the height and width of this instance based on another hterm.Size.
  *
- * @param {hterm.Size} that The object to copy from.
+ * @param {!hterm.Size} that The object to copy from.
  */
 hterm.Size.prototype.setTo = function(that) {
   this.width = that.width;
@@ -5114,7 +5650,7 @@ hterm.Size.prototype.setTo = function(that) {
 /**
  * Test if another hterm.Size instance is equal to this one.
  *
- * @param {hterm.Size} that The other hterm.Size instance.
+ * @param {!hterm.Size} that The other hterm.Size instance.
  * @return {boolean} True if both instances have the same width/height, false
  *     otherwise.
  */
@@ -5127,6 +5663,7 @@ hterm.Size.prototype.equals = function(that) {
  *
  * @return {string} A string that identifies the width and height of this
  *     instance.
+ * @override
  */
 hterm.Size.prototype.toString = function() {
   return '[hterm.Size: ' + this.width + ', ' + this.height + ']';
@@ -5144,10 +5681,11 @@ hterm.Size.prototype.toString = function() {
  * happens normally, but any attempt to print new characters causes a cr/lf
  * first.
  *
- * @param {integer} row The row of this record.
- * @param {integer} column The column of this record.
- * @param {boolean} opt_overflow Optional boolean indicating that the RowCol
+ * @param {number} row The row of this record.
+ * @param {number} column The column of this record.
+ * @param {boolean=} opt_overflow Optional boolean indicating that the RowCol
  *     has overflowed.
+ * @constructor
  */
 hterm.RowCol = function(row, column, opt_overflow) {
   this.row = row;
@@ -5158,9 +5696,9 @@ hterm.RowCol = function(row, column, opt_overflow) {
 /**
  * Adjust the row and column of this record.
  *
- * @param {integer} row The new row of this record.
- * @param {integer} column The new column of this record.
- * @param {boolean} opt_overflow Optional boolean indicating that the RowCol
+ * @param {number} row The new row of this record.
+ * @param {number} column The new column of this record.
+ * @param {boolean=} opt_overflow Optional boolean indicating that the RowCol
  *     has overflowed.
  */
 hterm.RowCol.prototype.move = function(row, column, opt_overflow) {
@@ -5172,8 +5710,8 @@ hterm.RowCol.prototype.move = function(row, column, opt_overflow) {
 /**
  * Return a copy of this record.
  *
- * @return {hterm.RowCol} A new hterm.RowCol instance with the same row and
- * column.
+ * @return {!hterm.RowCol} A new hterm.RowCol instance with the same row and
+ *     column.
  */
 hterm.RowCol.prototype.clone = function() {
   return new hterm.RowCol(this.row, this.column, this.overflow);
@@ -5182,7 +5720,7 @@ hterm.RowCol.prototype.clone = function() {
 /**
  * Set the row and column of this instance based on another hterm.RowCol.
  *
- * @param {hterm.RowCol} that The object to copy from.
+ * @param {!hterm.RowCol} that The object to copy from.
  */
 hterm.RowCol.prototype.setTo = function(that) {
   this.row = that.row;
@@ -5193,7 +5731,7 @@ hterm.RowCol.prototype.setTo = function(that) {
 /**
  * Test if another hterm.RowCol instance is equal to this one.
  *
- * @param {hterm.RowCol} that The other hterm.RowCol instance.
+ * @param {!hterm.RowCol} that The other hterm.RowCol instance.
  * @return {boolean} True if both instances have the same row/column, false
  *     otherwise.
  */
@@ -5207,6 +5745,7 @@ hterm.RowCol.prototype.equals = function(that) {
  *
  * @return {string} A string that identifies the row and column of this
  *     instance.
+ * @override
  */
 hterm.RowCol.prototype.toString = function() {
   return ('[hterm.RowCol: ' + this.row + ', ' + this.column + ', ' +
@@ -5227,8 +5766,9 @@ hterm.RowCol.prototype.toString = function() {
  * row of a large piece of output to the screen as it wouldn't be performant.
  * But we want the screen reader to read it all out in order.
  *
- * @param {HTMLDivElement} div The div element where the live region should be
+ * @param {!Element} div The div element where the live region should be
  *     added.
+ * @constructor
  */
 hterm.AccessibilityReader = function(div) {
   this.document_ = div.ownerDocument;
@@ -5301,8 +5841,8 @@ hterm.AccessibilityReader = function(div) {
  * aria updates make it to the screen reader. We want this to be short so
  * there's not a big delay between typing/executing commands and hearing output.
  *
- * @constant
- * @type {integer}
+ * @const
+ * @type {number}
  */
 hterm.AccessibilityReader.DELAY = 50;
 
@@ -5324,7 +5864,7 @@ hterm.AccessibilityReader.prototype.setAccessibilityEnabled =
  * Decorate the document where the terminal <x-screen> resides. This is needed
  * for listening to keystrokes on the screen.
  *
- * @param {HTMLDocument} doc The document where the <x-screen> resides.
+ * @param {!Document} doc The document where the <x-screen> resides.
  */
 hterm.AccessibilityReader.prototype.decorate = function(doc) {
   const handlers = ['keydown', 'keypress', 'keyup', 'textInput'];
@@ -5340,9 +5880,9 @@ hterm.AccessibilityReader.prototype.decorate = function(doc) {
  *
  * @param {string} cursorRowString The text in the row that the cursor is
  *     currently on.
- * @param {integer} cursorRow The index of the row that the cursor is currently
+ * @param {number} cursorRow The index of the row that the cursor is currently
  *     on, including rows in the scrollback buffer.
- * @param {integer} cursorColumn The index of the column that the cursor is
+ * @param {number} cursorColumn The index of the column that the cursor is
  *     currently on.
  */
 hterm.AccessibilityReader.prototype.beforeCursorChange =
@@ -5375,9 +5915,9 @@ hterm.AccessibilityReader.prototype.beforeCursorChange =
  *
  * @param {string} cursorRowString The text in the row that the cursor is
  *     currently on.
- * @param {integer} cursorRow The index of the row that the cursor is currently
+ * @param {number} cursorRow The index of the row that the cursor is currently
  *     on, including rows in the scrollback buffer.
- * @param {integer} cursorColumn The index of the column that the cursor is
+ * @param {number} cursorColumn The index of the column that the cursor is
  *     currently on.
  */
 hterm.AccessibilityReader.prototype.afterCursorChange =
@@ -5523,10 +6063,11 @@ hterm.AccessibilityReader.prototype.clear = function() {
  *
  * @param {string} cursorRowString The text in the row that the cursor is
  *     currently on.
- * @param {integer} cursorRow The index of the row that the cursor is currently
+ * @param {number} cursorRow The index of the row that the cursor is currently
  *     on, including rows in the scrollback buffer.
- * @param {integer} cursorColumn The index of the column that the cursor is
+ * @param {number} cursorColumn The index of the column that the cursor is
  *     currently on.
+ * @return {boolean} Whether anything was announced.
  */
 hterm.AccessibilityReader.prototype.announceAction_ =
     function(cursorRowString, cursorRow, cursorColumn) {
@@ -5534,6 +6075,8 @@ hterm.AccessibilityReader.prototype.announceAction_ =
   if (this.lastCursorRow_ != cursorRow) {
     return false;
   }
+
+  lib.assert(this.lastCursorRowString_ !== null);
 
   // The case when the row of text hasn't changed at all.
   if (this.lastCursorRowString_ == cursorRowString) {
@@ -5642,6 +6185,8 @@ hterm.AccessibilityReader.prototype.addToLiveRegion_ = function() {
 
 /**
  * Manage the context menu usually shown when right clicking.
+ *
+ * @constructor
  */
 hterm.ContextMenu = function() {
   // The document that contains this context menu.
@@ -5649,18 +6194,22 @@ hterm.ContextMenu = function() {
   // The generated context menu (i.e. HTML elements).
   this.element_ = null;
   // The structured menu (i.e. JS objects).
+  /** @type {!Array<!hterm.ContextMenu.Item>} */
   this.menu_ = [];
 };
+
+/** @typedef {{name:(string|symbol), action:function(!Event)}} */
+hterm.ContextMenu.Item;
 
 /**
  * Constant to add a separator to the context menu.
  */
-hterm.ContextMenu.SEPARATOR = {};
+hterm.ContextMenu.SEPARATOR = Symbol('-');
 
 /**
  * Bind context menu to a specific document element.
  *
- * @param {HTMLDocument} document The document to use when creating elements.
+ * @param {!Document} document The document to use when creating elements.
  */
 hterm.ContextMenu.prototype.setDocument = function(document) {
   if (this.element_) {
@@ -5693,7 +6242,7 @@ hterm.ContextMenu.prototype.regenerate_ = function() {
     this.element_.removeChild(this.element_.firstChild);
   }
 
-  this.menu_.forEach(([name, action]) => {
+  this.menu_.forEach(({name, action}) => {
     const menuitem = this.document_.createElement('menuitem');
     if (name === hterm.ContextMenu.SEPARATOR) {
       menuitem.innerHTML = '<hr>';
@@ -5719,7 +6268,7 @@ hterm.ContextMenu.prototype.regenerate_ = function() {
  *
  * This resets all existing menu entries.
  *
- * @param {Array<Array<string, function(Event)>>} items The menu entries.
+ * @param {!Array<!hterm.ContextMenu.Item>} items The menu entries.
  */
 hterm.ContextMenu.prototype.setItems = function(items) {
   this.menu_ = items;
@@ -5733,8 +6282,9 @@ hterm.ContextMenu.prototype.setItems = function(items) {
  *
  * If no menu entries are defined, then nothing will be shown.
  *
- * @param {Event} e The event triggering this display.
- * @param {hterm.Terminal=} terminal The terminal object to get style info from.
+ * @param {!Event} e The event triggering this display.
+ * @param {!hterm.Terminal=} terminal The terminal object to get style info
+ *     from.
  */
 hterm.ContextMenu.prototype.show = function(e, terminal) {
   // If there are no menu entries, then don't try to show anything.
@@ -5752,7 +6302,7 @@ hterm.ContextMenu.prototype.show = function(e, terminal) {
 
   this.element_.style.top = `${e.clientY}px`;
   this.element_.style.left = `${e.clientX}px`;
-  const docSize = hterm.getClientSize(this.document_.body);
+  const docSize = hterm.getClientSize(lib.notNull(this.document_.body));
 
   this.element_.style.display = 'block';
 
@@ -5797,9 +6347,11 @@ hterm.ContextMenu.prototype.hide = function() {
 /**
  * Construct a new frame for the given terminal.
  *
- * @param terminal {hterm.Terminal} The parent terminal object.
- * @param url {String} The url to load in the frame.
- * @param opt_options {Object} Optional options for the frame.  Not implemented.
+ * @param {!hterm.Terminal} terminal The parent terminal object.
+ * @param {string} url The url to load in the frame.
+ * @param {!Object=} opt_options Optional options for the frame.  Not
+ *     implemented.
+ * @constructor
  */
 hterm.Frame = function(terminal, url, opt_options) {
   this.terminal_ = terminal;
@@ -5813,6 +6365,8 @@ hterm.Frame = function(terminal, url, opt_options) {
 
 /**
  * Handle messages from the iframe.
+ *
+ * @param {!MessageEvent} e The message to process.
  */
 hterm.Frame.prototype.onMessage_ = function(e) {
   switch (e.data.name) {
@@ -5850,7 +6404,6 @@ hterm.Frame.prototype.onLoad_ = function() {
   this.messageChannel_ = new MessageChannel();
   this.messageChannel_.port1.onmessage = this.onMessage_.bind(this);
   this.messageChannel_.port1.start();
-  this.url = "*"; //admin.tools: ../../nassh_custom/html/nassh_connect_dialog.html";
   this.iframe_.contentWindow.postMessage(
       {name: 'ipc-init', argv: [{messagePort: this.messageChannel_.port2}]},
       this.url, [this.messageChannel_.port2]);
@@ -5905,6 +6458,9 @@ hterm.Frame.prototype.onClose = function() {};
 
 /**
  * Send a message to the iframe.
+ *
+ * @param {string} name The message name.
+ * @param {!Array=} argv The message arguments.
  */
 hterm.Frame.prototype.postMessage = function(name, argv) {
   if (!this.messageChannel_)
@@ -5928,21 +6484,10 @@ hterm.Frame.prototype.show = function() {
     return defaultValue;
   }
 
-  var self = this;
-
   if (this.container_ && this.container_.parentNode) {
     console.error('Frame already visible');
     return;
   }
-
-  var headerHeight = '16px';
-
-  var divSize = hterm.getClientSize(this.div_);
-
-  var width = opt('width', 640);
-  var height = opt('height', 480);
-  var left = (divSize.width - width) / 2;
-  var top = (divSize.height - height) / 2;
 
   var document = this.terminal_.document_;
 
@@ -5950,39 +6495,15 @@ hterm.Frame.prototype.show = function() {
   container.style.cssText = (
       'position: absolute;' +
       'display: none;' +
-      'flex-direction: c olumn;' +
+      'flex-direction: column;' +
       'top: 10%;' +
       'left: 4%;' +
-      'width: 90%;'  +
-      'height: 80%;'  +
-      'min-height: 20% ;' +
+      'width: 90%;' +
+      'height: 80%;' +
+      'min-height: 20%;' +
       'max-height: 80%;' +
       'box-shadow: 0 0 2px ' + this.terminal_.getForegroundColor() + ';' +
       'border: 2px ' + this.terminal_.getForegroundColor() + ' solid;');
-
-  if (false) {
-    // No use for the close button, so no use for the window header either.
-    var header = document.createElement('div');
-    header.style.cssText = (
-        'display: flex;' +
-        'justify-content: flex-end;' +
-        'height: ' + headerHeight + ';' +
-        'background-color: ' + this.terminal_.getForegroundColor() + ';' +
-        'color: ' + this.terminal_.getBackgroundColor() + ';' +
-        'font-size: 16px;' +
-        'font-family: ' + this.terminal_.getFontFamily());
-    container.appendChild(header);
-
-    var button = document.createElement('div');
-    button.setAttribute('role', 'button');
-    button.style.cssText = (
-        'margin-top: -3px;' +
-        'margin-right: 3px;' +
-        'cursor: pointer;');
-    button.textContent = '\u2a2f';
-    button.addEventListener('click', this.onCloseClicked_.bind(this));
-    header.appendChild(button);
-  }
 
   var iframe = this.iframe_ = document.createElement('iframe');
   iframe.onload = this.onLoad_.bind(this);
@@ -6009,7 +6530,9 @@ hterm.Frame.prototype.show = function() {
  *
  * See also: [XTERM] as referenced in vt.js.
  *
- * @param {hterm.Terminal} The Terminal object associated with this keyboard.
+ * @param {!hterm.Terminal} terminal The Terminal object associated with this
+ *     keyboard.
+ * @constructor
  */
 hterm.Keyboard = function(terminal) {
   // The parent vt interpreter.
@@ -6033,7 +6556,7 @@ hterm.Keyboard = function(terminal) {
    */
   this.keyMap = new hterm.Keyboard.KeyMap(this);
 
-  this.bindings = new hterm.Keyboard.Bindings(this);
+  this.bindings = new hterm.Keyboard.Bindings();
 
   /**
    * none: Disable any AltGr related munging.
@@ -6169,6 +6692,9 @@ hterm.Keyboard = function(terminal) {
 
 /**
  * Special handling for keyCodes in a keyboard layout.
+ *
+ * @enum {symbol}
+ * @const
  */
 hterm.Keyboard.KeyActions = {
   /**
@@ -6220,6 +6746,9 @@ hterm.Keyboard.KeyActions = {
   STRIP: Symbol('STRIP')
 };
 
+/** @typedef {string|!hterm.Keyboard.KeyActions} */
+hterm.Keyboard.KeyAction;
+
 /**
  * Capture keyboard events sent to the associated element.
  *
@@ -6228,7 +6757,7 @@ hterm.Keyboard.KeyActions = {
  *
  * Passing a null element will uninstall the keyboard handlers.
  *
- * @param {HTMLElement} element The element whose events should be captured, or
+ * @param {?Element} element The element whose events should be captured, or
  *     null to disable the keyboard.
  */
 hterm.Keyboard.prototype.installKeyboard = function(element) {
@@ -6260,10 +6789,12 @@ hterm.Keyboard.prototype.uninstallKeyboard = function() {
 };
 
 /**
- * Handle onTextInput events.
+ * Handle textInput events.
  *
  * These are generated when using IMEs, Virtual Keyboards (VKs), compose keys,
  * Unicode input, etc...
+ *
+ * @param {!InputEvent} e The event to process.
  */
 hterm.Keyboard.prototype.onTextInput_ = function(e) {
   if (!e.data)
@@ -6275,9 +6806,11 @@ hterm.Keyboard.prototype.onTextInput_ = function(e) {
 };
 
 /**
- * Handle onKeyPress events.
+ * Handle keypress events.
  *
  * TODO(vapier): Drop this event entirely and only use keydown.
+ *
+ * @param {!KeyboardEvent} e The event to process.
  */
 hterm.Keyboard.prototype.onKeyPress_ = function(e) {
   // FF doesn't set keyCode reliably in keypress events.  Stick to the which
@@ -6297,6 +6830,8 @@ hterm.Keyboard.prototype.onKeyPress_ = function(e) {
     return;
   }
 
+  /** @type {string} */
+  var ch;
   if (e.altKey && this.altSendsWhat == 'browser-key' && e.charCode == 0) {
     // If we got here because we were expecting the browser to handle an
     // alt sequence but it didn't do it, then we might be on an OS without
@@ -6305,16 +6840,16 @@ hterm.Keyboard.prototype.onKeyPress_ = function(e) {
     //
     // This happens here only as a fallback.  Typically these platforms should
     // set altSendsWhat to either 'escape' or '8-bit'.
-    var ch = String.fromCharCode(e.keyCode);
+    ch = String.fromCharCode(e.keyCode);
     if (!e.shiftKey)
       ch = ch.toLowerCase();
 
   } else if (e.charCode >= 32) {
-    ch = e.charCode;
+    ch = String.fromCharCode(e.charCode);
   }
 
   if (ch)
-    this.terminal.onVTKeystroke(String.fromCharCode(ch));
+    this.terminal.onVTKeystroke(ch);
 
   e.preventDefault();
   e.stopPropagation();
@@ -6326,6 +6861,8 @@ hterm.Keyboard.prototype.onKeyPress_ = function(e) {
  * When combined with Chrome permission 'app.window.fullscreen.overrideEsc',
  * and called for both key down and key up events,
  * the ESC key remains usable within fullscreen Chrome app windows.
+ *
+ * @param {!KeyboardEvent} e The event to process.
  */
 hterm.Keyboard.prototype.preventChromeAppNonCtrlShiftDefault_ = function(e) {
   if (!window.chrome || !window.chrome.app || !window.chrome.app.window)
@@ -6334,10 +6871,20 @@ hterm.Keyboard.prototype.preventChromeAppNonCtrlShiftDefault_ = function(e) {
     e.preventDefault();
 };
 
+/**
+ * Handle focusout events.
+ *
+ * @param {!FocusEvent} e The event to process.
+ */
 hterm.Keyboard.prototype.onFocusOut_ = function(e) {
   this.altKeyPressed = 0;
 };
 
+/**
+ * Handle keyup events.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ */
 hterm.Keyboard.prototype.onKeyUp_ = function(e) {
   if (e.keyCode == 18)
     this.altKeyPressed = this.altKeyPressed & ~(1 << (e.location - 1));
@@ -6347,7 +6894,9 @@ hterm.Keyboard.prototype.onKeyUp_ = function(e) {
 };
 
 /**
- * Handle onKeyDown events.
+ * Handle keydown events.
+ *
+ * @param {!KeyboardEvent} e The event to process.
  */
 hterm.Keyboard.prototype.onKeyDown_ = function(e) {
   if (e.keyCode == 18)
@@ -6370,6 +6919,10 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
   var resolvedActionType = null;
 
   var self = this;
+  /**
+   * @param {string} name
+   * @return {!hterm.Keyboard.KeyDefAction}
+   */
   function getAction(name) {
     // Get the key action for the given action name.  If the action is a
     // function, dispatch it.  If the action defers to the normal action,
@@ -6379,7 +6932,7 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
 
     var action = keyDef[name];
     if (typeof action == 'function')
-      action = action.apply(self.keyMap, [e, keyDef]);
+      action = action.call(self.keyMap, e, keyDef);
 
     if (action === DEFAULT && name != 'normal')
       action = getAction('normal');
@@ -6427,6 +6980,7 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
     break;
   }
 
+  /** @type {?hterm.Keyboard.KeyDefAction} */
   var action;
 
   if (control) {
@@ -6445,6 +6999,7 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
   // "CSI Z", not "CSI 1 ; 2 Z".
   var shift = !e.maskShiftKey && e.shiftKey;
 
+  /** @type {!hterm.Keyboard.KeyDown} */
   var keyDown = {
     keyCode: e.keyCode,
     shift: e.shiftKey, // not `var shift` from above.
@@ -6460,10 +7015,14 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
     // further.
     shift = control = alt = meta = false;
     resolvedActionType = 'normal';
-    action = binding.action;
 
-    if (typeof action == 'function')
-      action = action.call(this, this.terminal, keyDown);
+    if (typeof binding.action == 'function') {
+      const bindingFn =
+          /** @type {!hterm.Keyboard.KeyBindingFunction} */ (binding.action);
+      action = bindingFn.call(this, this.terminal, keyDown);
+    } else {
+      action = /** @type {!hterm.Keyboard.KeyAction} */ (binding.action);
+    }
   }
 
   if (alt && this.altSendsWhat == 'browser-key' && action == DEFAULT) {
@@ -6491,7 +7050,7 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
     alt = control = false;
     action = keyDef.normal;
     if (typeof action == 'function')
-      action = action.apply(this.keyMap, [e, keyDef]);
+      action = action.call(this.keyMap, e, keyDef);
 
     if (action == DEFAULT && keyDef.keyCap.length == 2)
       action = keyDef.keyCap.substr((shift ? 1 : 0), 1);
@@ -6572,7 +7131,7 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
     }
   }
 
-  this.terminal.onVTKeystroke(action);
+  this.terminal.onVTKeystroke(/** @type {string} */ (action));
 };
 // SOURCE FILE: hterm/js/hterm_keyboard_bindings.js
 // Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
@@ -6580,11 +7139,41 @@ hterm.Keyboard.prototype.onKeyDown_ = function(e) {
 // found in the LICENSE file.
 
 /**
+ * @typedef {{
+ *     keyCode: number,
+ *     shift: (boolean|undefined),
+ *     ctrl: (boolean|undefined),
+ *     alt: (boolean|undefined),
+ *     meta: (boolean|undefined),
+ * }}
+ */
+hterm.Keyboard.KeyDown;
+
+/**
+ * @typedef {function(!hterm.Terminal, !hterm.Keyboard.KeyDown):
+ *               !hterm.Keyboard.KeyAction}
+ */
+hterm.Keyboard.KeyBindingFunction;
+
+/** @typedef {!hterm.Keyboard.KeyAction|!hterm.Keyboard.KeyBindingFunction} */
+hterm.Keyboard.KeyBindingAction;
+
+/**
+ * @typedef {{
+ *     keyPattern: !hterm.Keyboard.KeyPattern,
+ *     action: !hterm.Keyboard.KeyBindingAction,
+ * }}
+ */
+hterm.Keyboard.KeyBinding;
+
+/**
  * A mapping from hterm.Keyboard.KeyPattern to an action.
  *
  * TODO(rginda): For now this bindings code is only used for user overrides.
  * hterm.Keyboard.KeyMap still handles all of the built-in key mappings.
  * It'd be nice if we migrated that over to be hterm.Keyboard.Bindings based.
+ *
+ * @constructor
  */
 hterm.Keyboard.Bindings = function() {
   this.bindings_ = {};
@@ -6603,8 +7192,8 @@ hterm.Keyboard.Bindings.prototype.clear = function () {
  * Internal API that assumes parsed objects as inputs.
  * See the public addBinding for more details.
  *
- * @param {hterm.Keyboard.KeyPattern} keyPattern
- * @param {string|function|hterm.Keyboard.KeyAction} action
+ * @param {!hterm.Keyboard.KeyPattern} keyPattern
+ * @param {!hterm.Keyboard.KeyBindingAction} action
  */
 hterm.Keyboard.Bindings.prototype.addBinding_ = function(keyPattern, action) {
   var binding = null;
@@ -6658,8 +7247,8 @@ hterm.Keyboard.Bindings.prototype.addBinding_ = function(keyPattern, action) {
  *     return hterm.Keyboard.KeyActions.PASS;
  *   });
  *
- * @param {string|hterm.Keyboard.KeyPattern} keyPattern
- * @param {string|function|hterm.Keyboard.KeyAction} action
+ * @param {string|!hterm.Keyboard.KeyPattern} key
+ * @param {!hterm.Keyboard.KeyBindingAction} action
  */
 hterm.Keyboard.Bindings.prototype.addBinding = function(key, action) {
   // If we're given a hterm.Keyboard.KeyPattern object, pass it down.
@@ -6709,7 +7298,7 @@ hterm.Keyboard.Bindings.prototype.addBinding = function(key, action) {
  * Add multiple bindings at a time using a map of {string: string, ...}
  *
  * This uses hterm.Parser to parse the maps key into KeyPatterns, and the
- * map values into {string|function|KeyAction}.
+ * map values into {!hterm.Keyboard.KeyBindingAction}.
  *
  * For example:
  *  {
@@ -6719,7 +7308,7 @@ hterm.Keyboard.Bindings.prototype.addBinding = function(key, action) {
  *    'Alt-D': hterm.Keyboard.KeyActions.CANCEL,
  *  }
  *
- * @param {Object} map
+ * @param {!Object<string, !hterm.Keyboard.KeyBindingAction>} map
  */
 hterm.Keyboard.Bindings.prototype.addBindings = function(map) {
   for (var key in map) {
@@ -6731,9 +7320,11 @@ hterm.Keyboard.Bindings.prototype.addBindings = function(map) {
  * Return the binding that is the best match for the given keyDown record,
  * or null if there is no match.
  *
- * @param {Object} keyDown An object with a keyCode property and zero or
- *   more boolean properties representing key modifiers.  These property names
- *   must match those defined in hterm.Keyboard.KeyPattern.modifiers.
+ * @param {!hterm.Keyboard.KeyDown} keyDown An object with a keyCode property
+ *     and zero or more boolean properties representing key modifiers.  These
+ *     property names must match those defined in
+ *     hterm.Keyboard.KeyPattern.modifiers.
+ * @return {?hterm.Keyboard.KeyBinding} The keyboard binding for this key.
  */
 hterm.Keyboard.Bindings.prototype.getBinding = function(keyDown) {
   var list = this.bindings_[keyDown.keyCode];
@@ -6752,6 +7343,26 @@ hterm.Keyboard.Bindings.prototype.getBinding = function(keyDown) {
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+/**
+ * @typedef {{
+ *     keyCap: string,
+ *     normal: !hterm.Keyboard.KeyDefAction,
+ *     control: !hterm.Keyboard.KeyDefAction,
+ *     alt: !hterm.Keyboard.KeyDefAction,
+ *     meta: !hterm.Keyboard.KeyDefAction,
+ * }}
+ */
+hterm.Keyboard.KeyDef;
+
+/**
+ * @typedef {function(!KeyboardEvent, !hterm.Keyboard.KeyDef):
+ *               !hterm.Keyboard.KeyAction}
+ */
+hterm.Keyboard.KeyDefFunction;
+
+/** @typedef {!hterm.Keyboard.KeyAction|!hterm.Keyboard.KeyDefFunction} */
+hterm.Keyboard.KeyDefAction;
 
 /**
  * The default key map for hterm.
@@ -6773,9 +7384,13 @@ hterm.Keyboard.Bindings.prototype.getBinding = function(keyDown) {
  *
  * The sequences defined in this key map come from [XTERM] as referenced in
  * vt.js, starting with the section titled "Alt and Meta Keys".
+ *
+ * @param {!hterm.Keyboard} keyboard
+ * @constructor
  */
 hterm.Keyboard.KeyMap = function(keyboard) {
   this.keyboard = keyboard;
+  /** @type {!Object<number, !hterm.Keyboard.KeyDef>} */
   this.keyDefs = {};
   this.reset();
 };
@@ -6812,6 +7427,9 @@ hterm.Keyboard.KeyMap = function(keyboard) {
  * The second-to-last element of the array will be overwritten with the
  * state of the modifier keys, as specified in the final table of "PC-Style
  * Function Keys" from [XTERM].
+ *
+ * @param {number} keyCode The KeyboardEvent.keyCode to match against.
+ * @param {!hterm.Keyboard.KeyDef} def The actions this key triggers.
  */
 hterm.Keyboard.KeyMap.prototype.addKeyDef = function(keyCode, def) {
   if (keyCode in this.keyDefs)
@@ -6821,49 +7439,42 @@ hterm.Keyboard.KeyMap.prototype.addKeyDef = function(keyCode, def) {
 };
 
 /**
- * Add multiple key definitions in a single call.
- *
- * This function takes the key definitions as variable argument list.  Each
- * argument is the key definition specified as an array.
- *
- * (If the function took everything as one big hash we couldn't detect
- * duplicates, and there would be a lot more typing involved.)
- *
- * Each key definition should have 6 elements: (keyCode, keyCap, normal action,
- * control action, alt action and meta action).  See KeyMap.addKeyDef for the
- * meaning of these elements.
- */
-hterm.Keyboard.KeyMap.prototype.addKeyDefs = function(var_args) {
-  for (var i = 0; i < arguments.length; i++) {
-    this.addKeyDef(arguments[i][0],
-                   { keyCap: arguments[i][1],
-                     normal: arguments[i][2],
-                     control: arguments[i][3],
-                     alt: arguments[i][4],
-                     meta: arguments[i][5]
-                   });
-  }
-};
-
-/**
  * Set up the default state for this keymap.
  */
 hterm.Keyboard.KeyMap.prototype.reset = function() {
   this.keyDefs = {};
 
-  var self = this;
+  const self = this;
+  const CANCEL = hterm.Keyboard.KeyActions.CANCEL;
+  const DEFAULT = hterm.Keyboard.KeyActions.DEFAULT;
+  const PASS = hterm.Keyboard.KeyActions.PASS;
+  const STRIP = hterm.Keyboard.KeyActions.STRIP;
 
-  // This function is used by the "macro" functions below.  It makes it
-  // possible to use the call() macro as an argument to any other macro.
+  /**
+   * This function is used by the "macro" functions below.  It makes it
+   * possible to use the call() macro as an argument to any other macro.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} action
+   * @param {!KeyboardEvent} e
+   * @param {!hterm.Keyboard.KeyDef} k
+   * @return {!hterm.Keyboard.KeyAction}
+   */
   function resolve(action, e, k) {
-    if (typeof action == 'function')
-      return action.apply(self, [e, k]);
-
+    if (typeof action == 'function') {
+      const keyDefFn = /** @type {!hterm.Keyboard.KeyDefFunction} */ (action);
+      return keyDefFn.call(self, e, k);
+    }
     return action;
   }
 
-  // If not application keypad a, else b.  The keys that care about
-  // application keypad ignore it when the key is modified.
+  /**
+   * If not application keypad a, else b.  The keys that care about
+   * application keypad ignore it when the key is modified.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function ak(a, b) {
     return function(e, k) {
       var action = (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey ||
@@ -6872,8 +7483,14 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // If mod or not application cursor a, else b.  The keys that care about
-  // application cursor ignore it when the key is modified.
+  /**
+   * If mod or not application cursor a, else b.  The keys that care about
+   * application cursor ignore it when the key is modified.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function ac(a, b) {
     return function(e, k) {
       var action = (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey ||
@@ -6882,7 +7499,13 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // If not backspace-sends-backspace keypad a, else b.
+  /**
+   * If not backspace-sends-backspace keypad a, else b.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function bs(a, b) {
     return function(e, k) {
       var action = !self.keyboard.backspaceSendsBackspace ? a : b;
@@ -6890,7 +7513,13 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // If not e.shiftKey a, else b.
+  /**
+   * If not e.shiftKey a, else b.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function sh(a, b) {
     return function(e, k) {
       var action = !e.shiftKey ? a : b;
@@ -6899,7 +7528,13 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // If not e.altKey a, else b.
+  /**
+   * If not e.altKey a, else b.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function alt(a, b) {
     return function(e, k) {
       var action = !e.altKey ? a : b;
@@ -6907,7 +7542,13 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // If no modifiers a, else b.
+  /**
+   * If no modifiers a, else b.
+   *
+   * @param {!hterm.Keyboard.KeyDefAction} a
+   * @param {!hterm.Keyboard.KeyDefAction} b
+   * @return {!hterm.Keyboard.KeyDefFunction}
+   */
   function mod(a, b) {
     return function(e, k) {
       var action = !(e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) ? a : b;
@@ -6915,7 +7556,12 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
     };
   }
 
-  // Compute a control character for a given character.
+  /**
+   * Compute a control character for a given character.
+   *
+   * @param {string} ch
+   * @return {string}
+   */
   function ctl(ch) { return String.fromCharCode(ch.charCodeAt(0) - 64); }
 
   // Call a method on the keymap instance.
@@ -6928,238 +7574,248 @@ hterm.Keyboard.KeyMap.prototype.reset = function() {
         // Block Back, Forward, and Reload keys to avoid navigating away from
         // the current page.
         return (e.keyCode == 166 || e.keyCode == 167 || e.keyCode == 168) ?
-            hterm.Keyboard.KeyActions.CANCEL :
-            hterm.Keyboard.KeyActions.PASS;
+            CANCEL : PASS;
       }
       return resolve(fn, e, k);
     };
   }
 
-  // Browser-specific differences.
-  if (window.navigator && navigator.userAgent) {
-    if (navigator.userAgent.includes('Firefox')) {
-      // Firefox defines some keys uniquely.  No other browser defines these is
-      // this way.  Some even conflict.  The keyCode field isn't well documented
-      // as it isn't standardized.  At some point we should switch to "key".
-      // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
-      // http://unixpapa.com/js/key.html
-      var keycapMute = 181;   // Mute
-      var keycapVolDn = 182;  // Volume Down
-      var keycapVolUp = 183;  // Volume Up
-      var keycapSC = 59;      // ;:
-      var keycapEP = 61;      // =+
-      var keycapMU = 173;     // -_
+  /**
+   * @param {number} keyCode
+   * @param {string} keyCap
+   * @param {!hterm.Keyboard.KeyDefAction} normal
+   * @param {!hterm.Keyboard.KeyDefAction} control
+   * @param {!hterm.Keyboard.KeyDefAction} alt
+   * @param {!hterm.Keyboard.KeyDefAction} meta
+   */
+  const add = (keyCode, keyCap, normal, control, alt, meta) => {
+    this.addKeyDef(keyCode, {
+      keyCap: keyCap,
+      normal: normal,
+      control: control,
+      alt: alt,
+      meta: meta,
+    });
+  };
 
-      this.addKeyDefs(
-        // Firefox Italian +*.
-        [171, '+*', DEFAULT, c('onPlusMinusZero_'), DEFAULT, c('onPlusMinusZero_')]
-      );
-    } else {
-      // All other browsers use these mappings.
-      var keycapMute = 173;   // Mute
-      var keycapVolDn = 174;  // Volume Down
-      var keycapVolUp = 175;  // Volume Up
-      var keycapSC = 186;     // ;:
-      var keycapEP = 187;     // =+
-      var keycapMU = 189;     // -_
-    }
+  // Browser-specific differences.
+  if (window.navigator && navigator.userAgent &&
+      navigator.userAgent.includes('Firefox')) {
+    // Firefox defines some keys uniquely.  No other browser defines these in
+    // this way.  Some even conflict.  The keyCode field isn't well documented
+    // as it isn't standardized.  At some point we should switch to "key".
+    // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+    // http://unixpapa.com/js/key.html
+    // var keycapMute = 181;   // Mute
+    // var keycapVolDn = 182;  // Volume Down
+    // var keycapVolUp = 183;  // Volume Up
+    var keycapSC = 59;      // ;:
+    var keycapEP = 61;      // =+
+    var keycapMU = 173;     // -_
+
+    // Firefox Italian +*.
+    add(171, '+*', DEFAULT, c('onZoom_'), DEFAULT, c('onZoom_'));
+  } else {
+    // All other browsers use these mappings.
+    // var keycapMute = 173;   // Mute
+    // var keycapVolDn = 174;  // Volume Down
+    // var keycapVolUp = 175;  // Volume Up
+    var keycapSC = 186;     // ;:
+    var keycapEP = 187;     // =+
+    var keycapMU = 189;     // -_
   }
 
   var ESC = '\x1b';
   var CSI = '\x1b[';
   var SS3 = '\x1bO';
 
-  var CANCEL = hterm.Keyboard.KeyActions.CANCEL;
-  var DEFAULT = hterm.Keyboard.KeyActions.DEFAULT;
-  var PASS = hterm.Keyboard.KeyActions.PASS;
-  var STRIP = hterm.Keyboard.KeyActions.STRIP;
+  // These fields are: [keycode, keycap, normal, control, alt, meta]
 
-  this.addKeyDefs(
-    // These fields are: [keycode, keycap, normal, control, alt, meta]
+  // The browser sends the keycode 0 for some keys.  We'll just assume it's
+  // going to do the right thing by default for those keys.
+  add(0,   '[UNKNOWN]', PASS, PASS, PASS, PASS);
 
-    // The browser sends the keycode 0 for some keys.  We'll just assume it's
-    // going to do the right thing by default for those keys.
-    [0,   '[UNKNOWN]', PASS, PASS, PASS, PASS],
+  // First row.
+  // These bindings match xterm for lack of a better standard.  The emitted
+  // values might look like they're skipping values, but it's what xterm does.
+  // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-PC-Style-Function-Keys
+  add(27,  '[ESC]', ESC,                       DEFAULT, DEFAULT,     DEFAULT);
+  add(112, '[F1]',  mod(SS3 + 'P', CSI + 'P'), DEFAULT, CSI + '23~', DEFAULT);
+  add(113, '[F2]',  mod(SS3 + 'Q', CSI + 'Q'), DEFAULT, CSI + '24~', DEFAULT);
+  add(114, '[F3]',  mod(SS3 + 'R', CSI + 'R'), DEFAULT, CSI + '25~', DEFAULT);
+  add(115, '[F4]',  mod(SS3 + 'S', CSI + 'S'), DEFAULT, CSI + '26~', DEFAULT);
+  add(116, '[F5]',  CSI + '15~',               DEFAULT, CSI + '28~', DEFAULT);
+  add(117, '[F6]',  CSI + '17~',               DEFAULT, CSI + '29~', DEFAULT);
+  add(118, '[F7]',  CSI + '18~',               DEFAULT, CSI + '31~', DEFAULT);
+  add(119, '[F8]',  CSI + '19~',               DEFAULT, CSI + '32~', DEFAULT);
+  add(120, '[F9]',  CSI + '20~',               DEFAULT, CSI + '33~', DEFAULT);
+  add(121, '[F10]', CSI + '21~',               DEFAULT, CSI + '34~', DEFAULT);
+  add(122, '[F11]', c('onF11_'),               DEFAULT, CSI + '42~', DEFAULT);
+  add(123, '[F12]', CSI + '24~',               DEFAULT, CSI + '43~', DEFAULT);
 
-    // First row.
-    // These bindings match xterm for lack of a better standard.  The emitted
-    // values might look like they're skipping values, but it's what xterm does.
-    // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-PC-Style-Function-Keys
-    [27,  '[ESC]', ESC,                       DEFAULT, DEFAULT,     DEFAULT],
-    [112, '[F1]',  mod(SS3 + 'P', CSI + 'P'), DEFAULT, CSI + "23~", DEFAULT],
-    [113, '[F2]',  mod(SS3 + 'Q', CSI + 'Q'), DEFAULT, CSI + "24~", DEFAULT],
-    [114, '[F3]',  mod(SS3 + 'R', CSI + 'R'), DEFAULT, CSI + "25~", DEFAULT],
-    [115, '[F4]',  mod(SS3 + 'S', CSI + 'S'), DEFAULT, CSI + "26~", DEFAULT],
-    [116, '[F5]',  CSI + '15~',               DEFAULT, CSI + "28~", DEFAULT],
-    [117, '[F6]',  CSI + '17~',               DEFAULT, CSI + "29~", DEFAULT],
-    [118, '[F7]',  CSI + '18~',               DEFAULT, CSI + "31~", DEFAULT],
-    [119, '[F8]',  CSI + '19~',               DEFAULT, CSI + "32~", DEFAULT],
-    [120, '[F9]',  CSI + '20~',               DEFAULT, CSI + "33~", DEFAULT],
-    [121, '[F10]', CSI + '21~',               DEFAULT, CSI + "34~", DEFAULT],
-    [122, '[F11]', c('onF11_'),               DEFAULT, CSI + "42~", DEFAULT],
-    [123, '[F12]', CSI + '24~',               DEFAULT, CSI + "43~", DEFAULT],
+  // Second row.
+  add(192, '`~', DEFAULT, sh(ctl('@'), ctl('^')),     DEFAULT,           PASS);
+  add(49,  '1!', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(50,  '2@', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(51,  '3#', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(52,  '4$', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(53,  '5%', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(54,  '6^', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(55,  '7&', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(56,  '8*', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(57,  '9(', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_'));
+  add(48,  '0)', DEFAULT, c('onZoom_'),       c('onAltNum_'), c('onZoom_'));
+  add(keycapMU, '-_', DEFAULT, c('onZoom_'),  DEFAULT,        c('onZoom_'));
+  add(keycapEP, '=+', DEFAULT, c('onZoom_'),  DEFAULT,        c('onZoom_'));
 
-    // Second row.
-    [192, '`~', DEFAULT, sh(ctl('@'), ctl('^')),     DEFAULT,           PASS],
-    [49,  '1!', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [50,  '2@', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [51,  '3#', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [52,  '4$', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [53,  '5%', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [54,  '6^', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [55,  '7&', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [56,  '8*', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [57,  '9(', DEFAULT, c('onCtrlNum_'),    c('onAltNum_'), c('onMetaNum_')],
-    [48,  '0)', DEFAULT, c('onPlusMinusZero_'),c('onAltNum_'),c('onPlusMinusZero_')],
-    [keycapMU, '-_', DEFAULT, c('onPlusMinusZero_'), DEFAULT, c('onPlusMinusZero_')],
-    [keycapEP, '=+', DEFAULT, c('onPlusMinusZero_'), DEFAULT, c('onPlusMinusZero_')],
+  add(8,   '[BKSP]', bs('\x7f', '\b'), bs('\b', '\x7f'), DEFAULT,     DEFAULT);
 
-    [8,   '[BKSP]', bs('\x7f', '\b'), bs('\b', '\x7f'), DEFAULT,     DEFAULT],
+  // Third row.
+  add(9,   '[TAB]', sh('\t', CSI + 'Z'), STRIP,     PASS,    DEFAULT);
+  add(81,  'qQ',    DEFAULT,             ctl('Q'),  DEFAULT, DEFAULT);
+  add(87,  'wW',    DEFAULT,             ctl('W'),  DEFAULT, DEFAULT);
+  add(69,  'eE',    DEFAULT,             ctl('E'),  DEFAULT, DEFAULT);
+  add(82,  'rR',    DEFAULT,             ctl('R'),  DEFAULT, DEFAULT);
+  add(84,  'tT',    DEFAULT,             ctl('T'),  DEFAULT, DEFAULT);
+  add(89,  'yY',    DEFAULT,             ctl('Y'),  DEFAULT, DEFAULT);
+  add(85,  'uU',    DEFAULT,             ctl('U'),  DEFAULT, DEFAULT);
+  add(73,  'iI',    DEFAULT,             ctl('I'),  DEFAULT, DEFAULT);
+  add(79,  'oO',    DEFAULT,             ctl('O'),  DEFAULT, DEFAULT);
+  add(80,  'pP',    DEFAULT,             ctl('P'),  DEFAULT, DEFAULT);
+  add(219, '[{',    DEFAULT,             ctl('['),  DEFAULT, DEFAULT);
+  add(221, ']}',    DEFAULT,             ctl(']'),  DEFAULT, DEFAULT);
+  add(220, '\\|',   DEFAULT,             ctl('\\'), DEFAULT, DEFAULT);
 
-    // Third row.
-    [9,   '[TAB]', sh('\t', CSI + 'Z'), STRIP,     PASS,    DEFAULT],
-    [81,  'qQ',    DEFAULT,             ctl('Q'),  DEFAULT, DEFAULT],
-    [87,  'wW',    DEFAULT,             ctl('W'),  DEFAULT, DEFAULT],
-    [69,  'eE',    DEFAULT,             ctl('E'),  DEFAULT, DEFAULT],
-    [82,  'rR',    DEFAULT,             ctl('R'),  DEFAULT, DEFAULT],
-    [84,  'tT',    DEFAULT,             ctl('T'),  DEFAULT, DEFAULT],
-    [89,  'yY',    DEFAULT,             ctl('Y'),  DEFAULT, DEFAULT],
-    [85,  'uU',    DEFAULT,             ctl('U'),  DEFAULT, DEFAULT],
-    [73,  'iI',    DEFAULT,             ctl('I'),  DEFAULT, DEFAULT],
-    [79,  'oO',    DEFAULT,             ctl('O'),  DEFAULT, DEFAULT],
-    [80,  'pP',    DEFAULT,             ctl('P'),  DEFAULT, DEFAULT],
-    [219, '[{',    DEFAULT,             ctl('['),  DEFAULT, DEFAULT],
-    [221, ']}',    DEFAULT,             ctl(']'),  DEFAULT, DEFAULT],
-    [220, '\\|',   DEFAULT,             ctl('\\'), DEFAULT, DEFAULT],
+  // Fourth row. We let Ctrl-Shift-J pass for Chrome DevTools.
+  // To be compliant with xterm's behavior for modifiers on Enter
+  // would mean maximizing the window with Alt-Enter... so we don't
+  // want to do that. Our behavior on Enter is what most other
+  // modern emulators do.
+  add(20,  '[CAPS]',  PASS,    PASS,                        PASS,    DEFAULT);
+  add(65,  'aA',      DEFAULT, ctl('A'),                    DEFAULT, DEFAULT);
+  add(83,  'sS',      DEFAULT, ctl('S'),                    DEFAULT, DEFAULT);
+  add(68,  'dD',      DEFAULT, ctl('D'),                    DEFAULT, DEFAULT);
+  add(70,  'fF',      DEFAULT, ctl('F'),                    DEFAULT, DEFAULT);
+  add(71,  'gG',      DEFAULT, ctl('G'),                    DEFAULT, DEFAULT);
+  add(72,  'hH',      DEFAULT, ctl('H'),                    DEFAULT, DEFAULT);
+  add(74,  'jJ',      DEFAULT, sh(ctl('J'), PASS),          DEFAULT, DEFAULT);
+  add(75,  'kK',      DEFAULT, sh(ctl('K'), c('onClear_')), DEFAULT, DEFAULT);
+  add(76,  'lL',      DEFAULT, sh(ctl('L'), PASS),          DEFAULT, DEFAULT);
+  add(keycapSC, ';:', DEFAULT, STRIP,                       DEFAULT, DEFAULT);
+  add(222, '\'"',     DEFAULT, STRIP,                       DEFAULT, DEFAULT);
+  add(13,  '[ENTER]', '\r',    DEFAULT,                     DEFAULT, DEFAULT);
 
-    // Fourth row. We let Ctrl-Shift-J pass for Chrome DevTools.
-    // To be compliant with xterm's behavior for modifiers on Enter
-    // would mean maximizing the window with Alt-Enter... so we don't
-    // want to do that. Our behavior on Enter is what most other
-    // modern emulators do.
-    [20,  '[CAPS]',  PASS,    PASS,                           PASS,    DEFAULT],
-    [65,  'aA',      DEFAULT, ctl('A'),                       DEFAULT, DEFAULT],
-    [83,  'sS',      DEFAULT, ctl('S'),                       DEFAULT, DEFAULT],
-    [68,  'dD',      DEFAULT, ctl('D'),                       DEFAULT, DEFAULT],
-    [70,  'fF',      DEFAULT, ctl('F'),                       DEFAULT, DEFAULT],
-    [71,  'gG',      DEFAULT, ctl('G'),                       DEFAULT, DEFAULT],
-    [72,  'hH',      DEFAULT, ctl('H'),                       DEFAULT, DEFAULT],
-    [74,  'jJ',      DEFAULT, sh(ctl('J'), PASS),             DEFAULT, DEFAULT],
-    [75,  'kK',      DEFAULT, sh(ctl('K'), c('onClear_')),    DEFAULT, DEFAULT],
-    [76,  'lL',      DEFAULT, sh(ctl('L'), PASS),             DEFAULT, DEFAULT],
-    [keycapSC, ';:', DEFAULT, STRIP,                          DEFAULT, DEFAULT],
-    [222, '\'"',     DEFAULT, STRIP,                          DEFAULT, DEFAULT],
-    [13,  '[ENTER]', '\r',    DEFAULT,                        DEFAULT, DEFAULT],
+  // Fifth row.  This includes the copy/paste shortcuts.  On some
+  // platforms it's Ctrl-C/V, on others it's Meta-C/V.  We assume either
+  // Ctrl-C/Meta-C should pass to the browser when there is a selection,
+  // and Ctrl-Shift-V/Meta-*-V should always pass to the browser (since
+  // these seem to be recognized as paste too).
+  add(16,  '[SHIFT]', PASS, PASS,                  PASS,    DEFAULT);
+  add(90,  'zZ',   DEFAULT, ctl('Z'),              DEFAULT, DEFAULT);
+  add(88,  'xX',   DEFAULT, ctl('X'),              DEFAULT, DEFAULT);
+  add(67,  'cC',   DEFAULT, c('onCtrlC_'),         DEFAULT, c('onMetaC_'));
+  add(86,  'vV',   DEFAULT, c('onCtrlV_'),         DEFAULT, c('onMetaV_'));
+  add(66,  'bB',   DEFAULT, sh(ctl('B'), PASS),    DEFAULT, sh(DEFAULT, PASS));
+  add(78,  'nN',   DEFAULT, c('onCtrlN_'),         DEFAULT, c('onMetaN_'));
+  add(77,  'mM',   DEFAULT, ctl('M'),              DEFAULT, DEFAULT);
+  add(188, ',<',   DEFAULT, alt(STRIP, PASS),      DEFAULT, DEFAULT);
+  add(190, '.>',   DEFAULT, alt(STRIP, PASS),      DEFAULT, DEFAULT);
+  add(191, '/?',   DEFAULT, sh(ctl('_'), ctl('?')), DEFAULT, DEFAULT);
 
-    // Fifth row.  This includes the copy/paste shortcuts.  On some
-    // platforms it's Ctrl-C/V, on others it's Meta-C/V.  We assume either
-    // Ctrl-C/Meta-C should pass to the browser when there is a selection,
-    // and Ctrl-Shift-V/Meta-*-V should always pass to the browser (since
-    // these seem to be recognized as paste too).
-    [16,  '[SHIFT]', PASS, PASS,                   PASS,    DEFAULT],
-    [90,  'zZ',   DEFAULT, ctl('Z'),               DEFAULT, DEFAULT],
-    [88,  'xX',   DEFAULT, ctl('X'),               DEFAULT, DEFAULT],
-    [67,  'cC',   DEFAULT, c('onCtrlC_'),          DEFAULT, c('onMetaC_')],
-    [86,  'vV',   DEFAULT, c('onCtrlV_'),          DEFAULT, c('onMetaV_')],
-    [66,  'bB',   DEFAULT, sh(ctl('B'), PASS),     DEFAULT, sh(DEFAULT, PASS)],
-    [78,  'nN',   DEFAULT, c('onCtrlN_'),          DEFAULT, c('onMetaN_')],
-    [77,  'mM',   DEFAULT, ctl('M'),               DEFAULT, DEFAULT],
-    [188, ',<',   DEFAULT, alt(STRIP, PASS),       DEFAULT, DEFAULT],
-    [190, '.>',   DEFAULT, alt(STRIP, PASS),       DEFAULT, DEFAULT],
-    [191, '/?',   DEFAULT, sh(ctl('_'), ctl('?')), DEFAULT, DEFAULT],
+  // Sixth and final row.
+  add(17,  '[CTRL]',  PASS,    PASS,     PASS,    PASS);
+  add(18,  '[ALT]',   PASS,    PASS,     PASS,    PASS);
+  add(91,  '[LAPL]',  PASS,    PASS,     PASS,    PASS);
+  add(32,  ' ',       DEFAULT, ctl('@'), DEFAULT, DEFAULT);
+  add(92,  '[RAPL]',  PASS,    PASS,     PASS,    PASS);
+  add(93,  '[RMENU]', PASS,    PASS,     PASS,    PASS);
 
-    // Sixth and final row.
-    [17,  '[CTRL]',  PASS,    PASS,     PASS,    PASS],
-    [18,  '[ALT]',   PASS,    PASS,     PASS,    PASS],
-    [91,  '[LAPL]',  PASS,    PASS,     PASS,    PASS],
-    [32,  ' ',       DEFAULT, ctl('@'), DEFAULT, DEFAULT],
-    [92,  '[RAPL]',  PASS,    PASS,     PASS,    PASS],
-    [93,  '[RMENU]', PASS,    PASS,     PASS,    PASS],
+  // These things.
+  add(42,  '[PRTSCR]', PASS, PASS, PASS, PASS);
+  add(145, '[SCRLK]',  PASS, PASS, PASS, PASS);
+  add(19,  '[BREAK]',  PASS, PASS, PASS, PASS);
 
-    // These things.
-    [42,  '[PRTSCR]', PASS, PASS, PASS, PASS],
-    [145, '[SCRLK]',  PASS, PASS, PASS, PASS],
-    [19,  '[BREAK]',  PASS, PASS, PASS, PASS],
+  // The block of six keys above the arrows.
+  add(45,  '[INSERT]', c('onKeyInsert_'),   DEFAULT, DEFAULT, DEFAULT);
+  add(36,  '[HOME]',   c('onKeyHome_'),     DEFAULT, DEFAULT, DEFAULT);
+  add(33,  '[PGUP]',   c('onKeyPageUp_'),   DEFAULT, DEFAULT, DEFAULT);
+  add(46,  '[DEL]',    c('onKeyDel_'),      DEFAULT, DEFAULT, DEFAULT);
+  add(35,  '[END]',    c('onKeyEnd_'),      DEFAULT, DEFAULT, DEFAULT);
+  add(34,  '[PGDOWN]', c('onKeyPageDown_'), DEFAULT, DEFAULT, DEFAULT);
 
-    // The block of six keys above the arrows.
-    [45,  '[INSERT]', c('onKeyInsert_'),   DEFAULT, DEFAULT, DEFAULT],
-    [36,  '[HOME]',   c('onKeyHome_'),     DEFAULT, DEFAULT, DEFAULT],
-    [33,  '[PGUP]',   c('onKeyPageUp_'),   DEFAULT, DEFAULT, DEFAULT],
-    [46,  '[DEL]',    c('onKeyDel_'),      DEFAULT, DEFAULT, DEFAULT],
-    [35,  '[END]',    c('onKeyEnd_'),      DEFAULT, DEFAULT, DEFAULT],
-    [34,  '[PGDOWN]', c('onKeyPageDown_'), DEFAULT, DEFAULT, DEFAULT],
+  // Arrow keys.  When unmodified they respect the application cursor state,
+  // otherwise they always send the CSI codes.
+  add(38, '[UP]',    c('onKeyArrowUp_'), DEFAULT, DEFAULT, DEFAULT);
+  add(40, '[DOWN]',  c('onKeyArrowDown_'), DEFAULT, DEFAULT, DEFAULT);
+  add(39, '[RIGHT]', ac(CSI + 'C', SS3 + 'C'), DEFAULT, DEFAULT, DEFAULT);
+  add(37, '[LEFT]',  ac(CSI + 'D', SS3 + 'D'), DEFAULT, DEFAULT, DEFAULT);
 
-    // Arrow keys.  When unmodified they respect the application cursor state,
-    // otherwise they always send the CSI codes.
-    [38, '[UP]',    c('onKeyArrowUp_'), DEFAULT, DEFAULT, DEFAULT],
-    [40, '[DOWN]',  c('onKeyArrowDown_'), DEFAULT, DEFAULT, DEFAULT],
-    [39, '[RIGHT]', ac(CSI + 'C', SS3 + 'C'), DEFAULT, DEFAULT, DEFAULT],
-    [37, '[LEFT]',  ac(CSI + 'D', SS3 + 'D'), DEFAULT, DEFAULT, DEFAULT],
+  add(144, '[NUMLOCK]', PASS, PASS, PASS, PASS);
 
-    [144, '[NUMLOCK]', PASS, PASS, PASS, PASS],
+  // On Apple keyboards, the NumLock key is a Clear key.  It also tends to be
+  // what KP5 sends when numlock is off.  Not clear if we could do anything
+  // useful with it, so just pass it along.
+  add(12, '[CLEAR]', PASS, PASS, PASS, PASS);
 
-    // On Apple keyboards, the NumLock key is a Clear key.  It also tends to be
-    // what KP5 sends when numlock is off.  Not clear if we could do anything
-    // useful with it, so just pass it along.
-    [12, '[CLEAR]', PASS, PASS, PASS, PASS],
+  // With numlock off, the keypad generates the same key codes as the arrows
+  // and 'block of six' for some keys, and null key codes for the rest.
 
-    // With numlock off, the keypad generates the same key codes as the arrows
-    // and 'block of six' for some keys, and null key codes for the rest.
-
-    // Keypad with numlock on generates unique key codes...
-    [96,  '[KP0]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [97,  '[KP1]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [98,  '[KP2]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [99,  '[KP3]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [100, '[KP4]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [101, '[KP5]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [102, '[KP6]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [103, '[KP7]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [104, '[KP8]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [105, '[KP9]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [107, '[KP+]', DEFAULT, c('onPlusMinusZero_'), DEFAULT, c('onPlusMinusZero_')],
-    [109, '[KP-]', DEFAULT, c('onPlusMinusZero_'), DEFAULT, c('onPlusMinusZero_')],
-    [106, '[KP*]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [111, '[KP/]', DEFAULT, DEFAULT, DEFAULT, DEFAULT],
-    [110, '[KP.]', DEFAULT, DEFAULT, DEFAULT, DEFAULT]
-  );
+  // Keypad with numlock on generates unique key codes...
+  add(96,  '[KP0]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(97,  '[KP1]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(98,  '[KP2]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(99,  '[KP3]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(100, '[KP4]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(101, '[KP5]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(102, '[KP6]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(103, '[KP7]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(104, '[KP8]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(105, '[KP9]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(107, '[KP+]', DEFAULT, c('onZoom_'), DEFAULT, c('onZoom_'));
+  add(109, '[KP-]', DEFAULT, c('onZoom_'), DEFAULT, c('onZoom_'));
+  add(106, '[KP*]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(111, '[KP/]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
+  add(110, '[KP.]', DEFAULT, DEFAULT,      DEFAULT, DEFAULT);
 
   // OS-specific differences.
   if (hterm.os == 'cros') {
-    this.addKeyDefs(
-      // Chrome OS keyboard top row.  The media-keys-are-fkeys preference allows
-      // users to make these always behave as function keys (see those bindings
-      // above for more details).
-      [166, '[BACK]',   med(mod(SS3+'P', CSI+'P')), DEFAULT, CSI+'23~', DEFAULT],  // F1
-      [167, '[FWD]',    med(mod(SS3+'Q', CSI+'Q')), DEFAULT, CSI+'24~', DEFAULT],  // F2
-      [168, '[RELOAD]', med(mod(SS3+'R', CSI+'R')), DEFAULT, CSI+'25~', DEFAULT],  // F3
-      [183, '[FSCR]',   med(mod(SS3+'S', CSI+'S')), DEFAULT, CSI+'26~', DEFAULT],  // F4
-      [182, '[WINS]',   med(CSI + '15~'),           DEFAULT, CSI+'28~', DEFAULT],  // F5
-      [216, '[BRIT-]',  med(CSI + '17~'),           DEFAULT, CSI+'29~', DEFAULT],  // F6
-      [217, '[BRIT+]',  med(CSI + '18~'),           DEFAULT, CSI+'31~', DEFAULT],  // F7
-      [173, '[MUTE]',   med(CSI + '19~'),           DEFAULT, CSI+'32~', DEFAULT],  // F8
-      [174, '[VOL-]',   med(CSI + '20~'),           DEFAULT, CSI+'33~', DEFAULT],  // F9
-      [175, '[VOL+]',   med(CSI + '21~'),           DEFAULT, CSI+'34~', DEFAULT],  // F10
+    // Chrome OS keyboard top row.  The media-keys-are-fkeys preference allows
+    // users to make these always behave as function keys (see those bindings
+    // above for more details).
+    /* eslint-disable max-len */
+    add(166, '[BACK]',   med(mod(SS3+'P', CSI+'P')), DEFAULT, CSI+'23~', DEFAULT);  // F1
+    add(167, '[FWD]',    med(mod(SS3+'Q', CSI+'Q')), DEFAULT, CSI+'24~', DEFAULT);  // F2
+    add(168, '[RELOAD]', med(mod(SS3+'R', CSI+'R')), DEFAULT, CSI+'25~', DEFAULT);  // F3
+    add(183, '[FSCR]',   med(mod(SS3+'S', CSI+'S')), DEFAULT, CSI+'26~', DEFAULT);  // F4
+    add(182, '[WINS]',   med(CSI + '15~'),           DEFAULT, CSI+'28~', DEFAULT);  // F5
+    add(216, '[BRIT-]',  med(CSI + '17~'),           DEFAULT, CSI+'29~', DEFAULT);  // F6
+    add(217, '[BRIT+]',  med(CSI + '18~'),           DEFAULT, CSI+'31~', DEFAULT);  // F7
+    add(173, '[MUTE]',   med(CSI + '19~'),           DEFAULT, CSI+'32~', DEFAULT);  // F8
+    add(174, '[VOL-]',   med(CSI + '20~'),           DEFAULT, CSI+'33~', DEFAULT);  // F9
+    add(175, '[VOL+]',   med(CSI + '21~'),           DEFAULT, CSI+'34~', DEFAULT);  // F10
+    /* eslint-enable max-len */
 
-      // We could make this into F11, but it'd be a bit weird.  Chrome allows us
-      // to see this and react, but it doesn't actually allow us to block or
-      // cancel it, so it makes the screen flash/lock still.
-      [152, '[POWER]',  DEFAULT, DEFAULT, DEFAULT, DEFAULT],
+    // We could make this into F11, but it'd be a bit weird.  Chrome allows us
+    // to see this and react, but it doesn't actually allow us to block or
+    // cancel it, so it makes the screen flash/lock still.
+    add(152, '[POWER]', DEFAULT, DEFAULT, DEFAULT, DEFAULT);
 
-      // The Pixelbook has a slightly different layout.  This means half the keys
-      // above are off by one.  https://crbug.com/807513
-      [179, '[PLAY]',   med(CSI + '18~'),           DEFAULT, CSI + '31~', DEFAULT], // F7
-      // The settings / hamburgers / three hot dogs / menu / whatever-it's-called.
-      [154, '[DOGS]',   med(CSI + '23~'),           DEFAULT, CSI + '42~', DEFAULT], // F11
+    // The Pixelbook has a slightly different layout.  This means half the keys
+    // above are off by one.  https://crbug.com/807513
+    add(179, '[PLAY]', med(CSI + '18~'), DEFAULT, CSI + '31~', DEFAULT); // F7
+    // The settings / hamburgers / three hot dogs / menu / whatever-it's-called.
+    add(154, '[DOGS]', med(CSI + '23~'), DEFAULT, CSI + '42~', DEFAULT); // F11
 
-      // We don't use this for anything, but keep it from popping up by default.
-      [153, '[ASSIST]', DEFAULT, DEFAULT, DEFAULT, DEFAULT]
-    );
+    // We don't use this for anything, but keep it from popping up by default.
+    add(153, '[ASSIST]', DEFAULT, DEFAULT, DEFAULT, DEFAULT);
   }
 };
 
 /**
  * Either allow the paste or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyInsert_ = function(e) {
   if (this.keyboard.shiftInsertPaste && e.shiftKey)
@@ -7170,6 +7826,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyInsert_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyHome_ = function(e) {
   if (!this.keyboard.homeKeysScroll ^ e.shiftKey) {
@@ -7187,6 +7846,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyHome_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyEnd_ = function(e) {
   if (!this.keyboard.homeKeysScroll ^ e.shiftKey) {
@@ -7204,6 +7866,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyEnd_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyPageUp_ = function(e) {
   if (!this.keyboard.pageKeysScroll ^ e.shiftKey)
@@ -7220,6 +7885,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyPageUp_ = function(e) {
  * claims that the alt key is not pressed, we know the DEL was a synthetic
  * one from a user that hit alt-backspace. Based on a user pref, we can sub
  * in meta-backspace in this case.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyDel_ = function(e) {
   if (this.keyboard.altBackspaceIsMetaBackspace &&
@@ -7230,6 +7898,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyDel_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyPageDown_ = function(e) {
   if (!this.keyboard.pageKeysScroll ^ e.shiftKey)
@@ -7241,6 +7912,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyPageDown_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyArrowUp_ = function(e) {
   if (!this.keyboard.applicationCursor && e.shiftKey) {
@@ -7254,6 +7928,9 @@ hterm.Keyboard.KeyMap.prototype.onKeyArrowUp_ = function(e) {
 
 /**
  * Either scroll the scrollback buffer or send a key sequence.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onKeyArrowDown_ = function(e) {
   if (!this.keyboard.applicationCursor && e.shiftKey) {
@@ -7267,8 +7944,11 @@ hterm.Keyboard.KeyMap.prototype.onKeyArrowDown_ = function(e) {
 
 /**
  * Clear the primary/alternate screens and the scrollback buffer.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onClear_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onClear_ = function(e) {
   this.keyboard.terminal.wipeContents();
   return hterm.Keyboard.KeyActions.CANCEL;
 };
@@ -7279,8 +7959,11 @@ hterm.Keyboard.KeyMap.prototype.onClear_ = function(e, keyDef) {
  * It would be nice to use the Fullscreen API, but the UX is slightly different
  * a bad way: the Escape key is automatically registered for exiting.  If we let
  * the browser handle F11 directly though, we still get to capture Escape.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onF11_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onF11_ = function(e) {
   if (hterm.windowType != 'popup')
     return hterm.Keyboard.KeyActions.PASS;
   else
@@ -7293,6 +7976,10 @@ hterm.Keyboard.KeyMap.prototype.onF11_ = function(e, keyDef) {
  * Note that Ctrl-1 and Ctrl-9 don't actually have special sequences mapped
  * to them in xterm or gnome-terminal.  The range is really Ctrl-2..8, but
  * we handle 1..9 since Chrome treats the whole range special.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @param {!hterm.Keyboard.KeyDef} keyDef Key definition.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onCtrlNum_ = function(e, keyDef) {
   // Compute a control character for a given character.
@@ -7312,12 +7999,16 @@ hterm.Keyboard.KeyMap.prototype.onCtrlNum_ = function(e, keyDef) {
     case '8': return '\x7f';
     case '9': return '9';
   }
+  return hterm.Keyboard.KeyActions.PASS;
 };
 
 /**
  * Either pass Alt-1..9 to the browser or send them to the host.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onAltNum_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onAltNum_ = function(e) {
   if (this.keyboard.terminal.passAltNumber && !e.shiftKey)
     return hterm.Keyboard.KeyActions.PASS;
 
@@ -7326,8 +8017,11 @@ hterm.Keyboard.KeyMap.prototype.onAltNum_ = function(e, keyDef) {
 
 /**
  * Either pass Meta-1..9 to the browser or send them to the host.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onMetaNum_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onMetaNum_ = function(e) {
   if (this.keyboard.terminal.passMetaNumber && !e.shiftKey)
     return hterm.Keyboard.KeyActions.PASS;
 
@@ -7336,8 +8030,11 @@ hterm.Keyboard.KeyMap.prototype.onMetaNum_ = function(e, keyDef) {
 
 /**
  * Either send a ^C or interpret the keystroke as a copy command.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onCtrlC_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onCtrlC_ = function(e) {
   var selection = this.keyboard.terminal.getDocument().getSelection();
 
   if (!selection.isCollapsed) {
@@ -7369,8 +8066,11 @@ hterm.Keyboard.KeyMap.prototype.onCtrlC_ = function(e, keyDef) {
 
 /**
  * Either send a ^N or open a new window to the same location.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onCtrlN_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onCtrlN_ = function(e) {
   if (e.shiftKey) {
     lib.f.openWindow(document.location.href, '',
                      'chrome=no,close=yes,resize=yes,scrollbars=yes,' +
@@ -7389,8 +8089,10 @@ hterm.Keyboard.KeyMap.prototype.onCtrlN_ = function(e, keyDef) {
  * a ^V if the user presses Ctrl-V. This can be flipped with the
  * 'ctrl-v-paste' preference.
  *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onCtrlV_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onCtrlV_ = function(e) {
   if ((!e.shiftKey && this.keyboard.ctrlVPaste) ||
       (e.shiftKey && !this.keyboard.ctrlVPaste)) {
     // We try to do the pasting ourselves as not all browsers/OSs bind Ctrl-V to
@@ -7408,8 +8110,11 @@ hterm.Keyboard.KeyMap.prototype.onCtrlV_ = function(e, keyDef) {
 
 /**
  * Either the default action or open a new window to the same location.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onMetaN_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onMetaN_ = function(e) {
   if (e.shiftKey) {
     lib.f.openWindow(document.location.href, '',
                      'chrome=no,close=yes,resize=yes,scrollbars=yes,' +
@@ -7431,6 +8136,10 @@ hterm.Keyboard.KeyMap.prototype.onMetaN_ = function(e, keyDef) {
  * If there is a selection, we defer to the browser.  In this case we clear out
  * the selection so the user knows we heard them, and also to give them a
  * chance to send a Meta-C by just hitting the key again.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @param {!hterm.Keyboard.KeyDef} keyDef Key definition.
+ * @return {symbol|string} Key action or sequence.
  */
 hterm.Keyboard.KeyMap.prototype.onMetaC_ = function(e, keyDef) {
   var document = this.keyboard.terminal.getDocument();
@@ -7453,8 +8162,11 @@ hterm.Keyboard.KeyMap.prototype.onMetaC_ = function(e, keyDef) {
  *
  * Always PASS Meta-Shift-V to allow browser to interpret the keystroke as
  * a paste command.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onMetaV_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onMetaV_ = function(e) {
   if (e.shiftKey)
     return hterm.Keyboard.KeyActions.PASS;
 
@@ -7472,8 +8184,12 @@ hterm.Keyboard.KeyMap.prototype.onMetaV_ = function(e, keyDef) {
  *
  * We override the browser zoom keys to change the ScrollPort's font size to
  * avoid the issue.
+ *
+ * @param {!KeyboardEvent} e The event to process.
+ * @param {!hterm.Keyboard.KeyDef} keyDef Key definition.
+ * @return {symbol|string} Key action or sequence.
  */
-hterm.Keyboard.KeyMap.prototype.onPlusMinusZero_ = function(e, keyDef) {
+hterm.Keyboard.KeyMap.prototype.onZoom_ = function(e, keyDef) {
   if (!(this.keyboard.ctrlPlusMinusZeroZoom ^ e.shiftKey)) {
     // If ctrl-PMZ controls zoom and the shift key is pressed, or
     // ctrl-shift-PMZ controls zoom and this shift key is not pressed,
@@ -7520,6 +8236,9 @@ hterm.Keyboard.KeyMap.prototype.onPlusMinusZero_ = function(e, keyDef) {
  * property below.  Each modifier can be true, false, or "*".  True means
  * the modifier key must be present, false means it must not, and "*" means
  * it doesn't matter.
+ *
+ * @param {!hterm.Keyboard.KeyDown} spec
+ * @constructor
  */
 hterm.Keyboard.KeyPattern = function(spec) {
   this.wildcardCount = 0;
@@ -7546,8 +8265,9 @@ hterm.Keyboard.KeyPattern.modifiers = [
  * patterns first, so that loosely defined patterns have a lower priority than
  * exact patterns.
  *
- * @param {hterm.Keyboard.KeyPattern} a
- * @param {hterm.Keyboard.KeyPattern} b
+ * @param {!hterm.Keyboard.KeyPattern} a
+ * @param {!hterm.Keyboard.KeyPattern} b
+ * @return {number}
  */
 hterm.Keyboard.KeyPattern.sortCompare = function(a, b) {
   if (a.wildcardCount < b.wildcardCount)
@@ -7563,9 +8283,11 @@ hterm.Keyboard.KeyPattern.sortCompare = function(a, b) {
  * Private method used to match this key pattern against other key patterns
  * or key down events.
  *
- * @param {Object} The object to match.
- * @param {boolean} True if we should ignore wildcards.  Useful when you want
+ * @param {!hterm.Keyboard.KeyDown} obj The object to match.
+ * @param {boolean} exactMatch True if we should ignore wildcards.  Useful when
+ *     you want
  *   to perform and exact match against another key pattern.
+ * @return {boolean}
  */
 hterm.Keyboard.KeyPattern.prototype.match_ = function(obj, exactMatch) {
   if (this.keyCode != obj.keyCode)
@@ -7587,9 +8309,11 @@ hterm.Keyboard.KeyPattern.prototype.match_ = function(obj, exactMatch) {
 /**
  * Return true if the given keyDown object is a match for this key pattern.
  *
- * @param {Object} keyDown An object with a keyCode property and zero or
- *   more boolean properties representing key modifiers.  These property names
- *   must match those defined in hterm.Keyboard.KeyPattern.modifiers.
+ * @param {!hterm.Keyboard.KeyDown} keyDown An object with a keyCode property
+ *     and zero or more boolean properties representing key modifiers.  These
+ *     property names must match those defined in
+ *     hterm.Keyboard.KeyPattern.modifiers.
+ * @return {boolean}
  */
 hterm.Keyboard.KeyPattern.prototype.matchKeyDown = function(keyDown) {
   return this.match_(keyDown, false);
@@ -7599,7 +8323,8 @@ hterm.Keyboard.KeyPattern.prototype.matchKeyDown = function(keyDown) {
  * Return true if the given hterm.Keyboard.KeyPattern is exactly the same as
  * this one.
  *
- * @param {hterm.Keyboard.KeyPattern}
+ * @param {!hterm.Keyboard.KeyPattern} keyPattern
+ * @return {boolean}
  */
 hterm.Keyboard.KeyPattern.prototype.matchKeyPattern = function(keyPattern) {
   return this.match_(keyPattern, true);
@@ -7627,7 +8352,7 @@ hterm.Keyboard.KeyPattern.prototype.matchKeyPattern = function(keyPattern) {
  * except that we enable autowrap (wraparound) by default since that seems to
  * be what xterm does.
  *
- * @param {hterm.Options=} opt_copy Optional instance to copy.
+ * @param {!hterm.Options=} opt_copy Optional instance to copy.
  * @constructor
  */
 hterm.Options = function(opt_copy) {
@@ -7650,8 +8375,9 @@ hterm.Options = function(opt_copy) {
 // found in the LICENSE file.
 
 /**
- * @constructor
  * Parses the key definition syntax used for user keyboard customizations.
+ *
+ * @constructor
  */
 hterm.Parser = function() {
   /**
@@ -7665,19 +8391,28 @@ hterm.Parser = function() {
   this.pos = 0;
 
   /**
-   * @type {string?} The character at the current position.
+   * @type {?string} The character at the current position.
    */
   this.ch = null;
 };
 
+/**
+ * @param {string} message
+ * @return {!Error}
+ */
 hterm.Parser.prototype.error = function(message) {
   return new Error('Parse error at ' + this.pos + ': ' + message);
 };
 
+/** @return {boolean} */
 hterm.Parser.prototype.isComplete = function() {
   return this.pos == this.source.length;
 };
 
+/**
+ * @param {string} source
+ * @param {number=} opt_pos
+ */
 hterm.Parser.prototype.reset = function(source, opt_pos) {
   this.source = source;
   this.pos = opt_pos || 0;
@@ -7707,8 +8442,8 @@ hterm.Parser.prototype.reset = function(source, opt_pos) {
  *   Ctrl-*-A: Matches Ctrl-A, as well as any other key sequence that includes
  *     at least the Ctrl and A keys.
  *
- * @return {Object} An object with shift, ctrl, alt, meta, keyCode
- *   properties.
+ * @return {!hterm.Keyboard.KeyDown} An object with shift, ctrl, alt, meta,
+ *     keyCode properties.
  */
 hterm.Parser.prototype.parseKeySequence = function() {
   var rv = {
@@ -7774,6 +8509,7 @@ hterm.Parser.prototype.parseKeySequence = function() {
   return rv;
 };
 
+/** @return {string} */
 hterm.Parser.prototype.parseKeyAction = function() {
   this.skipSpace();
 
@@ -7794,18 +8530,22 @@ hterm.Parser.prototype.parseKeyAction = function() {
 
 };
 
+/** @return {boolean} */
 hterm.Parser.prototype.peekString = function() {
   return this.ch == '\'' || this.ch == '"';
 };
 
+/** @return {boolean} */
 hterm.Parser.prototype.peekIdentifier = function() {
-  return this.ch.match(/[a-z_]/i);
+  return !!this.ch.match(/[a-z_]/i);
 };
 
+/** @return {boolean} */
 hterm.Parser.prototype.peekInteger = function() {
-  return this.ch.match(/[0-9]/);
+  return !!this.ch.match(/[0-9]/);
 };
 
+/** @return {!Object} */
 hterm.Parser.prototype.parseToken = function() {
   if (this.ch == '*') {
     var rv = {type: 'symbol', value: this.ch};
@@ -7826,6 +8566,7 @@ hterm.Parser.prototype.parseToken = function() {
   throw this.error('Unexpected token');
 };
 
+/** @return {string} */
 hterm.Parser.prototype.parseIdentifier = function() {
   if (!this.peekIdentifier())
     throw this.error('Expected identifier');
@@ -7833,15 +8574,14 @@ hterm.Parser.prototype.parseIdentifier = function() {
   return this.parsePattern(/[a-z0-9_]+/ig);
 };
 
+/** @return {number} */
 hterm.Parser.prototype.parseInteger = function() {
-  var base = 10;
-
   if (this.ch == '0' && this.pos < this.source.length - 1 &&
       this.source.substr(this.pos + 1, 1) == 'x') {
-    return parseInt(this.parsePattern(/0x[0-9a-f]+/gi));
+    return parseInt(this.parsePattern(/0x[0-9a-f]+/gi), undefined);
   }
 
-  return parseInt(this.parsePattern(/\d+/g));
+  return parseInt(this.parsePattern(/\d+/g), 10);
 };
 
 /**
@@ -7852,8 +8592,6 @@ hterm.Parser.prototype.parseInteger = function() {
  *
  * TODO(rginda): Variable interpolation.
  *
- * @param {ParseState} parseState
- * @param {string} quote A single or double-quote character.
  * @return {string}
  */
 hterm.Parser.prototype.parseString = function() {
@@ -7942,7 +8680,7 @@ hterm.Parser.prototype.parseEscape = function() {
 /**
  * Parse the given pattern starting from the current position.
  *
- * @param {RegExp} pattern A pattern representing the characters to span.  MUST
+ * @param {!RegExp} pattern A pattern representing the characters to span.  MUST
  *   include the "global" RegExp flag.
  * @return {string}
  */
@@ -8196,6 +8934,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal one line up.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollLineUp: function(terminal) {
     terminal.scrollLineUp();
@@ -8204,6 +8945,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal one line down.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollLineDown: function(terminal) {
     terminal.scrollLineDown();
@@ -8212,6 +8956,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal one page up.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollPageUp: function(terminal) {
     terminal.scrollPageUp();
@@ -8220,6 +8967,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal one page down.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollPageDown: function(terminal) {
     terminal.scrollPageDown();
@@ -8228,6 +8978,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal to the top.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollToTop: function(terminal) {
     terminal.scrollHome();
@@ -8236,6 +8989,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Scroll the terminal to the bottom.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   scrollToBottom: function(terminal) {
     terminal.scrollEnd();
@@ -8244,6 +9000,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Clear the active screen and move the cursor to (0,0).
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   clearScreen: function(terminal) {
     terminal.clearHome();
@@ -8252,6 +9011,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Clear the scrollback buffer.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   clearScrollback: function(terminal) {
     terminal.clearScrollback();
@@ -8260,6 +9022,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Clear the terminal and scrollback buffer and move the cursor to (0,0).
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   clearTerminal: function(terminal) {
     terminal.wipeContents();
@@ -8268,6 +9033,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Perform a full terminal reset.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   fullReset: function(terminal) {
     terminal.reset();
@@ -8276,6 +9044,9 @@ hterm.Parser.identifiers.actions = {
 
   /**
    * Perform a soft terminal reset.
+   *
+   * @param {!hterm.Terminal} terminal
+   * @return {!hterm.Keyboard.KeyActions}
    */
   softReset: function(terminal) {
     terminal.softReset();
@@ -8291,6 +9062,10 @@ hterm.Parser.identifiers.actions = {
  * PreferenceManager subclass managing global NaSSH preferences.
  *
  * This is currently just an ordered list of known connection profiles.
+ *
+ * @param {string} profileId
+ * @extends {lib.PreferenceManager}
+ * @constructor
  */
 hterm.PreferenceManager = function(profileId) {
   lib.PreferenceManager.call(this, hterm.defaultStorage,
@@ -8309,7 +9084,7 @@ hterm.PreferenceManager.prefix_ = '/hterm/profiles/';
 /**
  * List all the defined profiles.
  *
- * @param {function(Array<string>)} callback Called with the list of profiles.
+ * @param {function(!Array<string>)} callback Called with the list of profiles.
  */
 hterm.PreferenceManager.listProfiles = function(callback) {
   hterm.defaultStorage.getItems(null, (items) => {
@@ -8326,47 +9101,50 @@ hterm.PreferenceManager.listProfiles = function(callback) {
   });
 };
 
-hterm.PreferenceManager.categories = {};
-hterm.PreferenceManager.categories.Keyboard = 'Keyboard';
-hterm.PreferenceManager.categories.Appearance = 'Appearance';
-hterm.PreferenceManager.categories.CopyPaste = 'CopyPaste';
-hterm.PreferenceManager.categories.Sounds = 'Sounds';
-hterm.PreferenceManager.categories.Scrolling = 'Scrolling';
-hterm.PreferenceManager.categories.Encoding = 'Encoding';
-hterm.PreferenceManager.categories.Extensions = 'Extensions';
-hterm.PreferenceManager.categories.Miscellaneous = 'Miscellaneous';
+/** @enum {string} */
+hterm.PreferenceManager.Categories = {
+  Keyboard: 'Keyboard',
+  Appearance: 'Appearance',
+  CopyPaste: 'CopyPaste',
+  Sounds: 'Sounds',
+  Scrolling: 'Scrolling',
+  Encoding: 'Encoding',
+  Extensions: 'Extensions',
+  Miscellaneous: 'Miscellaneous',
+};
 
 /**
  * List of categories, ordered by display order (top to bottom)
  */
 hterm.PreferenceManager.categoryDefinitions = [
-  { id: hterm.PreferenceManager.categories.Appearance,
+  { id: hterm.PreferenceManager.Categories.Appearance,
     text: 'Appearance (fonts, colors, images)'},
-  { id: hterm.PreferenceManager.categories.CopyPaste,
+  { id: hterm.PreferenceManager.Categories.CopyPaste,
     text: 'Copy & Paste'},
-  { id: hterm.PreferenceManager.categories.Encoding,
+  { id: hterm.PreferenceManager.Categories.Encoding,
     text: 'Encoding'},
-  { id: hterm.PreferenceManager.categories.Keyboard,
+  { id: hterm.PreferenceManager.Categories.Keyboard,
     text: 'Keyboard'},
-  { id: hterm.PreferenceManager.categories.Scrolling,
+  { id: hterm.PreferenceManager.Categories.Scrolling,
     text: 'Scrolling'},
-  { id: hterm.PreferenceManager.categories.Sounds,
+  { id: hterm.PreferenceManager.Categories.Sounds,
     text: 'Sounds'},
-  { id: hterm.PreferenceManager.categories.Extensions,
+  { id: hterm.PreferenceManager.Categories.Extensions,
     text: 'Extensions'},
-  { id: hterm.PreferenceManager.categories.Miscellaneous,
+  { id: hterm.PreferenceManager.Categories.Miscellaneous,
     text: 'Miscellaneous'}
 ];
 
 /**
  * Internal helper to create a default preference object.
  *
- * @param {hterm.PreferenceManager.categories} category The pref category.
  * @param {string} name The user readable name/title.
- * @param {Object} defaultValue The default pref value.
- * @param {Object} type The type for this pref (or an array for enums).
+ * @param {!hterm.PreferenceManager.Categories} category The pref category.
+ * @param {boolean|number|string|?Object} defaultValue The default pref value.
+ * @param {string|!Array<string|null>} type The type for this pref (or an array
+ *     for enums).
  * @param {string} help The user readable help text.
- * @return {Object} The default pref object.
+ * @return {!Object} The default pref object.
  */
 hterm.PreferenceManager.definePref_ = function(
     name, category, defaultValue, type, help) {
@@ -8382,7 +9160,7 @@ hterm.PreferenceManager.definePref_ = function(
 hterm.PreferenceManager.defaultPreferences = {
   'alt-gr-mode': hterm.PreferenceManager.definePref_(
       'AltGr key mode',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, [null, 'none', 'ctrl-alt', 'left-alt', 'right-alt'],
       `Select an AltGr detection heuristic.\n` +
       `\n` +
@@ -8396,7 +9174,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'alt-backspace-is-meta-backspace': hterm.PreferenceManager.definePref_(
       'Alt-Backspace is Meta-Backspace',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `If set, undoes the Chrome OS Alt-Backspace->DEL remap, so that ` +
       `Alt-Backspace indeed is Alt-Backspace.`
@@ -8404,14 +9182,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'alt-is-meta': hterm.PreferenceManager.definePref_(
       'Treat Alt key as Meta key',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `Whether the Alt key acts as a Meta key or as a distinct Alt key.`
   ),
 
   'alt-sends-what': hterm.PreferenceManager.definePref_(
       'Alt key modifier handling',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       'escape', ['escape', '8-bit', 'browser-key'],
       `Controls how the Alt key is handled.\n` +
       `\n` +
@@ -8424,14 +9202,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'audible-bell-sound': hterm.PreferenceManager.definePref_(
       'Alert bell sound (URI)',
-      hterm.PreferenceManager.categories.Sounds,
+      hterm.PreferenceManager.Categories.Sounds,
       'lib-resource:hterm/audio/bell', 'url',
       `URL of the terminal bell sound. Empty string for no audible bell.`
   ),
 
   'desktop-notification-bell': hterm.PreferenceManager.definePref_(
       'Create desktop notifications for alert bells',
-      hterm.PreferenceManager.categories.Sounds,
+      hterm.PreferenceManager.Categories.Sounds,
       false, 'bool',
       `If true, terminal bells in the background will create a Web ` +
       `Notification. https://www.w3.org/TR/notifications/\n` +
@@ -8447,14 +9225,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'background-color': hterm.PreferenceManager.definePref_(
       'Background color',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       'rgb(16, 16, 16)', 'color',
       `The background color for text with no other color attributes.`
   ),
 
   'background-image': hterm.PreferenceManager.definePref_(
       'Background image',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '', 'string',
       `CSS value of the background image. Empty string for no image.\n` +
       `\n` +
@@ -8465,14 +9243,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'background-size': hterm.PreferenceManager.definePref_(
       'Background image size',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '', 'string',
       `CSS value of the background image size.`
   ),
 
   'background-position': hterm.PreferenceManager.definePref_(
       'Background image position',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '', 'string',
       `CSS value of the background image position.\n` +
       `\n` +
@@ -8483,7 +9261,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'backspace-sends-backspace': hterm.PreferenceManager.definePref_(
       'Backspace key behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `If true, the backspace should send BS ('\\x08', aka ^H). Otherwise ` +
       `the backspace key should send '\\x7f'.`
@@ -8491,7 +9269,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'character-map-overrides': hterm.PreferenceManager.definePref_(
       'Character map overrides',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       null, 'value',
       `This is specified as an object. It is a sparse array, where each ` +
       `property is the character set code and the value is an object that is ` +
@@ -8505,14 +9283,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'close-on-exit': hterm.PreferenceManager.definePref_(
       'Close window on exit',
-      hterm.PreferenceManager.categories.Miscellaneous,
+      hterm.PreferenceManager.Categories.Miscellaneous,
       true, 'bool',
       `Whether to close the window when the command finishes executing.`
   ),
 
   'cursor-blink': hterm.PreferenceManager.definePref_(
       'Cursor blink',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       false, 'bool',
       `Whether the text cursor blinks by default. This can be toggled at ` +
       `runtime via terminal escape sequences.`
@@ -8520,7 +9298,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'cursor-blink-cycle': hterm.PreferenceManager.definePref_(
       'Cursor blink rate',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       [1000, 500], 'value',
       `The text cursor blink rate in milliseconds.\n` +
       `\n` +
@@ -8530,7 +9308,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'cursor-shape': hterm.PreferenceManager.definePref_(
       'Text cursor shape',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       'BLOCK', ['BLOCK', 'BEAM', 'UNDERLINE'],
       `The shape of the visible text cursor. This can be toggled at ` +
       `runtime via terminal escape sequences.`
@@ -8538,14 +9316,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'cursor-color': hterm.PreferenceManager.definePref_(
       'Text cursor color',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       'rgba(255, 0, 0, 0.5)', 'color',
       `The color of the visible text cursor.`
   ),
 
   'color-palette-overrides': hterm.PreferenceManager.definePref_(
       'Initial color palette',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       null, 'value',
       `Override colors in the default palette.\n` +
       `\n` +
@@ -8568,14 +9346,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'copy-on-select': hterm.PreferenceManager.definePref_(
       'Automatically copy selected content',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `Automatically copy mouse selection to the clipboard.`
   ),
 
   'use-default-window-copy': hterm.PreferenceManager.definePref_(
       'Let the browser handle text copying',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       false, 'bool',
       `Whether to use the default browser/OS's copy behavior.\n` +
       `\n` +
@@ -8589,14 +9367,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'clear-selection-after-copy': hterm.PreferenceManager.definePref_(
       'Automatically clear text selection',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `Whether to clear the selection after copying.`
   ),
 
   'ctrl-plus-minus-zero-zoom': hterm.PreferenceManager.definePref_(
       'Ctrl-+/-/0 zoom behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       true, 'bool',
       `If true, Ctrl-Plus/Minus/Zero controls zoom.\n` +
       `If false, Ctrl-Shift-Plus/Minus/Zero controls zoom, Ctrl-Minus sends ` +
@@ -8605,7 +9383,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'ctrl-c-copy': hterm.PreferenceManager.definePref_(
       'Ctrl-C copy behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `Ctrl-C copies if true, send ^C to host if false.\n` +
       `Ctrl-Shift-C sends ^C to host if true, copies if false.`
@@ -8613,7 +9391,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'ctrl-v-paste': hterm.PreferenceManager.definePref_(
       'Ctrl-V paste behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `Ctrl-V pastes if true, send ^V to host if false.\n` +
       `Ctrl-Shift-V sends ^V to host if true, pastes if false.`
@@ -8621,14 +9399,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'east-asian-ambiguous-as-two-column': hterm.PreferenceManager.definePref_(
       'East Asian Ambiguous use two columns',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `Whether East Asian Ambiguous characters have two column width.`
   ),
 
   'enable-8-bit-control': hterm.PreferenceManager.definePref_(
       'Support non-UTF-8 C1 control characters',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `True to enable 8-bit control characters, false to ignore them.\n` +
       `\n` +
@@ -8638,7 +9416,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-bold': hterm.PreferenceManager.definePref_(
       'Bold text behavior',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       null, 'tristate',
       `If true, use bold weight font for text with the bold/bright ` +
       `attribute. False to use the normal weight font. Null to autodetect.`
@@ -8646,7 +9424,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-bold-as-bright': hterm.PreferenceManager.definePref_(
       'Use bright colors with bold text',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       true, 'bool',
       `If true, use bright colors (8-15 on a 16 color palette) for any text ` +
       `with the bold attribute. False otherwise.`
@@ -8654,14 +9432,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-blink': hterm.PreferenceManager.definePref_(
       'Enable blinking text',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       true, 'bool',
       `If true, respect the blink attribute. False to ignore it.`
   ),
 
   'enable-clipboard-notice': hterm.PreferenceManager.definePref_(
       'Show notification when copying content',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `Whether to show a message in the terminal when the host writes to the ` +
       `clipboard.`
@@ -8669,7 +9447,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-clipboard-write': hterm.PreferenceManager.definePref_(
       'Allow remote clipboard writes',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `Allow the remote host to write directly to the local system ` +
       `clipboard.\n` +
@@ -8680,7 +9458,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-dec12': hterm.PreferenceManager.definePref_(
       'Allow changing of text cursor blinking',
-      hterm.PreferenceManager.categories.Miscellaneous,
+      hterm.PreferenceManager.Categories.Miscellaneous,
       false, 'bool',
       `Respect the host's attempt to change the text cursor blink status ` +
       `using DEC Private Mode 12.`
@@ -8688,7 +9466,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'enable-csi-j-3': hterm.PreferenceManager.definePref_(
       'Allow clearing of scrollback buffer (CSI-J-3)',
-      hterm.PreferenceManager.categories.Miscellaneous,
+      hterm.PreferenceManager.Categories.Miscellaneous,
       true, 'bool',
       `Whether CSI-J (Erase Display) mode 3 may clear the terminal ` +
       `scrollback buffer.\n` +
@@ -8698,7 +9476,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'environment': hterm.PreferenceManager.definePref_(
       'Environment variables',
-      hterm.PreferenceManager.categories.Miscellaneous,
+      hterm.PreferenceManager.Categories.Miscellaneous,
       {
         // Signal ncurses based apps to use UTF-8 output instead of legacy
         // drawing modes (which only work in ISO-2022 mode).  Since hterm is
@@ -8716,7 +9494,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'font-family': hterm.PreferenceManager.definePref_(
       'Text font family',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '"DejaVu Sans Mono", "Noto Sans Mono", "Everson Mono", FreeMono, ' +
       'Menlo, Terminal, monospace',
       'string',
@@ -8725,28 +9503,35 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'font-size': hterm.PreferenceManager.definePref_(
       'Text font size',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       15, 'int',
       `The default font size in pixels.`
   ),
 
   'font-smoothing': hterm.PreferenceManager.definePref_(
       'Text font smoothing',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       'antialiased', 'string',
       `CSS font-smoothing property.`
   ),
 
   'foreground-color': hterm.PreferenceManager.definePref_(
       'Text color',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       'rgb(240, 240, 240)', 'color',
       `The foreground color for text with no other color attributes.`
   ),
 
+  'enable-resize-status': hterm.PreferenceManager.definePref_(
+      'Show terminal dimensions when resized',
+      hterm.PreferenceManager.Categories.Appearance,
+      false, 'bool',
+      `Whether to show terminal dimensions when the terminal changes size.`
+  ),
+
   'hide-mouse-while-typing': hterm.PreferenceManager.definePref_(
       'Hide mouse cursor while typing',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, 'tristate',
       `Whether to automatically hide the mouse cursor when typing. ` +
       `By default, autodetect whether the platform/OS handles this.\n` +
@@ -8757,7 +9542,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'home-keys-scroll': hterm.PreferenceManager.definePref_(
       'Home/End key scroll behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `If true, Home/End controls the terminal scrollbar and Shift-Home/` +
       `Shift-End are sent to the remote host. If false, then Home/End are ` +
@@ -8766,7 +9551,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'keybindings': hterm.PreferenceManager.definePref_(
       'Keyboard bindings/shortcuts',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, 'value',
       `A map of key sequence to key actions. Key sequences include zero or ` +
       `more modifier keys followed by a key code. Key codes can be decimal ` +
@@ -8784,7 +9569,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'media-keys-are-fkeys': hterm.PreferenceManager.definePref_(
       'Media keys are Fkeys',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `If true, convert media keys to their Fkey equivalent. If false, let ` +
       `the browser handle the keys.`
@@ -8792,7 +9577,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'meta-sends-escape': hterm.PreferenceManager.definePref_(
       'Meta key modifier handling',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       true, 'bool',
       `Send an ESC prefix when pressing a key while holding the Meta key.\n` +
       `\n` +
@@ -8802,7 +9587,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'mouse-right-click-paste': hterm.PreferenceManager.definePref_(
       'Mouse right clicks paste content',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `Paste on right mouse button clicks.\n` +
       `\n` +
@@ -8813,7 +9598,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'mouse-paste-button': hterm.PreferenceManager.definePref_(
       'Mouse button paste',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       null, [null, 0, 1, 2, 3, 4, 5, 6],
       `Mouse paste button, or null to autodetect.\n` +
       `\n` +
@@ -8833,7 +9618,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'word-break-match-left': hterm.PreferenceManager.definePref_(
       'Automatic selection halting (to the left)',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       '[^\\s\\[\\](){}<>"\'\\^!@#$%&*,;:`]', 'string',
       `Regular expression to halt matching to the left (start) of a ` +
       `selection.\n` +
@@ -8844,7 +9629,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'word-break-match-right': hterm.PreferenceManager.definePref_(
       'Automatic selection halting (to the right)',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       '[^\\s\\[\\](){}<>"\'\\^!@#$%&*,;:~.`]', 'string',
       `Regular expression to halt matching to the right (end) of a ` +
       `selection.\n` +
@@ -8854,7 +9639,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'word-break-match-middle': hterm.PreferenceManager.definePref_(
       'Word break characters',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       '[^\\s\\[\\](){}<>"\'\\^]*', 'string',
       `Regular expression to match all the characters in the middle.\n` +
       `\n` +
@@ -8865,7 +9650,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'page-keys-scroll': hterm.PreferenceManager.definePref_(
       'Page Up/Down key scroll behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       false, 'bool',
       `If true, Page Up/Page Down controls the terminal scrollbar and ` +
       `Shift-Page Up/Shift-Page Down are sent to the remote host. If false, ` +
@@ -8875,7 +9660,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'pass-alt-number': hterm.PreferenceManager.definePref_(
       'Pass Alt-1..9 key behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, 'tristate',
       `Whether Alt-1..9 is passed to the browser.\n` +
       `\n` +
@@ -8891,7 +9676,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'pass-ctrl-number': hterm.PreferenceManager.definePref_(
       'Pass Ctrl-1..9 key behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, 'tristate',
       `Whether Ctrl-1..9 is passed to the browser.\n` +
       `\n` +
@@ -8907,7 +9692,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'pass-meta-number': hterm.PreferenceManager.definePref_(
       'Pass Meta-1..9 key behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       null, 'tristate',
       `Whether Meta-1..9 is passed to the browser.\n` +
       `\n` +
@@ -8923,14 +9708,14 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'pass-meta-v': hterm.PreferenceManager.definePref_(
       'Pass Meta-V key behavior',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       true, 'bool',
       `Whether Meta-V gets passed to host.`
   ),
 
   'paste-on-drop': hterm.PreferenceManager.definePref_(
       'Allow drag & drop to paste',
-      hterm.PreferenceManager.categories.CopyPaste,
+      hterm.PreferenceManager.Categories.CopyPaste,
       true, 'bool',
       `If true, Drag and dropped text will paste into terminal.\n` +
       `If false, dropped text will be ignored.`
@@ -8938,7 +9723,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'receive-encoding': hterm.PreferenceManager.definePref_(
       'Receive encoding',
-      hterm.PreferenceManager.categories.Encoding,
+      hterm.PreferenceManager.Categories.Encoding,
       'utf-8', ['utf-8', 'raw'],
       `Set the expected encoding for data received from the host.\n` +
       `If the encodings do not match, visual bugs are likely to be ` +
@@ -8949,28 +9734,28 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'scroll-on-keystroke': hterm.PreferenceManager.definePref_(
       'Scroll to bottom after keystroke',
-      hterm.PreferenceManager.categories.Scrolling,
+      hterm.PreferenceManager.Categories.Scrolling,
       true, 'bool',
       `Whether to scroll to the bottom on any keystroke.`
   ),
 
   'scroll-on-output': hterm.PreferenceManager.definePref_(
       'Scroll to bottom after new output',
-      hterm.PreferenceManager.categories.Scrolling,
+      hterm.PreferenceManager.Categories.Scrolling,
       false, 'bool',
       `Whether to scroll to the bottom on terminal output.`
   ),
 
   'scrollbar-visible': hterm.PreferenceManager.definePref_(
       'Scrollbar visibility',
-      hterm.PreferenceManager.categories.Scrolling,
+      hterm.PreferenceManager.Categories.Scrolling,
       true, 'bool',
       `The vertical scrollbar mode.`
   ),
 
   'scroll-wheel-may-send-arrow-keys': hterm.PreferenceManager.definePref_(
       'Emulate arrow keys with scroll wheel',
-      hterm.PreferenceManager.categories.Scrolling,
+      hterm.PreferenceManager.Categories.Scrolling,
       false, 'bool',
       `When using the alternative screen buffer, and DECCKM (Application ` +
       `Cursor Keys) is active, mouse wheel scroll events will emulate arrow ` +
@@ -8984,7 +9769,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'scroll-wheel-move-multiplier': hterm.PreferenceManager.definePref_(
       'Mouse scroll wheel multiplier',
-      hterm.PreferenceManager.categories.Scrolling,
+      hterm.PreferenceManager.Categories.Scrolling,
       1, 'int',
       `The multiplier for scroll wheel events when measured in pixels.\n` +
       `\n` +
@@ -8993,7 +9778,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'terminal-encoding': hterm.PreferenceManager.definePref_(
       'Terminal encoding',
-      hterm.PreferenceManager.categories.Encoding,
+      hterm.PreferenceManager.Categories.Encoding,
       'utf-8', ['iso-2022', 'utf-8', 'utf-8-locked'],
       `The default terminal encoding (DOCS).\n` +
       `\n` +
@@ -9009,28 +9794,28 @@ hterm.PreferenceManager.defaultPreferences = {
 
   'shift-insert-paste': hterm.PreferenceManager.definePref_(
       'Shift-Insert paste',
-      hterm.PreferenceManager.categories.Keyboard,
+      hterm.PreferenceManager.Categories.Keyboard,
       true, 'bool',
       `Whether Shift-Insert is used for pasting or is sent to the remote host.`
   ),
 
   'user-css': hterm.PreferenceManager.definePref_(
       'Custom CSS (URI)',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '', 'url',
       `URL of user stylesheet to include in the terminal document.`
   ),
 
   'user-css-text': hterm.PreferenceManager.definePref_(
       'Custom CSS (inline text)',
-      hterm.PreferenceManager.categories.Appearance,
+      hterm.PreferenceManager.Categories.Appearance,
       '', 'multiline-string',
       `Custom CSS text for styling the terminal.`
   ),
 
   'allow-images-inline': hterm.PreferenceManager.definePref_(
       'Allow inline image display',
-      hterm.PreferenceManager.categories.Extensions,
+      hterm.PreferenceManager.Categories.Extensions,
       null, 'tristate',
       `Whether to allow the remote host to display images in the terminal.\n` +
       `\n` +
@@ -9040,6 +9825,7 @@ hterm.PreferenceManager.defaultPreferences = {
 
 hterm.PreferenceManager.prototype =
     Object.create(lib.PreferenceManager.prototype);
+/** @override */
 hterm.PreferenceManager.constructor = hterm.PreferenceManager;
 // SOURCE FILE: hterm/js/hterm_pubsub.js
 // Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
@@ -9049,9 +9835,10 @@ hterm.PreferenceManager.constructor = hterm.PreferenceManager;
 /**
  * Utility class used to add publish/subscribe/unsubscribe functionality to
  * an existing object.
+ *
+ * @constructor
  */
 hterm.PubSub = function() {
-  this.count = 0;
   this.observers_ = {};
 };
 
@@ -9061,7 +9848,7 @@ hterm.PubSub = function() {
  * No other properties of the object are touched, so there is no need to
  * worry about clashing private properties.
  *
- * @param {Object} obj The object to add this behavior to.
+ * @param {!Object} obj The object to add this behavior to.
  */
 hterm.PubSub.addBehavior = function(obj) {
   var pubsub = new hterm.PubSub();
@@ -9074,12 +9861,12 @@ hterm.PubSub.addBehavior = function(obj) {
  * Subscribe to be notified of messages about a subject.
  *
  * @param {string} subject The subject to subscribe to.
- * @param {function(Object)} callback The function to invoke for notifications.
+ * @param {function(...)} callback The function to invoke for notifications.
  */
 hterm.PubSub.prototype.subscribe = function(subject, callback) {
   if (!(subject in this.observers_))
     this.observers_[subject] = [];
-  // console.log("Pushing observer to observers: ", subject, (new Error).stack.split("\n")[2]);
+
   this.observers_[subject].push(callback);
 };
 
@@ -9087,7 +9874,7 @@ hterm.PubSub.prototype.subscribe = function(subject, callback) {
  * Unsubscribe from a subject.
  *
  * @param {string} subject The subject to unsubscribe from.
- * @param {function(Object)} callback A callback previously registered via
+ * @param {function(...)} callback A callback previously registered via
  *     subscribe().
  */
 hterm.PubSub.prototype.unsubscribe = function(subject, callback) {
@@ -9109,23 +9896,20 @@ hterm.PubSub.prototype.unsubscribe = function(subject, callback) {
  * This method will return before anyone is actually notified.
  *
  * @param {string} subject The subject to publish about.
- * @param {Object} e An arbitrary object associated with this notification.
- * @param {function(Object)} opt_lastCallback An optional function to call after
- *     all subscribers have been notified.
+ * @param {?Object=} e An arbitrary object associated with this notification.
+ * @param {function(!Object)=} opt_lastCallback An optional function to call
+ *     after all subscribers have been notified.
  */
 hterm.PubSub.prototype.publish = function(subject, e, opt_lastCallback) {
-  // console.log("subject/e/opt_lastCallback", subject, e, opt_lastCallback);
   function notifyList(i) {
     // Set this timeout before invoking the callback, so we don't have to
     // concern ourselves with exceptions.
-    if (i < list.length - 1) {
+    if (i < list.length - 1)
       setTimeout(notifyList, 0, i + 1);
-    }
 
     list[i](e);
   }
 
-  // console.log("calling publish", this.count++, (new Error()).stack.split("\n")[2]);
   var list = this.observers_[subject];
   if (list) {
     // Copy the list, in case it changes while we're notifying.
@@ -9139,12 +9923,6 @@ hterm.PubSub.prototype.publish = function(subject, e, opt_lastCallback) {
       list = [opt_lastCallback];
     }
   }
-
-  // console.log("+++++++++++++++++++++++++");
-  // for (let index = 0; index < list.length; index++) {
-  //   console.log("observerlist: " + index, list[index]);
-  // }
-  // console.log("-------------------------");
 
   if (list)
     setTimeout(notifyList, 0, 0);
@@ -9174,7 +9952,7 @@ hterm.PubSub.prototype.publish = function(subject, e, opt_lastCallback) {
  * - The hterm.Terminal class holds two hterm.Screen instances.  One for the
  * primary screen and one for the alternate screen.
  *
- * - The html.Screen class only cares that rows are HTMLElements.  In the
+ * - The html.Screen class only cares that rows are HTML Elements.  In the
  * larger context of hterm, however, the rows happen to be displayed by an
  * hterm.ScrollPort and have to follow a few rules as a result.  Each
  * row must be rooted by the custom HTML tag 'x-row', and each must have a
@@ -9189,19 +9967,22 @@ hterm.PubSub.prototype.publish = function(subject, e, opt_lastCallback) {
  *
  * The screen initially has no rows and a maximum column count of 0.
  *
- * @param {integer} opt_columnCount The maximum number of columns for this
+ * @param {number=} columnCount The maximum number of columns for this
  *    screen.  See insertString() and overwriteString() for information about
  *    what happens when too many characters are added too a row.  Defaults to
  *    0 if not provided.
+ * @constructor
  */
-hterm.Screen = function(opt_columnCount) {
+hterm.Screen = function(columnCount=0) {
   /**
    * Public, read-only access to the rows in this screen.
+   *
+   * @type {!Array<!Element>}
    */
   this.rowsArray = [];
 
   // The max column width for this screen.
-  this.columnCount_ = opt_columnCount || 80;
+  this.columnCount_ = columnCount;
 
   // The current color, bold, underline and blink attributes.
   this.textAttributes = new hterm.TextAttributes(window.document);
@@ -9220,18 +10001,21 @@ hterm.Screen = function(opt_columnCount) {
   this.cursorNode_ = null;
 
   // The offset in column width into cursorNode_ where the cursor is positioned.
-  this.cursorOffset_ = null;
+  this.cursorOffset_ = 0;
 
   // Regexes for expanding word selections.
+  /** @type {?string} */
   this.wordBreakMatchLeft = null;
+  /** @type {?string} */
   this.wordBreakMatchRight = null;
+  /** @type {?string} */
   this.wordBreakMatchMiddle = null;
 };
 
 /**
  * Return the screen size as an hterm.Size object.
  *
- * @return {hterm.Size} hterm.Size object representing the current number
+ * @return {!hterm.Size} hterm.Size object representing the current number
  *     of rows and columns in this screen.
  */
 hterm.Screen.prototype.getSize = function() {
@@ -9241,7 +10025,7 @@ hterm.Screen.prototype.getSize = function() {
 /**
  * Return the current number of rows in this screen.
  *
- * @return {integer} The number of rows in this screen.
+ * @return {number} The number of rows in this screen.
  */
 hterm.Screen.prototype.getHeight = function() {
   return this.rowsArray.length;
@@ -9250,7 +10034,7 @@ hterm.Screen.prototype.getHeight = function() {
 /**
  * Return the current number of columns in this screen.
  *
- * @return {integer} The number of columns in this screen.
+ * @return {number} The number of columns in this screen.
  */
 hterm.Screen.prototype.getWidth = function() {
   return this.columnCount_;
@@ -9259,7 +10043,7 @@ hterm.Screen.prototype.getWidth = function() {
 /**
  * Set the maximum number of columns per row.
  *
- * @param {integer} count The maximum number of columns per row.
+ * @param {number} count The maximum number of columns per row.
  */
 hterm.Screen.prototype.setColumnCount = function(count) {
   this.columnCount_ = count;
@@ -9271,7 +10055,7 @@ hterm.Screen.prototype.setColumnCount = function(count) {
 /**
  * Remove the first row from the screen and return it.
  *
- * @return {HTMLElement} The first row in this screen.
+ * @return {!Element} The first row in this screen.
  */
 hterm.Screen.prototype.shiftRow = function() {
   return this.shiftRows(1)[0];
@@ -9280,8 +10064,8 @@ hterm.Screen.prototype.shiftRow = function() {
 /**
  * Remove rows from the top of the screen and return them as an array.
  *
- * @param {integer} count The number of rows to remove.
- * @return {Array.<HTMLElement>} The selected rows.
+ * @param {number} count The number of rows to remove.
+ * @return {!Array<!Element>} The selected rows.
  */
 hterm.Screen.prototype.shiftRows = function(count) {
   return this.rowsArray.splice(0, count);
@@ -9290,7 +10074,7 @@ hterm.Screen.prototype.shiftRows = function(count) {
 /**
  * Insert a row at the top of the screen.
  *
- * @param {HTMLElement} row The row to insert.
+ * @param {!Element} row The row to insert.
  */
 hterm.Screen.prototype.unshiftRow = function(row) {
   this.rowsArray.splice(0, 0, row);
@@ -9299,7 +10083,7 @@ hterm.Screen.prototype.unshiftRow = function(row) {
 /**
  * Insert rows at the top of the screen.
  *
- * @param {Array.<HTMLElement>} rows The rows to insert.
+ * @param {!Array<!Element>} rows The rows to insert.
  */
 hterm.Screen.prototype.unshiftRows = function(rows) {
   this.rowsArray.unshift.apply(this.rowsArray, rows);
@@ -9308,7 +10092,7 @@ hterm.Screen.prototype.unshiftRows = function(rows) {
 /**
  * Remove the last row from the screen and return it.
  *
- * @return {HTMLElement} The last row in this screen.
+ * @return {!Element} The last row in this screen.
  */
 hterm.Screen.prototype.popRow = function() {
   return this.popRows(1)[0];
@@ -9317,8 +10101,8 @@ hterm.Screen.prototype.popRow = function() {
 /**
  * Remove rows from the bottom of the screen and return them as an array.
  *
- * @param {integer} count The number of rows to remove.
- * @return {Array.<HTMLElement>} The selected rows.
+ * @param {number} count The number of rows to remove.
+ * @return {!Array<!Element>} The selected rows.
  */
 hterm.Screen.prototype.popRows = function(count) {
   return this.rowsArray.splice(this.rowsArray.length - count, count);
@@ -9327,7 +10111,7 @@ hterm.Screen.prototype.popRows = function(count) {
 /**
  * Insert a row at the bottom of the screen.
  *
- * @param {HTMLElement} row The row to insert.
+ * @param {!Element} row The row to insert.
  */
 hterm.Screen.prototype.pushRow = function(row) {
   this.rowsArray.push(row);
@@ -9336,7 +10120,7 @@ hterm.Screen.prototype.pushRow = function(row) {
 /**
  * Insert rows at the bottom of the screen.
  *
- * @param {Array.<HTMLElement>} rows The rows to insert.
+ * @param {!Array<!Element>} rows The rows to insert.
  */
 hterm.Screen.prototype.pushRows = function(rows) {
   rows.push.apply(this.rowsArray, rows);
@@ -9345,8 +10129,8 @@ hterm.Screen.prototype.pushRows = function(rows) {
 /**
  * Insert a row at the specified row of the screen.
  *
- * @param {integer} index The index to insert the row.
- * @param {HTMLElement} row The row to insert.
+ * @param {number} index The index to insert the row.
+ * @param {!Element} row The row to insert.
  */
 hterm.Screen.prototype.insertRow = function(index, row) {
   this.rowsArray.splice(index, 0, row);
@@ -9355,8 +10139,8 @@ hterm.Screen.prototype.insertRow = function(index, row) {
 /**
  * Insert rows at the specified row of the screen.
  *
- * @param {integer} index The index to insert the rows.
- * @param {Array.<HTMLElement>} rows The rows to insert.
+ * @param {number} index The index to insert the rows.
+ * @param {!Array<!Element>} rows The rows to insert.
  */
 hterm.Screen.prototype.insertRows = function(index, rows) {
   for (var i = 0; i < rows.length; i++) {
@@ -9367,8 +10151,8 @@ hterm.Screen.prototype.insertRows = function(index, rows) {
 /**
  * Remove a row from the screen and return it.
  *
- * @param {integer} index The index of the row to remove.
- * @return {HTMLElement} The selected row.
+ * @param {number} index The index of the row to remove.
+ * @return {!Element} The selected row.
  */
 hterm.Screen.prototype.removeRow = function(index) {
   return this.rowsArray.splice(index, 1)[0];
@@ -9377,9 +10161,9 @@ hterm.Screen.prototype.removeRow = function(index) {
 /**
  * Remove rows from the bottom of the screen and return them as an array.
  *
- * @param {integer} index The index to start removing rows.
- * @param {integer} count The number of rows to remove.
- * @return {Array.<HTMLElement>} The selected rows.
+ * @param {number} index The index to start removing rows.
+ * @param {number} count The number of rows to remove.
+ * @return {!Array<!Element>} The selected rows.
  */
 hterm.Screen.prototype.removeRows = function(index, count) {
   return this.rowsArray.splice(index, count);
@@ -9398,7 +10182,7 @@ hterm.Screen.prototype.invalidateCursorPosition = function() {
   this.cursorPosition.move(0, 0);
   this.cursorRowNode_ = null;
   this.cursorNode_ = null;
-  this.cursorOffset_ = null;
+  this.cursorOffset_ = 0;
 };
 
 /**
@@ -9415,7 +10199,7 @@ hterm.Screen.prototype.clearCursorRow = function() {
   if (this.textAttributes.isDefault()) {
     text = '';
   } else {
-    text = lib.f.getWhitespace(this.columnCount_);
+    text = ' '.repeat(this.columnCount_);
   }
 
   // We shouldn't honor inverse colors when clearing an area, to match
@@ -9451,8 +10235,8 @@ hterm.Screen.prototype.commitLineOverflow = function() {
 /**
  * Relocate the cursor to a give row and column.
  *
- * @param {integer} row The zero based row.
- * @param {integer} column The zero based column.
+ * @param {number} row The zero based row.
+ * @param {number} column The zero based column.
  */
 hterm.Screen.prototype.setCursorPosition = function(row, column) {
   if (!this.rowsArray.length) {
@@ -9516,6 +10300,8 @@ hterm.Screen.prototype.setCursorPosition = function(row, column) {
 /**
  * Set the provided selection object to be a caret selection at the current
  * cursor position.
+ *
+ * @param {!Selection} selection
  */
 hterm.Screen.prototype.syncSelectionCaret = function(selection) {
   try {
@@ -9538,8 +10324,8 @@ hterm.Screen.prototype.syncSelectionCaret = function(selection) {
  * The to-be-split node must have a container, so that the new node can be
  * placed next to it.
  *
- * @param {HTMLNode} node The node to split.
- * @param {integer} offset The offset into the node where the split should
+ * @param {!Node} node The node to split.
+ * @param {number} offset The offset into the node where the split should
  *     occur.
  */
 hterm.Screen.prototype.splitNode_ = function(node, offset) {
@@ -9559,7 +10345,7 @@ hterm.Screen.prototype.splitNode_ = function(node, offset) {
  * Ensure that text is clipped and the cursor is clamped to the column count.
  */
 hterm.Screen.prototype.maybeClipCurrentRow = function() {
-  var width = hterm.TextAttributes.nodeWidth(this.cursorRowNode_);
+  var width = hterm.TextAttributes.nodeWidth(lib.notNull(this.cursorRowNode_));
 
   if (width <= this.columnCount_) {
     // Current row does not need clipping, but may need clamping.
@@ -9578,7 +10364,7 @@ hterm.Screen.prototype.maybeClipCurrentRow = function() {
   this.setCursorPosition(this.cursorPosition.row, this.columnCount_ - 1);
 
   // Remove any text that partially overflows.
-  width = hterm.TextAttributes.nodeWidth(this.cursorNode_);
+  width = hterm.TextAttributes.nodeWidth(lib.notNull(this.cursorNode_));
 
   if (this.cursorOffset_ < width - 1) {
     this.cursorNode_.textContent = hterm.TextAttributes.nodeSubstr(
@@ -9613,6 +10399,11 @@ hterm.Screen.prototype.maybeClipCurrentRow = function() {
  *
  * It is also up to the caller to properly maintain the line overflow state
  * using hterm.Screen..commitLineOverflow().
+ *
+ * @param {string} str The string to insert.
+ * @param {number=} wcwidth The cached lib.wc.strWidth value for |str|.  Will be
+ *     calculated on demand if need be.  Passing in a cached value helps speed
+ *     up processing as this is a hot codepath.
  */
 hterm.Screen.prototype.insertString = function(str, wcwidth=undefined) {
   var cursorNode = this.cursorNode_;
@@ -9640,7 +10431,7 @@ hterm.Screen.prototype.insertString = function(str, wcwidth=undefined) {
     // A negative reverse offset means the cursor is positioned past the end
     // of the characters on this line.  We'll need to insert the missing
     // whitespace.
-    var ws = lib.f.getWhitespace(-reverseOffset);
+    const ws = ' '.repeat(-reverseOffset);
 
     // This whitespace should be completely unstyled.  Underline, background
     // color, and strikethrough would be visible on whitespace, so we can't use
@@ -9752,6 +10543,11 @@ hterm.Screen.prototype.insertString = function(str, wcwidth=undefined) {
  *
  * It is also up to the caller to properly maintain the line overflow state
  * using hterm.Screen..commitLineOverflow().
+ *
+ * @param {string} str The source string for overwriting existing content.
+ * @param {number=} wcwidth The cached lib.wc.strWidth value for |str|.  Will be
+ *     calculated on demand if need be.  Passing in a cached value helps speed
+ *     up processing as this is a hot codepath.
  */
 hterm.Screen.prototype.overwriteString = function(str, wcwidth=undefined) {
   var maxLength = this.columnCount_ - this.cursorPosition.column;
@@ -9761,8 +10557,9 @@ hterm.Screen.prototype.overwriteString = function(str, wcwidth=undefined) {
   if (wcwidth === undefined)
     wcwidth = lib.wc.strWidth(str);
 
-  if (this.textAttributes.matchesContainer(this.cursorNode_) &&
-      this.cursorNode_.textContent.substr(this.cursorOffset_) == str) {
+  if (this.textAttributes.matchesContainer(lib.notNull(this.cursorNode_)) &&
+      this.cursorNode_.textContent.substr(this.cursorOffset_) ==
+          str) {
     // This overwrite would be a no-op, just move the cursor and return.
     this.cursorOffset_ += wcwidth;
     this.cursorPosition.column += wcwidth;
@@ -9779,9 +10576,9 @@ hterm.Screen.prototype.overwriteString = function(str, wcwidth=undefined) {
  * Text to the right of the deleted characters is shifted left.  Only affects
  * characters on the same row as the cursor.
  *
- * @param {integer} count The column width of characters to delete.  This is
+ * @param {number} count The column width of characters to delete.  This is
  *     clamped to the column width minus the cursor column.
- * @return {integer} The column width of the characters actually deleted.
+ * @return {number} The column width of the characters actually deleted.
  */
 hterm.Screen.prototype.deleteChars = function(count) {
   var node = this.cursorNode_;
@@ -9813,7 +10610,8 @@ hterm.Screen.prototype.deleteChars = function(count) {
     // was deleted).  If there are more chars to delete, the next loop will pick
     // up the slack.
     if (node.wcNode && offset < startLength &&
-        ((endLength && startLength == endLength) || (!endLength && offset == 1))) {
+        ((endLength && startLength == endLength) ||
+         (!endLength && offset == 1))) {
       // No characters were deleted when there should be.  We're probably trying
       // to delete one column width from a wide character node.  We remove the
       // wide character node here and replace it with a single space.
@@ -9860,8 +10658,8 @@ hterm.Screen.prototype.deleteChars = function(count) {
  * Finds first X-ROW of a line containing specified X-ROW.
  * Used to support line overflow.
  *
- * @param {Node} row X-ROW to begin search for first row of line.
- * @return {Node} The X-ROW that is at the beginning of the line.
+ * @param {!Node} row X-ROW to begin search for first row of line.
+ * @return {!Node} The X-ROW that is at the beginning of the line.
  **/
 hterm.Screen.prototype.getLineStartRow_ = function(row) {
   while (row.previousSibling &&
@@ -9875,15 +10673,16 @@ hterm.Screen.prototype.getLineStartRow_ = function(row) {
  * Gets text of a line beginning with row.
  * Supports line overflow.
  *
- * @param {Node} row First X-ROW of line.
+ * @param {!Node} row First X-ROW of line.
  * @return {string} Text content of line.
  **/
 hterm.Screen.prototype.getLineText_ = function(row) {
-  var rowText = "";
-  while (row) {
-    rowText += row.textContent;
-    if (row.hasAttribute('line-overflow')) {
-      row = row.nextSibling;
+  let rowText = '';
+  let rowOrNull = row;
+  while (rowOrNull) {
+    rowText += rowOrNull.textContent;
+    if (rowOrNull.hasAttribute('line-overflow')) {
+      rowOrNull = rowOrNull.nextSibling;
     } else {
       break;
     }
@@ -9894,27 +10693,27 @@ hterm.Screen.prototype.getLineText_ = function(row) {
 /**
  * Returns X-ROW that is ancestor of the node.
  *
- * @param {Node} node Node to get X-ROW ancestor for.
- * @return {Node} X-ROW ancestor of node, or null if not found.
+ * @param {!Node} node Node to get X-ROW ancestor for.
+ * @return {?Node} X-ROW ancestor of node, or null if not found.
  **/
 hterm.Screen.prototype.getXRowAncestor_ = function(node) {
-  while (node) {
-    if (node.nodeName === 'X-ROW')
+  let nodeOrNull = node;
+  while (nodeOrNull) {
+    if (nodeOrNull.nodeName === 'X-ROW')
       break;
-    node = node.parentNode;
+    nodeOrNull = nodeOrNull.parentNode;
   }
-  return node;
+  return nodeOrNull;
 };
 
 /**
  * Returns position within line of character at offset within node.
  * Supports line overflow.
  *
- * @param {Node} row X-ROW at beginning of line.
- * @param {Node} node Node to get position of.
- * @param {integer} offset Offset into node.
- *
- * @return {integer} Position within line of character at offset within node.
+ * @param {!Node} row X-ROW at beginning of line.
+ * @param {!Node} node Node to get position of.
+ * @param {number} offset Offset into node.
+ * @return {number} Position within line of character at offset within node.
  **/
 hterm.Screen.prototype.getPositionWithOverflow_ = function(row, node, offset) {
   if (!node)
@@ -9938,10 +10737,10 @@ hterm.Screen.prototype.getPositionWithOverflow_ = function(row, node, offset) {
  * Returns position within row of character at offset within node.
  * Does not support line overflow.
  *
- * @param {Node} row X-ROW to get position within.
- * @param {Node} node Node to get position for.
- * @param {integer} offset Offset within node to get position for.
- * @return {integer} Position within row of character at offset within node.
+ * @param {!Node} row X-ROW to get position within.
+ * @param {!Node} node Node to get position for.
+ * @param {number} offset Offset within node to get position for.
+ * @return {number} Position within row of character at offset within node.
  **/
 hterm.Screen.prototype.getPositionWithinRow_ = function(row, node, offset) {
   if (node.parentNode != row) {
@@ -9966,9 +10765,9 @@ hterm.Screen.prototype.getPositionWithinRow_ = function(row, node, offset) {
  * Returns the node and offset corresponding to position within line.
  * Supports line overflow.
  *
- * @param {Node} row X-ROW at beginning of line.
- * @param {integer} position Position within line to retrieve node and offset.
- * @return {Array} Two element array containing node and offset respectively.
+ * @param {!Node} row X-ROW at beginning of line.
+ * @param {number} position Position within line to retrieve node and offset.
+ * @return {?Array} Two element array containing node and offset respectively.
  **/
 hterm.Screen.prototype.getNodeAndOffsetWithOverflow_ = function(row, position) {
   while (row && position > hterm.TextAttributes.nodeWidth(row)) {
@@ -9976,7 +10775,7 @@ hterm.Screen.prototype.getNodeAndOffsetWithOverflow_ = function(row, position) {
       position -= hterm.TextAttributes.nodeWidth(row);
       row = row.nextSibling;
     } else {
-      return -1;
+      return [null, -1];
     }
   }
   return this.getNodeAndOffsetWithinRow_(row, position);
@@ -9986,9 +10785,9 @@ hterm.Screen.prototype.getNodeAndOffsetWithOverflow_ = function(row, position) {
  * Returns the node and offset corresponding to position within row.
  * Does not support line overflow.
  *
- * @param {Node} row X-ROW to get position within.
- * @param {integer} position Position within row to retrieve node and offset.
- * @return {Array} Two element array containing node and offset respectively.
+ * @param {!Node} row X-ROW to get position within.
+ * @param {number} position Position within row to retrieve node and offset.
+ * @return {?Array} Two element array containing node and offset respectively.
  **/
 hterm.Screen.prototype.getNodeAndOffsetWithinRow_ = function(row, position) {
   for (var i = 0; i < row.childNodes.length; i++) {
@@ -10011,10 +10810,10 @@ hterm.Screen.prototype.getNodeAndOffsetWithinRow_ = function(row, position) {
  * Returns the node and offset corresponding to position within line.
  * Supports line overflow.
  *
- * @param {Node} row X-ROW at beginning of line.
- * @param {integer} start Start position of range within line.
- * @param {integer} end End position of range within line.
- * @param {Range} range Range to modify.
+ * @param {!Node} row X-ROW at beginning of line.
+ * @param {number} start Start position of range within line.
+ * @param {number} end End position of range within line.
+ * @param {!Range} range Range to modify.
  **/
 hterm.Screen.prototype.setRange_ = function(row, start, end, range) {
   var startNodeAndOffset = this.getNodeAndOffsetWithOverflow_(row, start);
@@ -10030,7 +10829,7 @@ hterm.Screen.prototype.setRange_ = function(row, start, end, range) {
 /**
  * Expands selection to surrounding string with word break matches.
  *
- * @param {Selection} selection Selection to expand.
+ * @param {?Selection} selection Selection to expand.
  * @param {string} leftMatch left word break match.
  * @param {string} rightMatch right word break match.
  * @param {string} insideMatch inside word break match.
@@ -10044,28 +10843,26 @@ hterm.Screen.prototype.expandSelectionWithWordBreakMatches_ =
   if (!range || range.toString().match(/\s/))
     return;
 
-  const rowElement = this.getXRowAncestor_(range.startContainer);
+  const rowElement = this.getXRowAncestor_(lib.notNull(range.startContainer));
   if (!rowElement)
     return;
   const row = this.getLineStartRow_(rowElement);
   if (!row)
     return;
 
-  var startPosition = this.getPositionWithOverflow_(row,
-                                                    range.startContainer,
-                                                    range.startOffset);
+  var startPosition = this.getPositionWithOverflow_(
+      row, lib.notNull(range.startContainer), range.startOffset);
   if (startPosition == -1)
     return;
-  var endPosition = this.getPositionWithOverflow_(row,
-                                                  range.endContainer,
-                                                  range.endOffset);
+  var endPosition = this.getPositionWithOverflow_(
+      row, lib.notNull(range.endContainer), range.endOffset);
   if (endPosition == -1)
     return;
 
   //Move start to the left.
   var rowText = this.getLineText_(row);
   var lineUpToRange = lib.wc.substring(rowText, 0, endPosition);
-  var leftRegularExpression = new RegExp(leftMatch + insideMatch + "$");
+  var leftRegularExpression = new RegExp(leftMatch + insideMatch + '$');
   var expandedStart = lineUpToRange.search(leftRegularExpression);
   if (expandedStart == -1 || expandedStart > startPosition)
     return;
@@ -10073,7 +10870,7 @@ hterm.Screen.prototype.expandSelectionWithWordBreakMatches_ =
   //Move end to the right.
   var lineFromRange = lib.wc.substring(rowText, startPosition,
                                        lib.wc.strWidth(rowText));
-  var rightRegularExpression = new RegExp("^" + insideMatch + rightMatch);
+  var rightRegularExpression = new RegExp('^' + insideMatch + rightMatch);
   var found = lineFromRange.match(rightRegularExpression);
   if (!found)
     return;
@@ -10088,20 +10885,20 @@ hterm.Screen.prototype.expandSelectionWithWordBreakMatches_ =
 /**
  * Expands selection to surrounding string using the user's settings.
  *
- * @param {Selection} selection Selection to expand.
+ * @param {?Selection} selection Selection to expand.
  */
 hterm.Screen.prototype.expandSelection = function(selection) {
   this.expandSelectionWithWordBreakMatches_(
       selection,
-      this.wordBreakMatchLeft,
-      this.wordBreakMatchRight,
-      this.wordBreakMatchMiddle);
+      lib.notNull(this.wordBreakMatchLeft),
+      lib.notNull(this.wordBreakMatchRight),
+      lib.notNull(this.wordBreakMatchMiddle));
 };
 
 /**
  * Expands selection to surrounding URL using a set of fixed match settings.
  *
- * @param {Selection} selection Selection to expand.
+ * @param {?Selection} selection Selection to expand.
  */
 hterm.Screen.prototype.expandSelectionForUrl = function(selection) {
   this.expandSelectionWithWordBreakMatches_(
@@ -10114,7 +10911,7 @@ hterm.Screen.prototype.expandSelectionForUrl = function(selection) {
 /**
  * Save the current cursor state to the corresponding screens.
  *
- * @param {hterm.VT} vt The VT object to read graphic codeset details from.
+ * @param {!hterm.VT} vt The VT object to read graphic codeset details from.
  */
 hterm.Screen.prototype.saveCursorAndState = function(vt) {
   this.cursorState_.save(vt);
@@ -10123,7 +10920,7 @@ hterm.Screen.prototype.saveCursorAndState = function(vt) {
 /**
  * Restore the saved cursor state in the corresponding screens.
  *
- * @param {hterm.VT} vt The VT object to write graphic codeset details to.
+ * @param {!hterm.VT} vt The VT object to write graphic codeset details to.
  */
 hterm.Screen.prototype.restoreCursorAndState = function(vt) {
   this.cursorState_.restore(vt);
@@ -10143,6 +10940,9 @@ hterm.Screen.prototype.restoreCursorAndState = function(vt) {
  * - Any single shift 2 (SS2) or single shift 3 (SS3) functions sent
  *
  * These are done on a per-screen basis.
+ *
+ * @param {!hterm.Screen} screen The screen this cursor is tied to.
+ * @constructor
  */
 hterm.Screen.CursorState = function(screen) {
   this.screen_ = screen;
@@ -10154,7 +10954,7 @@ hterm.Screen.CursorState = function(screen) {
 /**
  * Save all the cursor state.
  *
- * @param {hterm.VT} vt The VT object to read graphic codeset details from.
+ * @param {!hterm.VT} vt The VT object to read graphic codeset details from.
  */
 hterm.Screen.CursorState.prototype.save = function(vt) {
   this.cursor = vt.terminal.saveCursor();
@@ -10173,7 +10973,7 @@ hterm.Screen.CursorState.prototype.save = function(vt) {
 /**
  * Restore the previously saved cursor state.
  *
- * @param {hterm.VT} vt The VT object to write graphic codeset details to.
+ * @param {!hterm.VT} vt The VT object to write graphic codeset details to.
  */
 hterm.Screen.CursorState.prototype.restore = function(vt) {
   vt.terminal.restoreCursor(this.cursor);
@@ -10200,6 +11000,30 @@ hterm.Screen.CursorState.prototype.restore = function(vt) {
 // found in the LICENSE file.
 
 /**
+ * The RowProvider should return rows rooted by the custom tag name 'x-row'.
+ * This ensures that we can quickly assign the correct display height
+ * to the rows with css.
+ *
+ * @interface
+ */
+hterm.RowProvider = function() {};
+
+/**
+ * @abstract
+ * @return {number} The current number of rows.
+ */
+hterm.RowProvider.prototype.getRowCount = function() {};
+
+/**
+ * Get specified row.
+ *
+ * @abstract
+ * @param {number} index The index of the row.
+ * @return {!Element}
+ */
+hterm.RowProvider.prototype.getRowNode = function(index) {};
+
+/**
  * A 'viewport' view of fixed-height rows with support for selection and
  * copy-to-clipboard.
  *
@@ -10216,12 +11040,10 @@ hterm.Screen.CursorState.prototype.restore = function(vt) {
  * of the selection is off screen.  It would be difficult to fix this without
  * adding significant overhead to pathologically large selection cases.
  *
- * The RowProvider should return rows rooted by the custom tag name 'x-row'.
- * This ensures that we can quickly assign the correct display height
- * to the rows with css.
- *
- * @param {RowProvider} rowProvider An object capable of providing rows as
- *     raw text or row nodes.
+ * @param {!hterm.RowProvider} rowProvider An object capable of providing rows
+ *     as raw text or row nodes.
+ * @constructor
+ * @extends {hterm.PubSub}
  */
 hterm.ScrollPort = function(rowProvider) {
   hterm.PubSub.addBehavior(this);
@@ -10273,7 +11095,7 @@ hterm.ScrollPort = function(rowProvider) {
   /**
    * A guess at the current scrollbar width, fixed in resize().
    */
-  this.currentScrollbarWidthPx = 5;
+  this.currentScrollbarWidthPx = 16;
 
   /**
    * Whether the ctrl-v key on the screen should paste.
@@ -10287,6 +11109,8 @@ hterm.ScrollPort = function(rowProvider) {
 
   this.div_ = null;
   this.document_ = null;
+  /** @type {?Element} */
+  this.screen_ = null;
 
   // Collection of active timeout handles.
   this.timeouts_ = {};
@@ -10304,7 +11128,8 @@ hterm.ScrollPort = function(rowProvider) {
  * Proxy for the native selection object which understands how to walk up the
  * DOM to find the containing row node and sort out which comes first.
  *
- * @param {hterm.ScrollPort} scrollPort The parent hterm.ScrollPort instance.
+ * @param {!hterm.ScrollPort} scrollPort The parent hterm.ScrollPort instance.
+ * @constructor
  */
 hterm.ScrollPort.Selection = function(scrollPort) {
   this.scrollPort_ = scrollPort;
@@ -10348,7 +11173,9 @@ hterm.ScrollPort.Selection = function(scrollPort) {
  * Given a list of DOM nodes and a container, return the DOM node that
  * is first according to a depth-first search.
  *
- * Returns null if none of the children are found.
+ * @param {!Node} parent
+ * @param {!Array<!Node>} childAry
+ * @return {?Node} Returns null if none of the children are found.
  */
 hterm.ScrollPort.Selection.prototype.findFirstChild = function(
     parent, childAry) {
@@ -10475,9 +11302,11 @@ hterm.ScrollPort.Selection.prototype.sync = function() {
   this.isMultiline = anchorRow.rowIndex != focusRow.rowIndex;
 };
 
-
 /**
  * Turn a div into this hterm.ScrollPort.
+ *
+ * @param {!Element} div
+ * @param {function()=} callback
  */
 hterm.ScrollPort.prototype.decorate = function(div, callback) {
   this.div_ = div;
@@ -10511,11 +11340,12 @@ hterm.ScrollPort.prototype.decorate = function(div, callback) {
 /**
  * Initialises the content of this.iframe_. This needs to be done asynchronously
  * in FF after the Iframe's load event has fired.
+ *
  * @private
  */
 hterm.ScrollPort.prototype.paintIframeContents_ = function() {
-
-  this.iframe_.contentWindow.addEventListener('resize', this.onResize_.bind(this));
+  this.iframe_.contentWindow.addEventListener('resize',
+                                              this.onResize_.bind(this));
 
   var doc = this.document_ = this.iframe_.contentDocument;
   doc.body.style.cssText = (
@@ -10546,20 +11376,7 @@ hterm.ScrollPort.prototype.paintIframeContents_ = function() {
       '  display: block;' +
       '  height: var(--hterm-charsize-height);' +
       '  line-height: var(--hterm-charsize-height);' +
-      '}' +
-      '::-webkit-scrollbar {' +
-      '   width: 9px;' +
-      '}' +
-      '::-webkit-scrollbar-track {' +
-      '   -webkit-box-shadow: inset 0 0 4px rgba(0,0,0,0.3);' +
-      '   border-radius: 8px;' +
-      '}' +
-      '::-webkit-scrollbar-thumb {' +
-      '   border-radius: 8px;' +
-      '   -webkit-box-shadow: inset 0 0 4px rgba(0,0,0,.3);' +
-      '   background-color: #D68910;' +
-      '}'
-  );
+      '}');
   doc.head.appendChild(style);
 
   this.userCssLink_ = doc.createElement('link');
@@ -10616,15 +11433,20 @@ hterm.ScrollPort.prototype.paintIframeContents_ = function() {
 
   doc.body.appendChild(this.screen_);
 
-  this.screen_.addEventListener('scroll', this.onScroll_.bind(this));
-  this.screen_.addEventListener('wheel', this.onScrollWheel_.bind(this));
-  this.screen_.addEventListener('touchstart', this.onTouch_.bind(this));
-  this.screen_.addEventListener('touchmove', this.onTouch_.bind(this));
-  this.screen_.addEventListener('touchend', this.onTouch_.bind(this));
-  this.screen_.addEventListener('touchcancel', this.onTouch_.bind(this));
-  this.screen_.addEventListener('copy', this.onCopy_.bind(this));
-  this.screen_.addEventListener('paste', this.onPaste_.bind(this));
-  this.screen_.addEventListener('drop', this.onDragAndDrop_.bind(this));
+  /**
+   * @param {function(...)} f
+   * @return {!EventListener}
+   */
+  const el = (f) => /** @type {!EventListener} */ (f);
+  this.screen_.addEventListener('scroll', el(this.onScroll_.bind(this)));
+  this.screen_.addEventListener('wheel', el(this.onScrollWheel_.bind(this)));
+  this.screen_.addEventListener('touchstart', el(this.onTouch_.bind(this)));
+  this.screen_.addEventListener('touchmove', el(this.onTouch_.bind(this)));
+  this.screen_.addEventListener('touchend', el(this.onTouch_.bind(this)));
+  this.screen_.addEventListener('touchcancel', el(this.onTouch_.bind(this)));
+  this.screen_.addEventListener('copy', el(this.onCopy_.bind(this)));
+  this.screen_.addEventListener('paste', el(this.onPaste_.bind(this)));
+  this.screen_.addEventListener('drop', el(this.onDragAndDrop_.bind(this)));
 
   doc.body.addEventListener('keydown', this.onBodyKeyDown_.bind(this));
 
@@ -10751,7 +11573,9 @@ hterm.ScrollPort.prototype.paintIframeContents_ = function() {
   // detect browser zoom level.  We should come up with a better solution.
   // Note: This must be http:// else Chrome cannot create the element correctly.
   var xmlns = 'http://www.w3.org/2000/svg';
-  this.svg_ = this.div_.ownerDocument.createElementNS(xmlns, 'svg');
+  this.svg_ =
+      /** @type {?SVGSVGElement} */
+      (this.div_.ownerDocument.createElementNS(xmlns, 'svg'));
   this.svg_.id = 'hterm:zoom-detector';
   this.svg_.setAttribute('xmlns', xmlns);
   this.svg_.setAttribute('version', '1.1');
@@ -10787,7 +11611,7 @@ hterm.ScrollPort.prototype.paintIframeContents_ = function() {
 /**
  * Set the AccessibilityReader object to use to announce page scroll updates.
  *
- * @param {hterm.AccessibilityReader} accessibilityReader for announcing page
+ * @param {!hterm.AccessibilityReader} accessibilityReader for announcing page
  *     scroll updates.
  */
 hterm.ScrollPort.prototype.setAccessibilityReader =
@@ -10830,7 +11654,7 @@ hterm.ScrollPort.prototype.scrollPageDown = function() {
  *
  * @param {string} fontFamily Value of the CSS 'font-family' to use for this
  *     scrollport.  Should be a monospace font.
- * @param {string} opt_smoothing Optional value for '-webkit-font-smoothing'.
+ * @param {string=} opt_smoothing Optional value for '-webkit-font-smoothing'.
  *     Defaults to an empty string if not specified.
  */
 hterm.ScrollPort.prototype.setFontFamily = function(fontFamily, opt_smoothing) {
@@ -10844,6 +11668,7 @@ hterm.ScrollPort.prototype.setFontFamily = function(fontFamily, opt_smoothing) {
   this.syncCharacterSize();
 };
 
+/** @return {string} */
 hterm.ScrollPort.prototype.getFontFamily = function() {
   return this.screen_.style.fontFamily;
 };
@@ -10853,6 +11678,8 @@ hterm.ScrollPort.prototype.getFontFamily = function() {
  *
  * Defaults to null, meaning no custom css is loaded.  Set it back to null or
  * the empty string to remove a previously applied custom css.
+ *
+ * @param {?string} url
  */
 hterm.ScrollPort.prototype.setUserCssUrl = function(url) {
   if (url) {
@@ -10865,57 +11692,76 @@ hterm.ScrollPort.prototype.setUserCssUrl = function(url) {
   }
 };
 
+/** @param {string} text */
 hterm.ScrollPort.prototype.setUserCssText = function(text) {
   this.userCssText_.textContent = text;
 };
 
+/** Focus. */
 hterm.ScrollPort.prototype.focus = function() {
   this.iframe_.focus();
   this.screen_.focus();
   this.publish('focus');
 };
 
+/**
+ * Unfocus the scrollport.
+ */
+hterm.ScrollPort.prototype.blur = function() {
+  this.screen_.blur();
+};
+
+/** @return {string} */
 hterm.ScrollPort.prototype.getForegroundColor = function() {
   return this.screen_.style.color;
 };
 
+/** @param {string} color */
 hterm.ScrollPort.prototype.setForegroundColor = function(color) {
   this.screen_.style.color = color;
   this.scrollUpButton_.style.backgroundColor = color;
   this.scrollDownButton_.style.backgroundColor = color;
 };
 
+/** @return {string} */
 hterm.ScrollPort.prototype.getBackgroundColor = function() {
   return this.screen_.style.backgroundColor;
 };
 
+/** @param {string} color */
 hterm.ScrollPort.prototype.setBackgroundColor = function(color) {
   this.screen_.style.backgroundColor = color;
   this.scrollUpButton_.style.color = color;
   this.scrollDownButton_.style.color = color;
 };
 
+/** @param {string} image */
 hterm.ScrollPort.prototype.setBackgroundImage = function(image) {
   this.screen_.style.backgroundImage = image;
 };
 
+/** @param {string} size */
 hterm.ScrollPort.prototype.setBackgroundSize = function(size) {
   this.screen_.style.backgroundSize = size;
 };
 
+/** @param {string} position */
 hterm.ScrollPort.prototype.setBackgroundPosition = function(position) {
   this.screen_.style.backgroundPosition = position;
-  if(position === "center") {
+  // muse.am added backgroud position additional parameters
+  if(position == "center") {
     this.screen_.style.backgroundSize = "cover";
     this.screen_.style.backgroundRepeat = "no-repeat";
-    this.screen_.style.backdropFilter = "blur(8px)";
+    // this.screen_.style.backdropFilter = "blur(8px)";
   }
 };
 
+/** @param {boolean} ctrlVPaste */
 hterm.ScrollPort.prototype.setCtrlVPaste = function(ctrlVPaste) {
   this.ctrlVPaste = ctrlVPaste;
 };
 
+/** @param {boolean} pasteOnDrop */
 hterm.ScrollPort.prototype.setPasteOnDrop = function(pasteOnDrop) {
   this.pasteOnDrop = pasteOnDrop;
 };
@@ -10924,9 +11770,11 @@ hterm.ScrollPort.prototype.setPasteOnDrop = function(pasteOnDrop) {
  * Get the usable size of the scrollport screen.
  *
  * The width will not include the scrollbar width.
+ *
+ * @return {{height: number, width: number}}
  */
 hterm.ScrollPort.prototype.getScreenSize = function() {
-  var size = hterm.getClientSize(this.screen_);
+  var size = hterm.getClientSize(lib.notNull(this.screen_));
   return {
     height: size.height,
     width: size.width - this.currentScrollbarWidthPx
@@ -10937,6 +11785,8 @@ hterm.ScrollPort.prototype.getScreenSize = function() {
  * Get the usable width of the scrollport screen.
  *
  * This the widget width minus scrollbar width.
+ *
+ * @return {number}
  */
 hterm.ScrollPort.prototype.getScreenWidth = function() {
   return this.getScreenSize().width ;
@@ -10944,6 +11794,8 @@ hterm.ScrollPort.prototype.getScreenWidth = function() {
 
 /**
  * Get the usable height of the scrollport screen.
+ *
+ * @return {number}
  */
 hterm.ScrollPort.prototype.getScreenHeight = function() {
   return this.getScreenSize().height;
@@ -10951,6 +11803,8 @@ hterm.ScrollPort.prototype.getScreenHeight = function() {
 
 /**
  * Return the document that holds the visible rows of this hterm.ScrollPort.
+ *
+ * @return {!Document}
  */
 hterm.ScrollPort.prototype.getDocument = function() {
   return this.document_;
@@ -10958,6 +11812,8 @@ hterm.ScrollPort.prototype.getDocument = function() {
 
 /**
  * Returns the x-screen element that holds the rows of this hterm.ScrollPort.
+ *
+ * @return {?Element}
  */
 hterm.ScrollPort.prototype.getScreenNode = function() {
   return this.screen_;
@@ -10976,8 +11832,8 @@ hterm.ScrollPort.prototype.resetCache = function() {
  *
  * This will clear the row cache and cause a redraw.
  *
- * @param {Object} rowProvider An object capable of providing the rows
- *     in this hterm.ScrollPort.
+ * @param {!hterm.RowProvider} rowProvider An object capable of providing the
+ *     rows in this hterm.ScrollPort.
  */
 hterm.ScrollPort.prototype.setRowProvider = function(rowProvider) {
   this.resetCache();
@@ -11013,6 +11869,9 @@ hterm.ScrollPort.prototype.invalidate = function() {
   this.drawVisibleRows_(topRowIndex, bottomRowIndex);
 };
 
+/**
+ * Schedule invalidate.
+ */
 hterm.ScrollPort.prototype.scheduleInvalidate = function() {
   if (this.timeouts_.invalidate)
     return;
@@ -11026,6 +11885,8 @@ hterm.ScrollPort.prototype.scheduleInvalidate = function() {
 
 /**
  * Set the font size of the ScrollPort.
+ *
+ * @param {number} px
  */
 hterm.ScrollPort.prototype.setFontSize = function(px) {
   this.screen_.style.fontSize = px + 'px';
@@ -11034,17 +11895,19 @@ hterm.ScrollPort.prototype.setFontSize = function(px) {
 
 /**
  * Return the current font size of the ScrollPort.
+ *
+ * @return {number}
  */
 hterm.ScrollPort.prototype.getFontSize = function() {
-  return parseInt(this.screen_.style.fontSize);
+  return parseInt(this.screen_.style.fontSize, 10);
 };
 
 /**
  * Measure the size of a single character in pixels.
  *
- * @param {string} opt_weight The font weight to measure, or 'normal' if
+ * @param {string=} opt_weight The font weight to measure, or 'normal' if
  *     omitted.
- * @return {hterm.Size} A new hterm.Size object.
+ * @return {!hterm.Size} A new hterm.Size object.
  */
 hterm.ScrollPort.prototype.measureCharacterSize = function(opt_weight) {
   // Number of lines used to average the height of a single character.
@@ -11115,8 +11978,8 @@ hterm.ScrollPort.prototype.syncCharacterSize = function() {
  * dimensions of the 'x-screen'.
  */
 hterm.ScrollPort.prototype.resize = function() {
-  this.currentScrollbarWidthPx = hterm.getClientWidth(this.screen_) -
-    this.screen_.clientWidth;
+  this.currentScrollbarWidthPx =
+    hterm.getClientWidth(lib.notNull(this.screen_)) - this.screen_.clientWidth;
 
   this.syncScrollHeight();
   this.syncRowNodesDimensions_();
@@ -11125,7 +11988,6 @@ hterm.ScrollPort.prototype.resize = function() {
   this.publish(
       'resize', { scrollPort: this },
       function() {
-        self.scrollRowToBottom(self.rowProvider_.getRowCount());
         self.scheduleRedraw();
       });
 };
@@ -11197,8 +12059,10 @@ hterm.ScrollPort.prototype.syncRowNodesDimensions_ = function() {
   this.rowNodes_.style.top = this.screen_.offsetTop - topFoldOffset + 'px';
 };
 
+/**
+ * Resize the scroll area to appear as though it contains every row.
+ */
 hterm.ScrollPort.prototype.syncScrollHeight = function() {
-  // Resize the scroll area to appear as though it contains every row.
   this.lastRowCount_ = this.rowProvider_.getRowCount();
   this.scrollArea_.style.height = (this.characterSize.height *
                                    this.lastRowCount_ +
@@ -11214,7 +12078,6 @@ hterm.ScrollPort.prototype.syncScrollHeight = function() {
  * run only one redraw occurs.
  */
 hterm.ScrollPort.prototype.scheduleRedraw = function() {
-  // console.error(new Error().stack);
   if (this.timeouts_.redraw)
     return;
 
@@ -11289,6 +12152,8 @@ hterm.ScrollPort.prototype.redraw_ = function() {
  * It is critical that this method does not move the selection nodes.  Doing
  * so would clear the current selection.  Instead, the rest of the DOM is
  * adjusted around them.
+ *
+ * @param {number} topRowIndex
  */
 hterm.ScrollPort.prototype.drawTopFold_ = function(topRowIndex) {
   if (!this.selection.startRow ||
@@ -11338,6 +12203,8 @@ hterm.ScrollPort.prototype.drawTopFold_ = function(topRowIndex) {
  * It is critical that this method does not move the selection nodes.  Doing
  * so would clear the current selection.  Instead, the rest of the DOM is
  * adjusted around them.
+ *
+ * @param {number} bottomRowIndex
  */
 hterm.ScrollPort.prototype.drawBottomFold_ = function(bottomRowIndex) {
   if (!this.selection.endRow ||
@@ -11388,6 +12255,9 @@ hterm.ScrollPort.prototype.drawBottomFold_ = function(bottomRowIndex) {
  * It is critical that this method does not move the selection nodes.  Doing
  * so would clear the current selection.  Instead, the rest of the DOM is
  * adjusted around them.
+ *
+ * @param {number} topRowIndex
+ * @param {number} bottomRowIndex
  */
 hterm.ScrollPort.prototype.drawVisibleRows_ = function(
     topRowIndex, bottomRowIndex) {
@@ -11484,8 +12354,6 @@ hterm.ScrollPort.prototype.drawVisibleRows_ = function(
     }
 
     this.rowNodes_.insertBefore(newNode, node);
-    if (!newNode.nextSibling)
-      debugger;
     this.rowNodes_.removeChild(node);
     node = newNode.nextSibling;
   }
@@ -11510,7 +12378,7 @@ hterm.ScrollPort.prototype.ariaHideOffscreenSelectionRows_ = function(
   // Reset previously hidden selection rows.
   const hiddenRows = this.ariaHiddenSelectionRows_;
   let row;
-  while (row = hiddenRows.pop()) {
+  while ((row = hiddenRows.pop())) {
     row.removeAttribute('aria-hidden');
   }
 
@@ -11547,13 +12415,11 @@ hterm.ScrollPort.prototype.resetSelectBags_ = function() {
  * Place a row node in the cache of visible nodes.
  *
  * This method may only be used during a redraw_.
+ *
+ * @param {!Node} rowNode
  */
 hterm.ScrollPort.prototype.cacheRowNode_ = function(rowNode) {
-  if(typeof rowNode !== "undefined") {
-    this.currentRowNodeCache_[rowNode.rowIndex] = rowNode;
-  } else {
-    console.error("rowNode is undefined");
-  }
+  this.currentRowNodeCache_[rowNode.rowIndex] = rowNode;
 };
 
 /**
@@ -11563,9 +12429,11 @@ hterm.ScrollPort.prototype.cacheRowNode_ = function(rowNode) {
  * from the RowProvider if not.
  *
  * If a redraw_ is in progress the row will be added to the current cache.
+ *
+ * @param {number} rowIndex
+ * @return {!Node}
  */
 hterm.ScrollPort.prototype.fetchRowNode_ = function(rowIndex) {
-  // console.warn(new Error().stack);
   var node;
 
   if (this.previousRowNodeCache_ && rowIndex in this.previousRowNodeCache_) {
@@ -11621,17 +12489,19 @@ hterm.ScrollPort.prototype.selectAll = function() {
 
 /**
  * Return the maximum scroll position in pixels.
+ *
+ * @return {number}
  */
-hterm.ScrollPort.prototype.getScrollMax_ = function(e) {
+hterm.ScrollPort.prototype.getScrollMax_ = function() {
   return (hterm.getClientHeight(this.scrollArea_) +
           this.visibleRowTopMargin + this.visibleRowBottomMargin -
-          hterm.getClientHeight(this.screen_));
+          hterm.getClientHeight(lib.notNull(this.screen_)));
 };
 
 /**
  * Scroll the given rowIndex to the top of the hterm.ScrollPort.
  *
- * @param {integer} rowIndex Index of the target row.
+ * @param {number} rowIndex Index of the target row.
  */
 hterm.ScrollPort.prototype.scrollRowToTop = function(rowIndex) {
   this.syncScrollHeight();
@@ -11656,7 +12526,7 @@ hterm.ScrollPort.prototype.scrollRowToTop = function(rowIndex) {
 /**
  * Scroll the given rowIndex to the bottom of the hterm.ScrollPort.
  *
- * @param {integer} rowIndex Index of the target row.
+ * @param {number} rowIndex Index of the target row.
  */
 hterm.ScrollPort.prototype.scrollRowToBottom = function(rowIndex) {
   this.syncScrollHeight();
@@ -11682,6 +12552,8 @@ hterm.ScrollPort.prototype.scrollRowToBottom = function(rowIndex) {
  *
  * This is based on the scroll position.  If a redraw_ is in progress this
  * returns the row that *should* be at the top.
+ *
+ * @return {number}
  */
 hterm.ScrollPort.prototype.getTopRowIndex = function() {
   return Math.round(this.screen_.scrollTop / this.characterSize.height);
@@ -11692,6 +12564,9 @@ hterm.ScrollPort.prototype.getTopRowIndex = function() {
  *
  * This is based on the scroll position.  If a redraw_ is in progress this
  * returns the row that *should* be at the bottom.
+ *
+ * @param {number} topRowIndex
+ * @return {number}
  */
 hterm.ScrollPort.prototype.getBottomRowIndex = function(topRowIndex) {
   return topRowIndex + this.visibleRowCount - 1;
@@ -11702,6 +12577,8 @@ hterm.ScrollPort.prototype.getBottomRowIndex = function(topRowIndex) {
  *
  * The onScroll event fires when scrollArea's scrollTop property changes.  This
  * may be due to the user manually move the scrollbar, or a programmatic change.
+ *
+ * @param {!Event} e
  */
 hterm.ScrollPort.prototype.onScroll_ = function(e) {
   var screenSize = this.getScreenSize();
@@ -11725,6 +12602,8 @@ hterm.ScrollPort.prototype.onScroll_ = function(e) {
  *
  * Clients may call event.preventDefault() if they want to keep the scrollport
  * from also handling the events.
+ *
+ * @param {!WheelEvent} e
  */
 hterm.ScrollPort.prototype.onScrollWheel = function(e) {};
 
@@ -11735,6 +12614,8 @@ hterm.ScrollPort.prototype.onScrollWheel = function(e) {};
  * hterm.ScrollPort.  Because the frontmost element in the hterm.ScrollPort is
  * a fixed position DIV, the scroll wheel does nothing by default.  Instead, we
  * have to handle it manually.
+ *
+ * @param {!WheelEvent} e
  */
 hterm.ScrollPort.prototype.onScrollWheel_ = function(e) {
   this.onScrollWheel(e);
@@ -11774,8 +12655,8 @@ hterm.ScrollPort.prototype.onScrollWheel_ = function(e) {
  * This normalizes the browser's concept of a scroll (pixels, lines, etc...)
  * into a standard pixel distance.
  *
- * @param {WheelEvent} e The mouse wheel event to process.
- * @return {Object} The x & y of how far (in pixels) to scroll.
+ * @param {!WheelEvent} e The mouse wheel event to process.
+ * @return {{x:number, y:number}} The x & y of how far (in pixels) to scroll.
  */
 hterm.ScrollPort.prototype.scrollWheelDelta = function(e) {
   const delta = {x: 0, y: 0};
@@ -11790,8 +12671,10 @@ hterm.ScrollPort.prototype.scrollWheelDelta = function(e) {
       delta.y = e.deltaY * this.characterSize.height;
       break;
     case WheelEvent.DOM_DELTA_PAGE:
-      delta.x = e.deltaX * this.characterSize.width * this.screen_.getWidth();
-      delta.y = e.deltaY * this.characterSize.height * this.screen_.getHeight();
+      delta.x = e.deltaX * this.characterSize.width *
+          hterm.getClientWidth(lib.notNull(this.screen_));
+      delta.y = e.deltaY * this.characterSize.height *
+          hterm.getClientHeight(lib.notNull(this.screen_));
       break;
   }
 
@@ -11803,17 +12686,20 @@ hterm.ScrollPort.prototype.scrollWheelDelta = function(e) {
   return delta;
 };
 
-
 /**
  * Clients can override this if they want to hear touch events.
  *
  * Clients may call event.preventDefault() if they want to keep the scrollport
  * from also handling the events.
+ *
+ * @param {!TouchEvent} e
  */
 hterm.ScrollPort.prototype.onTouch = function(e) {};
 
 /**
  * Handler for touch events.
+ *
+ * @param {!TouchEvent} e
  */
 hterm.ScrollPort.prototype.onTouch_ = function(e) {
   this.onTouch(e);
@@ -11897,10 +12783,11 @@ hterm.ScrollPort.prototype.onTouch_ = function(e) {
  *
  * The browser will resize us such that the top row stays at the top, but we
  * prefer to the bottom row to stay at the bottom.
+ *
+ * @param {!FocusEvent} e
  */
 hterm.ScrollPort.prototype.onResize_ = function(e) {
   // Re-measure, since onResize also happens for browser zoom changes.
-  // console.log(e);
   this.syncCharacterSize();
 };
 
@@ -11909,6 +12796,8 @@ hterm.ScrollPort.prototype.onResize_ = function(e) {
  *
  * Clients may call event.preventDefault() if they want to keep the scrollport
  * from also handling the events.
+ *
+ * @param {!ClipboardEvent} e
  */
 hterm.ScrollPort.prototype.onCopy = function(e) { };
 
@@ -11919,6 +12808,8 @@ hterm.ScrollPort.prototype.onCopy = function(e) { };
  * the rows between selection start and selection end.  This handler determines
  * if we're missing some of the selected text, and if so populates one or both
  * of the "select bags" with the missing text.
+ *
+ * @param {!ClipboardEvent} e
  */
 hterm.ScrollPort.prototype.onCopy_ = function(e) {
   this.onCopy(e);
@@ -11977,6 +12868,8 @@ hterm.ScrollPort.prototype.onCopy_ = function(e) {
 /**
  * Focuses on the paste target on a ctrl-v keydown event, as in
  * FF a content editable element must be focused before the paste event.
+ *
+ * @param {!KeyboardEvent} e
  */
 hterm.ScrollPort.prototype.onBodyKeyDown_ = function(e) {
   if (!this.ctrlVPaste)
@@ -11990,6 +12883,8 @@ hterm.ScrollPort.prototype.onBodyKeyDown_ = function(e) {
  * Handle a paste event on the the ScrollPort's screen element.
  *
  * TODO: Handle ClipboardData.files transfers.  https://crbug.com/433581.
+ *
+ * @param {!ClipboardEvent} e
  */
 hterm.ScrollPort.prototype.onPaste_ = function(e) {
   this.pasteTarget_.focus();
@@ -12005,6 +12900,8 @@ hterm.ScrollPort.prototype.onPaste_ = function(e) {
 /**
  * Handles a textInput event on the paste target. Stops this from
  * propagating as we want this to be handled in the onPaste_ method.
+ *
+ * @param {!Event} e
  */
 hterm.ScrollPort.prototype.handlePasteTargetTextInput_ = function(e) {
   e.stopPropagation();
@@ -12018,7 +12915,7 @@ hterm.ScrollPort.prototype.handlePasteTargetTextInput_ = function(e) {
  *
  * TODO: Handle DataTransfer.files transfers.  https://crbug.com/433581.
  *
- * @param {DragEvent} e The drag event that fired us.
+ * @param {!DragEvent} e The drag event that fired us.
  */
 hterm.ScrollPort.prototype.onDragAndDrop_ = function(e) {
   if (!this.pasteOnDrop)
@@ -12052,6 +12949,8 @@ hterm.ScrollPort.prototype.onDragAndDrop_ = function(e) {
 
 /**
  * Set the vertical scrollbar mode of the ScrollPort.
+ *
+ * @param {boolean} state
  */
 hterm.ScrollPort.prototype.setScrollbarVisible = function(state) {
   this.screen_.style.overflowY = state ? 'scroll' : 'hidden';
@@ -12060,6 +12959,8 @@ hterm.ScrollPort.prototype.setScrollbarVisible = function(state) {
 /**
  * Set scroll wheel multiplier. This alters how much the screen scrolls on
  * mouse wheel events.
+ *
+ * @param {number} multiplier
  */
 hterm.ScrollPort.prototype.setScrollWheelMoveMultipler = function(multiplier) {
   this.scrollWheelMultiplier_ = multiplier;
@@ -12086,11 +12987,16 @@ hterm.ScrollPort.prototype.setScrollWheelMoveMultipler = function(multiplier) {
  * displayed twice as wide as standard latin characters.  This is to support
  * CJK (and possibly other character sets).
  *
- * @param {string} opt_profileId Optional preference profile name.  If not
- *     provided, defaults to 'default'.
+ * @param {?string=} profileId Optional preference profile name.  If not
+ *     provided or null, defaults to 'default'.
+ * @constructor
+ * @implements {hterm.RowProvider}
  */
-hterm.Terminal = function(opt_profileId) {
+hterm.Terminal = function(profileId) {
   this.profileId_ = null;
+
+  /** @type {?hterm.PreferenceManager} */
+  this.prefs_ = null;
 
   // Two screen instances.
   this.primaryScreen_ = new hterm.Screen();
@@ -12145,14 +13051,19 @@ hterm.Terminal = function(opt_profileId) {
   // Cursor blink on/off cycle in ms, overwritten by prefs once they're loaded.
   this.cursorBlinkCycle_ = [100, 100];
 
+  // Whether to temporarily disable blinking.
+  this.cursorBlinkPause_ = false;
+
   // Pre-bound onCursorBlink_ handler, so we don't have to do this for each
   // cursor on/off servicing.
   this.myOnCursorBlink_ = this.onCursorBlink_.bind(this);
 
   // These prefs are cached so we don't have to read from local storage with
   // each output and keystroke.  They are initialized by the preference manager.
-  this.backgroundColor_ = null;
-  this.foregroundColor_ = null;
+  /** @type {string} */
+  this.backgroundColor_ = '';
+  /** @type {string} */
+  this.foregroundColor_ = '';
   this.scrollOnOutput_ = null;
   this.scrollOnKeystroke_ = null;
   this.scrollWheelArrowKeys_ = null;
@@ -12179,6 +13090,7 @@ hterm.Terminal = function(opt_profileId) {
   // All terminal bell notifications that have been generated (not necessarily
   // shown).
   this.bellNotificationList_ = [];
+  this.bellSquelchTimeout_ = null;
 
   // Whether we have permission to display notifications.
   this.desktopNotificationBell_ = false;
@@ -12224,7 +13136,7 @@ hterm.Terminal = function(opt_profileId) {
 
   this.reportFocus = false;
 
-  this.setProfile(opt_profileId || 'default',
+  this.setProfile(profileId || 'default',
                   function() { this.onTerminalReady(); }.bind(this));
 };
 
@@ -12259,11 +13171,10 @@ hterm.Terminal.prototype.tabWidth = 8;
  *
  * @param {string} profileId The name of the preference profile.  Forward slash
  *     characters will be removed from the name.
- * @param {function} opt_callback Optional callback to invoke when the profile
- *     transition is complete.
+ * @param {function()=} opt_callback Optional callback to invoke when the
+ *     profile transition is complete.
  */
 hterm.Terminal.prototype.setProfile = function(profileId, opt_callback) {
-  // console.log(new Error().stack);
   this.profileId_ = profileId.replace(/\//g, '');
 
   var terminal = this;
@@ -12403,7 +13314,7 @@ hterm.Terminal.prototype.setProfile = function(profileId, opt_callback) {
 
       if (v) {
         for (var key in v) {
-          var i = parseInt(key);
+          var i = parseInt(key, 10);
           if (isNaN(i) || i < 0 || i > 255) {
             console.log('Invalid value in palette: ' + key + ': ' + v[key]);
             continue;
@@ -12488,7 +13399,7 @@ hterm.Terminal.prototype.setProfile = function(profileId, opt_callback) {
     },
 
     'font-size': function(v) {
-      v = parseInt(v);
+      v = parseInt(v, 10);
       if (v <= 0) {
         console.error(`Invalid font size: ${v}`);
         return;
@@ -12658,14 +13569,13 @@ hterm.Terminal.prototype.setProfile = function(profileId, opt_callback) {
   }.bind(this));
 };
 
-
 /**
  * Returns the preferences manager used for configuring this terminal.
  *
- * @return {hterm.PreferenceManager}
+ * @return {!hterm.PreferenceManager}
  */
 hterm.Terminal.prototype.getPrefs = function() {
-  return this.prefs_;
+  return lib.notNull(this.prefs_);
 };
 
 /**
@@ -12688,13 +13598,14 @@ hterm.Terminal.prototype.setBracketedPaste = function(state) {
  */
 hterm.Terminal.prototype.setCursorColor = function(color) {
   if (color === undefined)
-    color = this.prefs_.get('cursor-color');
+    color = this.prefs_.getString('cursor-color');
 
   this.setCssVar('cursor-color', color);
 };
 
 /**
  * Return the current cursor color as a string.
+ *
  * @return {string}
  */
 hterm.Terminal.prototype.getCursorColor = function() {
@@ -12721,9 +13632,9 @@ hterm.Terminal.prototype.setSelectionEnabled = function(state) {
  */
 hterm.Terminal.prototype.setBackgroundColor = function(color) {
   if (color === undefined)
-    color = this.prefs_.get('background-color');
+    color = this.prefs_.getString('background-color');
 
-  this.backgroundColor_ = lib.colors.normalizeCSS(color);
+  this.backgroundColor_ = lib.colors.normalizeCSS(color) || '';
   this.primaryScreen_.textAttributes.setDefaults(
       this.foregroundColor_, this.backgroundColor_);
   this.alternateScreen_.textAttributes.setDefaults(
@@ -12740,7 +13651,7 @@ hterm.Terminal.prototype.setBackgroundColor = function(color) {
  * @return {string}
  */
 hterm.Terminal.prototype.getBackgroundColor = function() {
-  return this.backgroundColor_;
+  return lib.notNull(this.backgroundColor_);
 };
 
 /**
@@ -12754,9 +13665,9 @@ hterm.Terminal.prototype.getBackgroundColor = function() {
  */
 hterm.Terminal.prototype.setForegroundColor = function(color) {
   if (color === undefined)
-    color = this.prefs_.get('foreground-color');
+    color = this.prefs_.getString('foreground-color');
 
-  this.foregroundColor_ = lib.colors.normalizeCSS(color);
+  this.foregroundColor_ = lib.colors.normalizeCSS(color) || '';
   this.primaryScreen_.textAttributes.setDefaults(
       this.foregroundColor_, this.backgroundColor_);
   this.alternateScreen_.textAttributes.setDefaults(
@@ -12773,29 +13684,34 @@ hterm.Terminal.prototype.setForegroundColor = function(color) {
  * @return {string}
  */
 hterm.Terminal.prototype.getForegroundColor = function() {
-  return this.foregroundColor_;
+  return lib.notNull(this.foregroundColor_);
 };
 
 /**
  * Create a new instance of a terminal command and run it with a given
  * argument string.
  *
- * @param {function} commandClass The constructor for a terminal command.
- * @param {string} argString The argument string to pass to the command.
+ * @param {!Function} commandClass The constructor for a terminal command.
+ * @param {string} commandName The command to run for this terminal.
+ * @param {!Array<string>} args The arguments to pass to the command.
  */
-hterm.Terminal.prototype.runCommandClass = function(commandClass, argString) {
+hterm.Terminal.prototype.runCommandClass = function(
+    commandClass, commandName, args) {
   var environment = this.prefs_.get('environment');
   if (typeof environment != 'object' || environment == null)
     environment = {};
 
   var self = this;
   this.command = new commandClass(
-      { argString: argString || '',
+      {
+        commandName: commandName,
+        args: args,
         io: this.io.push(),
         environment: environment,
         onExit: function(code) {
           self.io.pop();
           self.uninstallKeyboard();
+          self.div_.dispatchEvent(new CustomEvent('terminal-closing'));
           if (self.prefs_.get('close-on-exit'))
               window.close();
         }
@@ -12837,13 +13753,13 @@ hterm.Terminal.prototype.uninstallKeyboard = function() {
  * Normally this is used to set variables in the hterm namespace.
  *
  * @param {string} name The variable to set.
- * @param {string} value The value to assign to the variable.
- * @param {string?} opt_prefix The variable namespace/prefix to use.
+ * @param {string|number} value The value to assign to the variable.
+ * @param {string=} opt_prefix The variable namespace/prefix to use.
  */
 hterm.Terminal.prototype.setCssVar = function(name, value,
                                               opt_prefix='--hterm-') {
   this.document_.documentElement.style.setProperty(
-      `${opt_prefix}${name}`, value);
+      `${opt_prefix}${name}`, value.toString());
 };
 
 /**
@@ -12852,7 +13768,7 @@ hterm.Terminal.prototype.setCssVar = function(name, value,
  * Normally this is used to get variables in the hterm namespace.
  *
  * @param {string} name The variable to read.
- * @param {string?} opt_prefix The variable namespace/prefix to use.
+ * @param {string=} opt_prefix The variable namespace/prefix to use.
  * @return {string} The current setting for this variable.
  */
 hterm.Terminal.prototype.getCssVar = function(name, opt_prefix='--hterm-') {
@@ -12871,7 +13787,7 @@ hterm.Terminal.prototype.getCssVar = function(name, opt_prefix='--hterm-') {
  */
 hterm.Terminal.prototype.setFontSize = function(px) {
   if (px <= 0)
-    px = this.prefs_.get('font-size');
+    px = this.prefs_.getNumber('font-size');
 
   this.scrollPort_.setFontSize(px);
   this.setCssVar('charsize-width', this.scrollPort_.characterSize.width + 'px');
@@ -12901,8 +13817,8 @@ hterm.Terminal.prototype.getFontFamily = function() {
  * Set the CSS "font-family" for this terminal.
  */
 hterm.Terminal.prototype.syncFontFamily = function() {
-  this.scrollPort_.setFontFamily(this.prefs_.get('font-family'),
-                                 this.prefs_.get('font-smoothing'));
+  this.scrollPort_.setFontFamily(this.prefs_.getString('font-family'),
+                                 this.prefs_.getString('font-smoothing'));
   this.syncBoldSafeState();
 };
 
@@ -12957,7 +13873,7 @@ hterm.Terminal.prototype.syncBoldSafeState = function() {
  */
 hterm.Terminal.prototype.setTextBlink = function(state) {
   if (state === undefined)
-    state = this.prefs_.get('enable-blink');
+    state = this.prefs_.getBoolean('enable-blink');
   this.setCssVar('blink-node-duration', state ? '0.7s' : '0');
 };
 
@@ -12974,7 +13890,7 @@ hterm.Terminal.prototype.syncMouseStyle = function() {
 /**
  * Return a copy of the current cursor position.
  *
- * @return {hterm.RowCol} The RowCol object representing the current position.
+ * @return {!hterm.RowCol} The RowCol object representing the current position.
  */
 hterm.Terminal.prototype.saveCursor = function() {
   return this.screen_.cursorPosition.clone();
@@ -12983,7 +13899,7 @@ hterm.Terminal.prototype.saveCursor = function() {
 /**
  * Return the current text attributes.
  *
- * @return {string}
+ * @return {!hterm.TextAttributes}
  */
 hterm.Terminal.prototype.getTextAttributes = function() {
   return this.screen_.textAttributes;
@@ -12992,7 +13908,7 @@ hterm.Terminal.prototype.getTextAttributes = function() {
 /**
  * Set the text attributes.
  *
- * @param {string} textAttributes The attributes to set.
+ * @param {!hterm.TextAttributes} textAttributes The attributes to set.
  */
 hterm.Terminal.prototype.setTextAttributes = function(textAttributes) {
   this.screen_.textAttributes = textAttributes;
@@ -13013,14 +13929,13 @@ hterm.Terminal.prototype.getZoomFactor = function() {
  * @param {string} title The title to set.
  */
 hterm.Terminal.prototype.setWindowTitle = function(title) {
-  // admin.tools: cannot manipulate window or document level directly
-  // window.document.title = title;
+  window.document.title = title;
 };
 
 /**
  * Restore a previously saved cursor position.
  *
- * @param {hterm.RowCol} cursor The position to restore.
+ * @param {!hterm.RowCol} cursor The position to restore.
  */
 hterm.Terminal.prototype.restoreCursor = function(cursor) {
   var row = lib.f.clamp(cursor.row, 0, this.screenSize.height - 1);
@@ -13093,10 +14008,9 @@ hterm.Terminal.prototype.getCursorShape = function() {
 /**
  * Set the width of the terminal, resizing the UI to match.
  *
- * @param {number} columnCount
+ * @param {?number} columnCount
  */
 hterm.Terminal.prototype.setWidth = function(columnCount) {
-  // console.log("terminal setwidth function called: ", columnCount);
   if (columnCount == null) {
     this.div_.style.width = '100%';
     return;
@@ -13112,7 +14026,7 @@ hterm.Terminal.prototype.setWidth = function(columnCount) {
 /**
  * Set the height of the terminal, resizing the UI to match.
  *
- * @param {number} rowCount The height in rows.
+ * @param {?number} rowCount The height in rows.
  */
 hterm.Terminal.prototype.setHeight = function(rowCount) {
   if (rowCount == null) {
@@ -13133,14 +14047,22 @@ hterm.Terminal.prototype.setHeight = function(rowCount) {
  * @param {number} rowCount The number of rows.
  */
 hterm.Terminal.prototype.realizeSize_ = function(columnCount, rowCount) {
-  if (columnCount != this.screenSize.width)
-    this.realizeWidth_(columnCount);
+  let notify = false;
 
-  if (rowCount != this.screenSize.height)
+  if (columnCount != this.screenSize.width) {
+    notify = true;
+    this.realizeWidth_(columnCount);
+  }
+
+  if (rowCount != this.screenSize.height) {
+    notify = true;
     this.realizeHeight_(rowCount);
+  }
 
   // Send new terminal size to plugin.
-  this.io.onTerminalResize_(columnCount, rowCount);
+  if (notify) {
+    this.io.onTerminalResize_(columnCount, rowCount);
+  }
 };
 
 /**
@@ -13161,6 +14083,10 @@ hterm.Terminal.prototype.realizeWidth_ = function(columnCount) {
     throw new Error('Attempt to realize bad width: ' + columnCount);
 
   var deltaColumns = columnCount - this.screen_.getWidth();
+  if (deltaColumns == 0) {
+    // No change, so don't bother recalculating things.
+    return;
+  }
 
   this.screenSize.width = columnCount;
   this.screen_.setColumnCount(columnCount);
@@ -13198,6 +14124,10 @@ hterm.Terminal.prototype.realizeHeight_ = function(rowCount) {
     throw new Error('Attempt to realize bad height: ' + rowCount);
 
   var deltaRows = rowCount - this.screen_.getHeight();
+  if (deltaRows == 0) {
+    // No change, so don't bother recalculating things.
+    return;
+  }
 
   this.screenSize.height = rowCount;
 
@@ -13425,7 +14355,7 @@ hterm.Terminal.prototype.backwardTabStop = function() {
 /**
  * Set a tab stop at the given column.
  *
- * @param {integer} column Zero based column.
+ * @param {number} column Zero based column.
  */
 hterm.Terminal.prototype.setTabStop = function(column) {
   for (var i = this.tabStops_.length - 1; i >= 0; i--) {
@@ -13474,8 +14404,8 @@ hterm.Terminal.prototype.clearAllTabStops = function() {
  * This does not clear the existing tab stops first, use clearAllTabStops
  * for that.
  *
- * @param {integer} opt_start Optional starting zero based starting column, useful
- *     for filling out missing tab stops when the terminal is resized.
+ * @param {number=} opt_start Optional starting zero based starting column,
+ *     useful for filling out missing tab stops when the terminal is resized.
  */
 hterm.Terminal.prototype.setDefaultTabStops = function(opt_start) {
   var start = opt_start || 0;
@@ -13504,7 +14434,7 @@ hterm.Terminal.prototype.interpret = function(str) {
 /**
  * Take over the given DIV for use as the terminal display.
  *
- * @param {HTMLDivElement} div The div to use as the terminal display.
+ * @param {!Element} div The div to use as the terminal display.
  */
 hterm.Terminal.prototype.decorate = function(div) {
   const charset = div.ownerDocument.characterSet.toLowerCase();
@@ -13523,25 +14453,28 @@ hterm.Terminal.prototype.decorate = function(div) {
 /**
  * Initialisation of ScrollPort properties which need to be set after its DOM
  * has been initialised.
+ *
  * @private
  */
 hterm.Terminal.prototype.setupScrollPort_ = function() {
-  this.scrollPort_.setBackgroundImage(this.prefs_.get('background-image'));
-  this.scrollPort_.setBackgroundSize(this.prefs_.get('background-size'));
+  this.scrollPort_.setBackgroundImage(
+      this.prefs_.getString('background-image'));
+  this.scrollPort_.setBackgroundSize(this.prefs_.getString('background-size'));
   this.scrollPort_.setBackgroundPosition(
-      this.prefs_.get('background-position'));
-  this.scrollPort_.setUserCssUrl(this.prefs_.get('user-css'));
-  this.scrollPort_.setUserCssText(this.prefs_.get('user-css-text'));
-  this.scrollPort_.setAccessibilityReader(this.accessibilityReader_);
+      this.prefs_.getString('background-position'));
+  this.scrollPort_.setUserCssUrl(this.prefs_.getString('user-css'));
+  this.scrollPort_.setUserCssText(this.prefs_.getString('user-css-text'));
+  this.scrollPort_.setAccessibilityReader(
+      lib.notNull(this.accessibilityReader_));
 
   this.div_.focus = this.focus.bind(this);
 
-  this.setFontSize(this.prefs_.get('font-size'));
+  this.setFontSize(this.prefs_.getNumber('font-size'));
   this.syncFontFamily();
 
-  this.setScrollbarVisible(this.prefs_.get('scrollbar-visible'));
+  this.setScrollbarVisible(this.prefs_.getBoolean('scrollbar-visible'));
   this.setScrollWheelMoveMultipler(
-      this.prefs_.get('scroll-wheel-move-multiplier'));
+      this.prefs_.getNumber('scroll-wheel-move-multiplier'));
 
   this.document_ = this.scrollPort_.getDocument();
   this.accessibilityReader_.decorate(this.document_);
@@ -13551,12 +14484,17 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
 
   var onMouse = this.onMouse_.bind(this);
   var screenNode = this.scrollPort_.getScreenNode();
-  screenNode.addEventListener('mousedown', onMouse);
-  screenNode.addEventListener('mouseup', onMouse);
-  screenNode.addEventListener('mousemove', onMouse);
+  screenNode.addEventListener(
+      'mousedown', /** @type {!EventListener} */ (onMouse));
+  screenNode.addEventListener(
+      'mouseup', /** @type {!EventListener} */ (onMouse));
+  screenNode.addEventListener(
+      'mousemove', /** @type {!EventListener} */ (onMouse));
   this.scrollPort_.onScrollWheel = onMouse;
 
-  screenNode.addEventListener('keydown', this.onKeyboardActivity_.bind(this));
+  screenNode.addEventListener(
+      'keydown',
+      /** @type {!EventListener} */ (this.onKeyboardActivity_.bind(this)));
 
   screenNode.addEventListener(
       'focus', this.onFocusChange_.bind(this, true));
@@ -13570,65 +14508,65 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
       'blur', this.onFocusChange_.bind(this, false));
 
   var style = this.document_.createElement('style');
-  style.textContent =
-      ('.cursor-node[focus="false"] {' +
-       '  box-sizing: border-box;' +
-       '  background-color: transparent !important;' +
-       '  border-width: 2px;' +
-       '  border-style: solid;' +
-       '}' +
-       'menu {' +
-       '  margin: 0;' +
-       '  padding: 0;' +
-       '  cursor: var(--hterm-mouse-cursor-pointer);' +
-       '}' +
-       'menuitem {' +
-       '  white-space: nowrap;' +
-       '  border-bottom: 1px dashed;' +
-       '  display: block;' +
-       '  padding: 0.3em 0.3em 0 0.3em;' +
-       '}' +
-       'menuitem.separator {' +
-       '  border-bottom: none;' +
-       '  height: 0.5em;' +
-       '  padding: 0;' +
-       '}' +
-       'menuitem:hover {' +
-       '  color: var(--hterm-cursor-color);' +
-       '}' +
-       '.wc-node {' +
-       '  display: inline-block;' +
-       '  text-align: center;' +
-       '  width: calc(var(--hterm-charsize-width) * 2);' +
-       '  line-height: var(--hterm-charsize-height);' +
-       '}' +
-       ':root {' +
-       '  --hterm-charsize-width: ' + this.scrollPort_.characterSize.width + 'px;' +
-       '  --hterm-charsize-height: ' + this.scrollPort_.characterSize.height + 'px;' +
-       // Default position hides the cursor for when the window is initializing.
-       '  --hterm-cursor-offset-col: -1;' +
-       '  --hterm-cursor-offset-row: -1;' +
-       '  --hterm-blink-node-duration: 0.7s;' +
-       '  --hterm-mouse-cursor-default: default;' +
-       '  --hterm-mouse-cursor-text: text;' +
-       '  --hterm-mouse-cursor-pointer: pointer;' +
-       '  --hterm-mouse-cursor-style: var(--hterm-mouse-cursor-text);' +
-       '}' +
-       '.uri-node:hover {' +
-       '  text-decoration: underline;' +
-       '  cursor: var(--hterm-mouse-cursor-pointer);' +
-       '}' +
-       '@keyframes blink {' +
-       '  from { opacity: 1.0; }' +
-       '  to { opacity: 0.0; }' +
-       '}' +
-       '.blink-node {' +
-       '  animation-name: blink;' +
-       '  animation-duration: var(--hterm-blink-node-duration);' +
-       '  animation-iteration-count: infinite;' +
-       '  animation-timing-function: ease-in-out;' +
-       '  animation-direction: alternate;' +
-       '}');
+  style.textContent = `
+.cursor-node[focus="false"] {
+  box-sizing: border-box;
+  background-color: transparent !important;
+  border-width: 2px;
+  border-style: solid;
+}
+menu {
+  margin: 0;
+  padding: 0;
+  cursor: var(--hterm-mouse-cursor-pointer);
+}
+menuitem {
+  white-space: nowrap;
+  border-bottom: 1px dashed;
+  display: block;
+  padding: 0.3em 0.3em 0 0.3em;
+}
+menuitem.separator {
+  border-bottom: none;
+  height: 0.5em;
+  padding: 0;
+}
+menuitem:hover {
+  color: var(--hterm-cursor-color);
+}
+.wc-node {
+  display: inline-block;
+  text-align: center;
+  width: calc(var(--hterm-charsize-width) * 2);
+  line-height: var(--hterm-charsize-height);
+}
+:root {
+  --hterm-charsize-width: ${this.scrollPort_.characterSize.width}px;
+  --hterm-charsize-height: ${this.scrollPort_.characterSize.height}px;
+  /* Default position hides the cursor for when the window is initializing. */
+  --hterm-cursor-offset-col: -1;
+  --hterm-cursor-offset-row: -1;
+  --hterm-blink-node-duration: 0.7s;
+  --hterm-mouse-cursor-default: default;
+  --hterm-mouse-cursor-text: text;
+  --hterm-mouse-cursor-pointer: pointer;
+  --hterm-mouse-cursor-style: var(--hterm-mouse-cursor-text);
+}
+.uri-node:hover {
+  text-decoration: underline;
+  cursor: var(--hterm-mouse-cursor-pointer);
+}
+@keyframes blink {
+  from { opacity: 1.0; }
+  to { opacity: 0.0; }
+}
+.blink-node {
+  animation-name: blink;
+  animation-duration: var(--hterm-blink-node-duration);
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  animation-direction: alternate;
+}`;
   // Insert this stock style as the first node so that any user styles will
   // override w/out having to use !important everywhere.  The rules above mix
   // runtime variables with default ones designed to be overridden by the user,
@@ -13636,32 +14574,42 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
   // way to split the sheet up to before & after the user-css settings.
   this.document_.head.insertBefore(style, this.document_.head.firstChild);
 
-  // admin.tools: adding stylesheets FIXME: make it a method to take more stylesheets
-  var link = this.document_.createElement('link');
-  link.id = 'font-styles';
-  link.rel = 'stylesheet';
-  link.type = 'text/css';
-  link.href = '../styles/fonts/fonts.css';
-  link.media = 'all';
-  link.nonce = 'ZXh0ZXJuYWwgc2NyaXB0cw==';
-  this.document_.head.appendChild(link);
+  // muse.am: adding stylesheets FIXME: make it a method to take more stylesheets
+  let fontCSSLink = this.document_.createElement('link');
+  fontCSSLink.id = 'font-styles';
+  fontCSSLink.rel = 'stylesheet';
+  fontCSSLink.type = 'text/css';
+  fontCSSLink.href = '../styles/fonts.css';
+  fontCSSLink.media = 'all';
+  fontCSSLink.nonce = 'ZXh0ZXJuYWwgc2NyaXB0cw==';
+  this.document_.head.appendChild(fontCSSLink);
+
+  // muse.am: adding stylesheets FIXME: make it a method to take more stylesheets
+  let museTerminalCSS = this.document_.createElement('link');
+  museTerminalCSS.id = 'font-styles';
+  museTerminalCSS.rel = 'stylesheet';
+  museTerminalCSS.type = 'text/css';
+  museTerminalCSS.href = '../styles/muse-terminal.css';
+  museTerminalCSS.media = 'all';
+  museTerminalCSS.nonce = 'ZXh0ZXJuYWwgc2NyaXB0cw==';
+  this.document_.head.appendChild(museTerminalCSS);
 
 
 
   this.cursorNode_ = this.document_.createElement('div');
   this.cursorNode_.id = 'hterm:terminal-cursor';
   this.cursorNode_.className = 'cursor-node';
-  this.cursorNode_.style.cssText =
-      ('position: absolute;' +
-       'left: calc(var(--hterm-charsize-width) * var(--hterm-cursor-offset-col));' +
-       'top: calc(var(--hterm-charsize-height) * var(--hterm-cursor-offset-row));' +
-       'display: ' + (this.options_.cursorVisible ? '' : 'none') + ';' +
-       'width: var(--hterm-charsize-width);' +
-       'height: var(--hterm-charsize-height);' +
-       'background-color: var(--hterm-cursor-color);' +
-       'border-color: var(--hterm-cursor-color);' +
-       '-webkit-transition: opacity, background-color 100ms linear;' +
-       '-moz-transition: opacity, background-color 100ms linear;');
+  this.cursorNode_.style.cssText = `
+position: absolute;
+left: calc(var(--hterm-charsize-width) * var(--hterm-cursor-offset-col));
+top: calc(var(--hterm-charsize-height) * var(--hterm-cursor-offset-row));
+display: ${this.options_.cursorVisible ? '' : 'none'};
+width: var(--hterm-charsize-width);
+height: var(--hterm-charsize-height);
+background-color: var(--hterm-cursor-color);
+border-color: var(--hterm-cursor-color);
+-webkit-transition: opacity, background-color 100ms linear;
+-moz-transition: opacity, background-color 100ms linear;`;
 
   this.setCursorColor();
   this.setCursorBlink(!!this.prefs_.get('cursor-blink'));
@@ -13691,8 +14639,10 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
   ['mousedown', 'mouseup', 'mousemove', 'click', 'dblclick',
    ].forEach(function(event) {
        this.scrollBlockerNode_.addEventListener(event, onMouse);
-       this.cursorNode_.addEventListener(event, onMouse);
-       this.document_.addEventListener(event, onMouse);
+       this.cursorNode_.addEventListener(
+           event, /** @type {!EventListener} */ (onMouse));
+       this.document_.addEventListener(
+           event, /** @type {!EventListener} */ (onMouse));
      }.bind(this));
 
   this.cursorNode_.addEventListener('mousedown', function() {
@@ -13708,7 +14658,7 @@ hterm.Terminal.prototype.setupScrollPort_ = function() {
 /**
  * Return the HTML document that contains the terminal DOM nodes.
  *
- * @return {HTMLDocument}
+ * @return {!Document}
  */
 hterm.Terminal.prototype.getDocument = function() {
   return this.document_;
@@ -13722,6 +14672,13 @@ hterm.Terminal.prototype.focus = function() {
 };
 
 /**
+ * Unfocus the terminal.
+ */
+hterm.Terminal.prototype.blur = function() {
+  this.scrollPort_.blur();
+};
+
+/**
  * Return the HTML Element for a given row index.
  *
  * This is a method from the RowProvider interface.  The ScrollPort uses
@@ -13730,20 +14687,13 @@ hterm.Terminal.prototype.focus = function() {
  * TODO(rginda): Consider saving scrollback rows as (HTML source, text content)
  * pairs to conserve memory.
  *
- * @param {integer} index The zero-based row index, measured relative to the
+ * @param {number} index The zero-based row index, measured relative to the
  *     start of the scrollback buffer.  On-screen rows will always have the
  *     largest indices.
- * @return {HTMLElement} The 'x-row' element containing for the requested row.
+ * @return {!Element} The 'x-row' element containing for the requested row.
+ * @override
  */
 hterm.Terminal.prototype.getRowNode = function(index) {
-  // console.log("index: ", index);
-  // console.log("this.scrollbackRows_ length", this.scrollbackRows_.length)
-  // console.log("if index < this.scrollbackRows_.length, then return scrollbackrows_[index]", this.scrollbackRows_[index]);
-  //
-  // var screenIndex2 = index - this.scrollbackRows_.length;
-  // console.log("screenIndex", screenIndex2);
-  // console.log("rowsArray of screenIndex: ", this.screen_.rowsArray[screenIndex2]);
-
   if (index < this.scrollbackRows_.length)
     return this.scrollbackRows_[index];
 
@@ -13758,10 +14708,10 @@ hterm.Terminal.prototype.getRowNode = function(index) {
  * it to fetch text content on demand when the user attempts to copy their
  * selection to the clipboard.
  *
- * @param {integer} start The zero-based row index to start from, measured
+ * @param {number} start The zero-based row index to start from, measured
  *     relative to the start of the scrollback buffer.  On-screen rows will
  *     always have the largest indices.
- * @param {integer} end The zero-based row index to end on, measured
+ * @param {number} end The zero-based row index to end on, measured
  *     relative to the start of the scrollback buffer.
  * @return {string} A single string containing the text value of the range of
  *     rows.  Lines will be newline delimited, with no trailing newline.
@@ -13785,7 +14735,7 @@ hterm.Terminal.prototype.getRowsText = function(start, end) {
  * it to fetch text content on demand when the user attempts to copy their
  * selection to the clipboard.
  *
- * @param {integer} index The zero-based row index to return, measured
+ * @param {number} index The zero-based row index to return, measured
  *     relative to the start of the scrollback buffer.  On-screen rows will
  *     always have the largest indices.
  * @return {string} A string containing the text value of the selected row.
@@ -13802,7 +14752,8 @@ hterm.Terminal.prototype.getRowText = function(index) {
  * This is a method from the RowProvider interface.  The ScrollPort uses
  * it to compute the size of the scrollbar.
  *
- * @return {integer} The number of rows in this terminal.
+ * @return {number} The number of rows in this terminal.
+ * @override
  */
 hterm.Terminal.prototype.getRowCount = function() {
   return this.scrollbackRows_.length + this.screen_.rowsArray.length;
@@ -13890,7 +14841,7 @@ hterm.Terminal.prototype.moveRows_ = function(fromIndex, count, toIndex) {
  *
  * @param {number} start The start index.
  * @param {number} end The end index.
- * @param {hterm.Screen} opt_screen The screen to renumber.
+ * @param {!hterm.Screen=} opt_screen The screen to renumber.
  */
 hterm.Terminal.prototype.renumberRows_ = function(start, end, opt_screen) {
   var screen = opt_screen || this.screen_;
@@ -13911,7 +14862,7 @@ hterm.Terminal.prototype.renumberRows_ = function(start, end, opt_screen) {
  * The string is *not* parsed for escape codes.  Use the interpret() method if
  * that's what you're after.
  *
- * @param{string} str The string to print.
+ * @param {string} str The string to print.
  */
 hterm.Terminal.prototype.print = function(str) {
   this.scheduleSyncCursorPosition_();
@@ -13987,8 +14938,8 @@ hterm.Terminal.prototype.print = function(str) {
  * local scrollback buffer, which means the scrollbars and shift-pgup/pgdn
  * continue to work as most users would expect.
  *
- * @param {integer} scrollTop The zero-based top of the scroll region.
- * @param {integer} scrollBottom The zero-based bottom of the scroll region,
+ * @param {?number} scrollTop The zero-based top of the scroll region.
+ * @param {?number} scrollBottom The zero-based bottom of the scroll region,
  *     inclusive.
  */
 hterm.Terminal.prototype.setVTScrollRegion = function(scrollTop, scrollBottom) {
@@ -14008,7 +14959,7 @@ hterm.Terminal.prototype.setVTScrollRegion = function(scrollTop, scrollBottom) {
  * to some lower row.  It is used for some VT cursor positioning and scrolling
  * commands.
  *
- * @return {integer} The topmost row in the terminal's scroll region.
+ * @return {number} The topmost row in the terminal's scroll region.
  */
 hterm.Terminal.prototype.getVTScrollTop = function() {
   if (this.vtScrollTop_ != null)
@@ -14024,7 +14975,7 @@ hterm.Terminal.prototype.getVTScrollTop = function() {
  * restrict scrolling to some higher row.  It is used for some VT cursor
  * positioning and scrolling commands.
  *
- * @return {integer} The bottom most row in the terminal's scroll region.
+ * @return {number} The bottom most row in the terminal's scroll region.
  */
 hterm.Terminal.prototype.getVTScrollBottom = function() {
   if (this.vtScrollBottom_ != null)
@@ -14124,7 +15075,7 @@ hterm.Terminal.prototype.eraseToLeft = function() {
   var cursor = this.saveCursor();
   this.setCursorColumn(0);
   const count = cursor.column + 1;
-  this.screen_.overwriteString(lib.f.getWhitespace(count), count);
+  this.screen_.overwriteString(' '.repeat(count), count);
   this.restoreCursor(cursor);
 };
 
@@ -14143,7 +15094,7 @@ hterm.Terminal.prototype.eraseToLeft = function() {
  * from xterm, but agrees with gnome-terminal and konsole, xfce4-terminal.  See
  * crbug.com/232390 for details.
  *
- * @param {number} opt_count The number of characters to erase.
+ * @param {number=} opt_count The number of characters to erase.
  */
 hterm.Terminal.prototype.eraseToRight = function(opt_count) {
   if (this.screen_.cursorPosition.overflow)
@@ -14164,7 +15115,7 @@ hterm.Terminal.prototype.eraseToRight = function(opt_count) {
   }
 
   var cursor = this.saveCursor();
-  this.screen_.overwriteString(lib.f.getWhitespace(count), count);
+  this.screen_.overwriteString(' '.repeat(count), count);
   this.restoreCursor(cursor);
   this.clearCursorOverflow();
 };
@@ -14248,7 +15199,7 @@ hterm.Terminal.prototype.fill = function(ch) {
  *
  * This does not respect the scroll region.
  *
- * @param {hterm.Screen} opt_screen Optional screen to operate on.  Defaults
+ * @param {!hterm.Screen=} opt_screen Optional screen to operate on.  Defaults
  *     to the current screen.
  */
 hterm.Terminal.prototype.clearHome = function(opt_screen) {
@@ -14276,7 +15227,7 @@ hterm.Terminal.prototype.clearHome = function(opt_screen) {
  * The cursor position is unchanged.  This does not respect the scroll
  * region.
  *
- * @param {hterm.Screen} opt_screen Optional screen to operate on.  Defaults
+ * @param {!hterm.Screen=} opt_screen Optional screen to operate on.  Defaults
  *     to the current screen.
  */
 hterm.Terminal.prototype.clear = function(opt_screen) {
@@ -14292,7 +15243,7 @@ hterm.Terminal.prototype.clear = function(opt_screen) {
  * This respects the current scroll region.  Rows pushed off the bottom are
  * lost (they won't show up in the scrollback buffer).
  *
- * @param {integer} count The number of lines to insert.
+ * @param {number} count The number of lines to insert.
  */
 hterm.Terminal.prototype.insertLines = function(count) {
   var cursorRow = this.screen_.cursorPosition.row;
@@ -14352,7 +15303,7 @@ hterm.Terminal.prototype.deleteLines = function(count) {
 hterm.Terminal.prototype.insertSpace = function(count) {
   var cursor = this.saveCursor();
 
-  var ws = lib.f.getWhitespace(count || 1);
+  const ws = ' '.repeat(count || 1);
   this.screen_.insertString(ws, ws.length);
   this.screen_.maybeClipCurrentRow();
 
@@ -14364,14 +15315,14 @@ hterm.Terminal.prototype.insertSpace = function(count) {
  * Forward-delete the specified number of characters starting at the cursor
  * position.
  *
- * @param {integer} count The number of characters to delete.
+ * @param {number} count The number of characters to delete.
  */
 hterm.Terminal.prototype.deleteChars = function(count) {
   var deleted = this.screen_.deleteChars(count);
   if (deleted && !this.screen_.textAttributes.isDefault()) {
     var cursor = this.saveCursor();
     this.setCursorColumn(this.screenSize.width - deleted);
-    this.screen_.insertString(lib.f.getWhitespace(deleted));
+    this.screen_.insertString(' '.repeat(deleted));
     this.restoreCursor(cursor);
   }
 
@@ -14389,7 +15340,7 @@ hterm.Terminal.prototype.deleteChars = function(count) {
  *
  * The cursor position is not altered.
  *
- * @param {integer} count The number of rows to scroll.
+ * @param {number} count The number of rows to scroll.
  */
 hterm.Terminal.prototype.vtScrollUp = function(count) {
   var cursor = this.saveCursor();
@@ -14411,13 +15362,13 @@ hterm.Terminal.prototype.vtScrollUp = function(count) {
  * This function does not affect the scrollback rows at all.  Rows shifted
  * off the bottom are lost.
  *
- * @param {integer} count The number of rows to scroll.
+ * @param {number} count The number of rows to scroll.
  */
-hterm.Terminal.prototype.vtScrollDown = function(opt_count) {
+hterm.Terminal.prototype.vtScrollDown = function(count) {
   var cursor = this.saveCursor();
 
   this.setAbsoluteCursorPosition(this.getVTScrollTop(), 0);
-  this.insertLines(opt_count);
+  this.insertLines(count);
 
   this.restoreCursor(cursor);
 };
@@ -14443,8 +15394,8 @@ hterm.Terminal.prototype.setAccessibilityEnabled = function(enabled) {
  * The cursor row is relative to the scroll region if the terminal has
  * 'origin mode' enabled, or relative to the addressable screen otherwise.
  *
- * @param {integer} row The new zero-based cursor row.
- * @param {integer} row The new zero-based cursor column.
+ * @param {number} row The new zero-based cursor row.
+ * @param {number} column The new zero-based cursor column.
  */
 hterm.Terminal.prototype.setCursorPosition = function(row, column) {
   if (this.options_.originMode) {
@@ -14482,7 +15433,7 @@ hterm.Terminal.prototype.setAbsoluteCursorPosition = function(row, column) {
 /**
  * Set the cursor column.
  *
- * @param {integer} column The new zero-based cursor column.
+ * @param {number} column The new zero-based cursor column.
  */
 hterm.Terminal.prototype.setCursorColumn = function(column) {
   this.setAbsoluteCursorPosition(this.screen_.cursorPosition.row, column);
@@ -14491,7 +15442,7 @@ hterm.Terminal.prototype.setCursorColumn = function(column) {
 /**
  * Return the cursor column.
  *
- * @return {integer} The zero-based cursor column.
+ * @return {number} The zero-based cursor column.
  */
 hterm.Terminal.prototype.getCursorColumn = function() {
   return this.screen_.cursorPosition.column;
@@ -14503,7 +15454,7 @@ hterm.Terminal.prototype.getCursorColumn = function() {
  * The cursor row is relative to the scroll region if the terminal has
  * 'origin mode' enabled, or relative to the addressable screen otherwise.
  *
- * @param {integer} row The new cursor row.
+ * @param {number} row The new cursor row.
  */
 hterm.Terminal.prototype.setAbsoluteCursorRow = function(row) {
   this.setAbsoluteCursorPosition(row, this.screen_.cursorPosition.column);
@@ -14512,7 +15463,7 @@ hterm.Terminal.prototype.setAbsoluteCursorRow = function(row) {
 /**
  * Return the cursor row.
  *
- * @return {integer} The zero-based cursor row.
+ * @return {number} The zero-based cursor row.
  */
 hterm.Terminal.prototype.getCursorRow = function() {
   return this.screen_.cursorPosition.row;
@@ -14558,16 +15509,16 @@ hterm.Terminal.prototype.scheduleScrollDown_ = function() {
 /**
  * Move the cursor up a specified number of rows.
  *
- * @param {integer} count The number of rows to move the cursor.
+ * @param {number} count The number of rows to move the cursor.
  */
 hterm.Terminal.prototype.cursorUp = function(count) {
-  return this.cursorDown(-(count || 1));
+  this.cursorDown(-(count || 1));
 };
 
 /**
  * Move the cursor down a specified number of rows.
  *
- * @param {integer} count The number of rows to move the cursor.
+ * @param {number} count The number of rows to move the cursor.
  */
 hterm.Terminal.prototype.cursorDown = function(count) {
   count = count || 1;
@@ -14586,7 +15537,7 @@ hterm.Terminal.prototype.cursorDown = function(count) {
  * If reverse wraparound mode is enabled and the previous row wrapped into
  * the current row then we back up through the wraparound as well.
  *
- * @param {integer} count The number of columns to move the cursor.
+ * @param {number} count The number of columns to move the cursor.
  */
 hterm.Terminal.prototype.cursorLeft = function(count) {
   count = count || 1;
@@ -14629,7 +15580,7 @@ hterm.Terminal.prototype.cursorLeft = function(count) {
 /**
  * Move the cursor right a specified number of columns.
  *
- * @param {integer} count The number of columns to move the cursor.
+ * @param {number} count The number of columns to move the cursor.
  */
 hterm.Terminal.prototype.cursorRight = function(count) {
   count = count || 1;
@@ -14656,11 +15607,11 @@ hterm.Terminal.prototype.cursorRight = function(count) {
 hterm.Terminal.prototype.setReverseVideo = function(state) {
   this.options_.reverseVideo = state;
   if (state) {
-    this.scrollPort_.setForegroundColor(this.prefs_.get('background-color'));
-    this.scrollPort_.setBackgroundColor(this.prefs_.get('foreground-color'));
+    this.scrollPort_.setForegroundColor(this.backgroundColor_);
+    this.scrollPort_.setBackgroundColor(this.foregroundColor_);
   } else {
-    this.scrollPort_.setForegroundColor(this.prefs_.get('foreground-color'));
-    this.scrollPort_.setBackgroundColor(this.prefs_.get('background-color'));
+    this.scrollPort_.setForegroundColor(this.foregroundColor_);
+    this.scrollPort_.setBackgroundColor(this.backgroundColor_);
   }
 };
 
@@ -14684,11 +15635,11 @@ hterm.Terminal.prototype.ringBell = function() {
 
   if (this.bellAudio_.getAttribute('src')) {
     this.bellAudio_.play();
-    this.bellSequelchTimeout_ = setTimeout(function() {
-        delete this.bellSquelchTimeout_;
-      }.bind(this), 500);
+    this.bellSequelchTimeout_ = setTimeout(() => {
+        this.bellSquelchTimeout_ = null;
+      }, 500);
   } else {
-    delete this.bellSquelchTimeout_;
+    this.bellSquelchTimeout_ = null;
   }
 
   if (this.desktopNotificationBell_ && !this.document_.hasFocus()) {
@@ -14875,6 +15826,32 @@ hterm.Terminal.prototype.setCursorVisible = function(state) {
 };
 
 /**
+ * Pause blinking temporarily.
+ *
+ * When the cursor moves around, it can be helpful to momentarily pause the
+ * blinking.  This could be when the user is typing in things, or when they're
+ * moving around with the arrow keys.
+ */
+hterm.Terminal.prototype.pauseCursorBlink_ = function() {
+  if (!this.options_.cursorBlink) {
+    return;
+  }
+
+  this.cursorBlinkPause_ = true;
+
+  // If a timeout is already pending, reset the clock due to the new input.
+  if (this.timeouts_.cursorBlinkPause) {
+    clearTimeout(this.timeouts_.cursorBlinkPause);
+  }
+  // After 500ms, resume blinking.  That seems like a good balance between user
+  // input timings & responsiveness to resume.
+  this.timeouts_.cursorBlinkPause = setTimeout(() => {
+    delete this.timeouts_.cursorBlinkPause;
+    this.cursorBlinkPause_ = false;
+  }, 500);
+};
+
+/**
  * Synchronizes the visible cursor and document selection with the current
  * cursor coordinates.
  *
@@ -14954,20 +15931,20 @@ hterm.Terminal.prototype.restyleCursor_ = function() {
   switch (shape) {
     case hterm.Terminal.cursorShape.BEAM:
       style.backgroundColor = 'transparent';
-      style.borderBottomStyle = null;
+      style.borderBottomStyle = '';
       style.borderLeftStyle = 'solid';
       break;
 
     case hterm.Terminal.cursorShape.UNDERLINE:
       style.backgroundColor = 'transparent';
       style.borderBottomStyle = 'solid';
-      style.borderLeftStyle = null;
+      style.borderLeftStyle = '';
       break;
 
     default:
       style.backgroundColor = 'var(--hterm-cursor-color)';
-      style.borderBottomStyle = null;
-      style.borderLeftStyle = null;
+      style.borderBottomStyle = '';
+      style.borderLeftStyle = '';
       break;
   }
 };
@@ -15038,7 +16015,7 @@ hterm.Terminal.prototype.showZoomWarning_ = function(state) {
 
   this.zoomWarningNode_.textContent = lib.i18n.replaceReferences(
       hterm.zoomWarningMessage,
-      [parseInt(this.scrollPort_.characterSize.zoomFactor * 100)]);
+      [Math.floor(this.scrollPort_.characterSize.zoomFactor * 100)]);
 
   this.zoomWarningNode_.style.fontFamily = this.prefs_.get('font-family');
 
@@ -15059,7 +16036,7 @@ hterm.Terminal.prototype.showZoomWarning_ = function(state) {
  * of the terminal first.
  *
  * @param {string} msg The text (not HTML) message to display in the overlay.
- * @param {number} opt_timeout The amount of time to wait before fading out
+ * @param {number=} opt_timeout The amount of time to wait before fading out
  *     the overlay.  Defaults to 1.5 seconds.  Pass null to have the overlay
  *     stay up forever (or until the next overlay).
  */
@@ -15096,7 +16073,7 @@ hterm.Terminal.prototype.showOverlay = function(msg, opt_timeout) {
   if (!this.overlayNode_.parentNode)
     this.div_.appendChild(this.overlayNode_);
 
-  var divSize = hterm.getClientSize(this.div_);
+  var divSize = hterm.getClientSize(lib.notNull(this.div_));
   var overlaySize = hterm.getClientSize(this.overlayNode_);
 
   this.overlayNode_.style.top =
@@ -15135,6 +16112,8 @@ hterm.Terminal.prototype.hideOverlay = function() {
 
 /**
  * Paste from the system clipboard to the terminal.
+ *
+ * @return {boolean}
  */
 hterm.Terminal.prototype.paste = function() {
   return hterm.pasteFromClipboard(this.document_);
@@ -15159,20 +16138,32 @@ hterm.Terminal.prototype.copyStringToClipboard = function(str) {
  *
  * Either URI or buffer or blob fields must be specified.
  *
- * @param {Object} options The image to display.
- * @param {string=} options.name A human readable string for the image.
- * @param {string|number=} options.size The size (in bytes).
- * @param {boolean=} options.preserveAspectRatio Whether to preserve aspect.
- * @param {boolean=} options.inline Whether to display the image inline.
- * @param {string|number=} options.width The width of the image.
- * @param {string|number=} options.height The height of the image.
- * @param {string=} options.align Direction to align the image.
- * @param {string=} options.uri The source URI for the image.
- * @param {ArrayBuffer=} options.buffer The ArrayBuffer image data.
- * @param {Blob=} options.blob The Blob image data.
- * @param {string=} options.type The MIME type of the image data.
- * @param {function=} onLoad Callback when loading finishes.
- * @param {function(Event)=} onError Callback when loading fails.
+ * @param {{
+ *     name: (string|undefined),
+ *     size: (string|number|undefined),
+ *     preserveAspectRation: (boolean|undefined),
+ *     inline: (boolean|undefined),
+ *     width: (string|number|undefined),
+ *     height: (string|number|undefined),
+ *     align: (string|undefined),
+ *     url: (string|undefined),
+ *     buffer: (!ArrayBuffer|undefined),
+ *     blob: (!Blob|undefined),
+ *     type: (string|undefined),
+ * }} options The image to display.
+ *   name A human readable string for the image
+ *   size The size (in bytes).
+ *   preserveAspectRatio Whether to preserve aspect.
+ *   inline Whether to display the image inline.
+ *   width The width of the image.
+ *   height The height of the image.
+ *   align Direction to align the image.
+ *   uri The source URI for the image.
+ *   buffer The ArrayBuffer image data.
+ *   blob The Blob image data.
+ *   type The MIME type of the image data.
+ * @param {function()=} onLoad Callback when loading finishes.
+ * @param {function(!Event)=} onError Callback when loading fails.
  */
 hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
   // Make sure we're actually given a resource to display.
@@ -15254,14 +16245,13 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
   if (options.inline) {
     const io = this.io.push();
     io.showOverlay(hterm.msg('LOADING_RESOURCE_START', [options.name],
-                             'Loading $1 ...'), null);
+                             'Loading $1 ...'));
 
     // While we're loading the image, eat all the user's input.
     io.onVTKeystroke = io.sendString = () => {};
 
     // Initialize this new image.
-    const img =
-        /** @type {!HTMLImageElement} */ (this.document_.createElement('img'));
+    const img = this.document_.createElement('img');
     if (options.uri !== undefined) {
       img.src = options.uri;
     } else if (options.buffer !== undefined) {
@@ -15269,7 +16259,7 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
       img.src = URL.createObjectURL(blob);
     } else {
       const blob = new Blob([options.blob], {type: options.type});
-      img.src = URL.createObjectURL(options.blob);
+      img.src = URL.createObjectURL(blob);
     }
     img.title = img.alt = options.name;
 
@@ -15294,7 +16284,7 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
         const ary = dim.match(/^([0-9]+)(px|%)?$/);
         if (ary) {
           if (ary[2] == '%')
-            return maxDim * parseInt(ary[1]) / 100 + 'px';
+            return Math.floor(maxDim * ary[1] / 100) + 'px';
           else if (ary[2] == 'px')
             return dim;
           else
@@ -15311,7 +16301,7 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
                    '--hterm-charsize-height');
 
       // Figure out how many rows the image occupies, then add that many.
-      // XXX: This count will be inaccurate if the font size changes on us.
+      // Note: This count will be inaccurate if the font size changes on us.
       const padRows = Math.ceil(img.clientHeight /
                                 this.scrollPort_.characterSize.height);
       for (let i = 0; i < padRows; ++i)
@@ -15328,7 +16318,7 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
       // This helps with rounding errors between JS & CSS counts.
       const div = this.document_.createElement('div');
       div.style.position = 'relative';
-      div.style.textAlign = options.align;
+      div.style.textAlign = options.align || '';
       img.style.position = 'absolute';
       img.style.bottom = 'calc(0px - var(--hterm-charsize-height))';
       div.appendChild(img);
@@ -15368,7 +16358,7 @@ hterm.Terminal.prototype.displayImage = function(options, onLoad, onError) {
       const blob = new Blob([options.buffer]);
       a.href = URL.createObjectURL(blob);
     } else {
-      a.href = URL.createObjectURL(options.blob);
+      a.href = URL.createObjectURL(lib.notNull(options.blob));
     }
     a.download = options.name;
     this.document_.body.appendChild(a);
@@ -15452,8 +16442,13 @@ hterm.Terminal.prototype.copySelectionToClipboard = function() {
     this.copyStringToClipboard(text);
 };
 
+/**
+ * Show overlay with current terminal size.
+ */
 hterm.Terminal.prototype.overlaySize = function() {
-  this.showOverlay(this.screenSize.width + 'x' + this.screenSize.height);
+  if (this.prefs_.get('enable-resize-status')) {
+    this.showOverlay(this.screenSize.width + 'x' + this.screenSize.height);
+  }
 };
 
 /**
@@ -15464,6 +16459,8 @@ hterm.Terminal.prototype.overlaySize = function() {
 hterm.Terminal.prototype.onVTKeystroke = function(string) {
   if (this.scrollOnKeystroke_)
     this.scrollPort_.scrollRowToBottom(this.getRowCount());
+
+  this.pauseCursorBlink_();
 
   this.io.onVTKeystroke(string);
 };
@@ -15508,7 +16505,7 @@ hterm.Terminal.prototype.openSelectedUrl_ = function() {
 /**
  * Manage the automatic mouse hiding behavior while typing.
  *
- * @param {boolean=} v Whether to enable automatic hiding.
+ * @param {?boolean=} v Whether to enable automatic hiding.
  */
 hterm.Terminal.prototype.setAutomaticMouseHiding = function(v=null) {
   // Since Chrome OS & macOS do this by default everywhere, we don't need to.
@@ -15525,7 +16522,7 @@ hterm.Terminal.prototype.setAutomaticMouseHiding = function(v=null) {
  * This isn't for processing the keystrokes directly, but for updating any
  * state that might toggle based on the user using the keyboard at all.
  *
- * @param {KeyboardEvent} e The keyboard event that triggered us.
+ * @param {!KeyboardEvent} e The keyboard event that triggered us.
  */
 hterm.Terminal.prototype.onKeyboardActivity_ = function(e) {
   // When the user starts typing, hide the mouse cursor.
@@ -15540,7 +16537,7 @@ hterm.Terminal.prototype.onKeyboardActivity_ = function(e) {
  * The terminalRow and terminalColumn properties contain the (row, column)
  * coordinates for the mouse event.
  *
- * @param {Event} e The mouse event to handle.
+ * @param {!MouseEvent} e The mouse event to handle.
  */
 hterm.Terminal.prototype.onMouse_ = function(e) {
   if (e.processedByTerminalHandler_) {
@@ -15578,10 +16575,11 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
   }
 
   // One based row/column stored on the mouse event.
-  e.terminalRow = parseInt((e.clientY - this.scrollPort_.visibleRowTopMargin) /
-                           this.scrollPort_.characterSize.height) + 1;
-  e.terminalColumn = parseInt(e.clientX /
-                              this.scrollPort_.characterSize.width) + 1;
+  e.terminalRow = Math.floor(
+      (e.clientY - this.scrollPort_.visibleRowTopMargin) /
+      this.scrollPort_.characterSize.height) + 1;
+  e.terminalColumn = Math.floor(
+      e.clientX / this.scrollPort_.characterSize.width) + 1;
 
   if (e.type == 'mousedown' && e.terminalColumn > this.screenSize.width) {
     // Mousedown in the scrollbar area.
@@ -15602,7 +16600,7 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
   }
 
   if (e.type == 'mousedown') {
-    this.contextMenu.hide(e);
+    this.contextMenu.hide();
 
     if (e.altKey || !reportMouseEvents) {
       // If VT mouse reporting is disabled, or has been defeated with
@@ -15617,7 +16615,7 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
       e.preventDefault();
     }
   }
-  
+
   if (!reportMouseEvents) {
     if (e.type == 'dblclick') {
       this.screen_.expandSelection(this.document_.getSelection());
@@ -15636,7 +16634,6 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
     }
 
     if (e.type == 'mousedown') {
-      
       if (e.ctrlKey && e.button == 2 /* right button */) {
         e.preventDefault();
         this.contextMenu.show(e, this);
@@ -15663,7 +16660,8 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
     if (this.scrollWheelArrowKeys_ && !e.shiftKey &&
         this.keyboard.applicationCursor && !this.isPrimaryScreen()) {
       if (e.type == 'wheel') {
-        const delta = this.scrollPort_.scrollWheelDelta(e);
+        const delta =
+            this.scrollPort_.scrollWheelDelta(/** @type {!WheelEvent} */ (e));
 
         // Helper to turn a wheel event delta into a series of key presses.
         const deltaToArrows = (distance, charSize, arrowPos, arrowNeg) => {
@@ -15723,7 +16721,7 @@ hterm.Terminal.prototype.onMouse_ = function(e) {
  * The event parameter will be a normal DOM mouse click event with additional
  * 'terminalRow' and 'terminalColumn' properties.
  *
- * @param {Event} e The mouse event to handle.
+ * @param {!MouseEvent} e The mouse event to handle.
  */
 hterm.Terminal.prototype.onMouse = function(e) { };
 
@@ -15753,7 +16751,7 @@ hterm.Terminal.prototype.onScroll_ = function() {
 /**
  * React when text is pasted into the scrollPort.
  *
- * @param {Event} e The DOM paste event to handle.
+ * @param {{text: string}} e The text of the paste event to handle.
  */
 hterm.Terminal.prototype.onPaste_ = function(e) {
   var data = e.text.replace(/\n/mg, '\r');
@@ -15772,7 +16770,7 @@ hterm.Terminal.prototype.onPaste_ = function(e) {
 /**
  * React when the user tries to copy from the scrollPort.
  *
- * @param {Event} e The DOM copy event.
+ * @param {!Event} e The DOM copy event.
  */
 hterm.Terminal.prototype.onCopy_ = function(e) {
   if (!this.useDefaultWindowCopy) {
@@ -15806,17 +16804,22 @@ hterm.Terminal.prototype.onResize_ = function() {
 
   var isNewSize = (columnCount != this.screenSize.width ||
                    rowCount != this.screenSize.height);
+  const wasScrolledEnd = this.scrollPort_.isScrolledEnd;
 
   // We do this even if the size didn't change, just to be sure everything is
   // in sync.
   this.realizeSize_(columnCount, rowCount);
   this.showZoomWarning_(this.scrollPort_.characterSize.zoomFactor != 1);
-  
+
   if (isNewSize)
     this.overlaySize();
 
   this.restyleCursor_();
   this.scheduleSyncCursorPosition_();
+
+  if (wasScrolledEnd) {
+    this.scrollEnd();
+  }
 };
 
 /**
@@ -15829,7 +16832,8 @@ hterm.Terminal.prototype.onCursorBlink_ = function() {
   }
 
   if (this.cursorNode_.getAttribute('focus') == 'false' ||
-      this.cursorNode_.style.opacity == '0') {
+      this.cursorNode_.style.opacity == '0' ||
+      this.cursorBlinkPause_) {
     this.cursorNode_.style.opacity = '1';
     this.timeouts_.cursorBlink = setTimeout(this.myOnCursorBlink_,
                                             this.cursorBlinkCycle_[0]);
@@ -15912,7 +16916,8 @@ hterm.Terminal.prototype.onScrollportFocus_ = function() {
  * - In The Future commands may run in web workers where they would only be able
  *   to talk to a Terminal instance through an IPC mechanism.
  *
- * @param {hterm.Terminal}
+ * @param {!hterm.Terminal} terminal
+ * @constructor
  */
 hterm.Terminal.IO = function(terminal) {
   this.terminal_ = terminal;
@@ -15935,8 +16940,9 @@ hterm.Terminal.IO = function(terminal) {
  * since it's in a large font and you probably aren't going to check the size
  * of the terminal first.
  *
- * @param {string} msg The text (not HTML) message to display in the overlay.
- * @param {number} opt_timeout The amount of time to wait before fading out
+ * @param {string} message The text (not HTML) message to display in the
+ *     overlay.
+ * @param {number=} opt_timeout The amount of time to wait before fading out
  *     the overlay.  Defaults to 1.5 seconds.  Pass null to have the overlay
  *     stay up forever (or until the next overlay).
  */
@@ -15961,7 +16967,8 @@ hterm.Terminal.IO.prototype.hideOverlay = function() {
  * The user should also be able to move/resize the frame.
  *
  * @param {string} url The URL to load in the frame.
- * @param {Object} opt_options Optional frame options.  Not implemented.
+ * @param {!Object=} opt_options Optional frame options.  Not implemented.
+ * @return {!hterm.Frame}
  */
 hterm.Terminal.IO.prototype.createFrame = function(url, opt_options) {
   return new hterm.Frame(this.terminal_, url, opt_options);
@@ -15970,7 +16977,7 @@ hterm.Terminal.IO.prototype.createFrame = function(url, opt_options) {
 /**
  * Change the preference profile for the terminal.
  *
- * @param profileName {string} The name of the preference profile to activate.
+ * @param {string} profileName The name of the preference profile to activate.
  */
 hterm.Terminal.IO.prototype.setTerminalProfile = function(profileName) {
   this.terminal_.setProfile(profileName);
@@ -15982,6 +16989,8 @@ hterm.Terminal.IO.prototype.setTerminalProfile = function(profileName) {
  *
  * This is used to pass control of the terminal IO off to a subcommand.  The
  * IO.pop() method can be used to restore control when the subcommand completes.
+ *
+ * @return {!hterm.Terminal.IO} The new foreground IO instance.
  */
 hterm.Terminal.IO.prototype.push = function() {
   var io = new hterm.Terminal.IO(this.terminal_);
@@ -16043,6 +17052,12 @@ hterm.Terminal.IO.prototype.onVTKeystroke = function(string) {
   console.log('Unobserverd VT keystroke: ' + JSON.stringify(string));
 };
 
+/**
+ * Receives notification when the terminal is resized.
+ *
+ * @param {number} width The new terminal width.
+ * @param {number} height The new terminal height.
+ */
 hterm.Terminal.IO.prototype.onTerminalResize_ = function(width, height) {
   var obj = this;
   while (obj) {
@@ -16059,8 +17074,8 @@ hterm.Terminal.IO.prototype.onTerminalResize_ = function(width, height) {
  *
  * Clients should override this to receive notification of resize.
  *
- * @param {string|integer} terminal width.
- * @param {string|integer} terminal height.
+ * @param {string|number} width The new terminal width.
+ * @param {string|number} height The new terminal height.
  */
 hterm.Terminal.IO.prototype.onTerminalResize = function(width, height) {
   // Override this.
@@ -16069,21 +17084,21 @@ hterm.Terminal.IO.prototype.onTerminalResize = function(width, height) {
 /**
  * Write a UTF-8 encoded byte string to the terminal.
  *
- * @param {string} string The UTF-8 encoded string to print.
+ * @param {string|!ArrayBuffer} string The UTF-8 encoded string to print.
  */
 hterm.Terminal.IO.prototype.writeUTF8 = function(string) {
   // We can't use instanceof here on string to see if it's an ArrayBuffer as it
   // might be constructed in a different runtime context whose ArrayBuffer was
   // not the same.  See https://crbug.com/930171#5 for more details.
   if (typeof string == 'string') {
-    if (this.terminal_.characterEncoding != 'raw') {
-      const bytes = lib.codec.stringToCodeUnitArray(string, Uint8Array);
+    if (this.terminal_.vt.characterEncoding != 'raw') {
+      const bytes = lib.codec.stringToCodeUnitArray(string);
       string = this.textDecoder_.decode(bytes, {stream: true});
     }
   } else {
     // Handle array buffers & typed arrays by normalizing into a typed array.
     const u8 = new Uint8Array(string);
-    if (this.terminal_.characterEncoding == 'raw') {
+    if (this.terminal_.vt.characterEncoding == 'raw') {
       string = lib.codec.codeUnitArrayToString(u8);
     } else {
       string = this.textDecoder_.decode(u8, {stream: true});
@@ -16147,7 +17162,7 @@ hterm.Terminal.IO.prototype.writelnUTF16 = function(string) {
  * compatibility with the current attributes.
  *
  * @constructor
- * @param {HTMLDocument} document The parent document to use when creating
+ * @param {!Document=} document The parent document to use when creating
  *     new DOM containers.
  */
 hterm.TextAttributes = function(document) {
@@ -16156,14 +17171,20 @@ hterm.TextAttributes = function(document) {
   // SRC_DEFAULT  (use context default)
   // rgb(...)     (true color form)
   // number       (representing the index from color palette to use)
+  /** @type {symbol|string|number} */
   this.foregroundSource = this.SRC_DEFAULT;
+  /** @type {symbol|string|number} */
   this.backgroundSource = this.SRC_DEFAULT;
+  /** @type {symbol|string|number} */
   this.underlineSource = this.SRC_DEFAULT;
 
   // These properties cache the value in the color table, but foregroundSource
   // and backgroundSource contain the canonical values.
+  /** @type {symbol|string} */
   this.foreground = this.DEFAULT_COLOR;
+  /** @type {symbol|string} */
   this.background = this.DEFAULT_COLOR;
+  /** @type {symbol|string} */
   this.underlineColor = this.DEFAULT_COLOR;
 
   this.defaultForeground = 'rgb(255, 255, 255)';
@@ -16182,8 +17203,11 @@ hterm.TextAttributes = function(document) {
   this.invisible = false;
   this.wcNode = false;
   this.asciiNode = true;
+  /** @type {?string} */
   this.tileData = null;
+  /** @type {?string} */
   this.uri = null;
+  /** @type {?string} */
   this.uriId = null;
 
   this.colorPalette = null;
@@ -16218,7 +17242,7 @@ hterm.TextAttributes.prototype.SRC_DEFAULT = Symbol('SRC_DEFAULT');
 /**
  * The document object which should own the DOM nodes created by this instance.
  *
- * @param {HTMLDocument} document The parent document.
+ * @param {!Document} document The parent document.
  */
 hterm.TextAttributes.prototype.setDocument = function(document) {
   this.document_ = document;
@@ -16227,10 +17251,10 @@ hterm.TextAttributes.prototype.setDocument = function(document) {
 /**
  * Create a deep copy of this object.
  *
- * @return {hterm.TextAttributes} A deep copy of this object.
+ * @return {!hterm.TextAttributes} A deep copy of this object.
  */
 hterm.TextAttributes.prototype.clone = function() {
-  var rv = new hterm.TextAttributes(null);
+  var rv = new hterm.TextAttributes();
 
   for (var key in this) {
     rv[key] = this[key];
@@ -16278,7 +17302,7 @@ hterm.TextAttributes.prototype.resetColorPalette = function() {
 /**
  * Reset the color.
  *
- * @param {integer|string} index The color index in the palette to reset.
+ * @param {number|string} index The color index in the palette to reset.
  */
 hterm.TextAttributes.prototype.resetColor = function(index) {
   index = parseInt(index, 10);
@@ -16322,11 +17346,12 @@ hterm.TextAttributes.prototype.isDefault = function() {
  * Each vt_tiledata tile is also represented by a span with a single
  * character, with CSS classes '.tile' and '.tile_<glyph number>'.
  *
- * @param {string} opt_textContent Optional text content for the new container.
- * @return {HTMLNode} An HTML span or text nodes styled to match the current
+ * @param {string=} opt_textContent Optional text content for the new container.
+ * @return {!Node} An HTML span or text nodes styled to match the current
  *     attributes.
  */
-hterm.TextAttributes.prototype.createContainer = function(opt_textContent) {
+hterm.TextAttributes.prototype.createContainer = function(
+    opt_textContent = '') {
   if (this.isDefault()) {
     // Only attach attributes where we need an explicit default for the
     // matchContainer logic below.
@@ -16340,10 +17365,10 @@ hterm.TextAttributes.prototype.createContainer = function(opt_textContent) {
   var classes = [];
 
   if (this.foreground != this.DEFAULT_COLOR)
-    style.color = this.foreground;
+    style.color = this.foreground.toString();
 
   if (this.background != this.DEFAULT_COLOR)
-    style.backgroundColor = this.background;
+    style.backgroundColor = this.background.toString();
 
   if (this.enableBold && this.bold)
     style.fontWeight = 'bold';
@@ -16411,7 +17436,7 @@ hterm.TextAttributes.prototype.createContainer = function(opt_textContent) {
  *
  * For the purposes of this method, a string is considered a text node.
  *
- * @param {string|HTMLNode} obj The object to test.
+ * @param {string|!Node} obj The object to test.
  * @return {boolean} True if the provided container has the same style as
  *     this attributes instance.
  */
@@ -16443,6 +17468,14 @@ hterm.TextAttributes.prototype.matchesContainer = function(obj) {
           !!this.strikethrough == !!obj.strikethrough);
 };
 
+/**
+ * Set default foreground & background colors.
+ *
+ * @param {?string} foreground The terminal foreground color for use as
+ *     inverse text background.
+ * @param {?string} background The terminal background color for use as
+ *     inverse text foreground.
+ */
 hterm.TextAttributes.prototype.setDefaults = function(foreground, background) {
   this.defaultForeground = foreground;
   this.defaultBackground = background;
@@ -16453,12 +17486,6 @@ hterm.TextAttributes.prototype.setDefaults = function(foreground, background) {
 /**
  * Updates foreground and background properties based on current indices and
  * other state.
- *
- * @param {string} terminalForeground The terminal foreground color for use as
- *     inverse text background.
- * @param {string} terminalBackground The terminal background color for use as
- *     inverse text foreground.
- *
  */
 hterm.TextAttributes.prototype.syncColors = function() {
   function getBrightIndex(i) {
@@ -16477,21 +17504,32 @@ hterm.TextAttributes.prototype.syncColors = function() {
     return color == this.DEFAULT_COLOR ? defaultColor : color;
   };
 
-  var foregroundSource = this.foregroundSource;
-  var backgroundSource = this.backgroundSource;
+  // TODO(joelhockey): Remove redundant `typeof foo == 'number'` when
+  // externs/es6.js is updated.
+  // https://github.com/google/closure-compiler/pull/3472.
 
   if (this.enableBoldAsBright && this.bold) {
-    if (Number.isInteger(foregroundSource)) {
-      foregroundSource = getBrightIndex(foregroundSource);
+    if (typeof this.foregroundSource == 'number' &&
+        Number.isInteger(this.foregroundSource)) {
+      this.foregroundSource = getBrightIndex(this.foregroundSource);
     }
   }
 
-  if (foregroundSource == this.SRC_DEFAULT)
-    this.foreground = this.DEFAULT_COLOR;
-  else if (Number.isInteger(foregroundSource))
-    this.foreground = this.colorPalette[foregroundSource];
-  else
-    this.foreground = foregroundSource;
+  /**
+   * @param {symbol|string|number} source
+   * @return {symbol|string}
+   */
+  const colorFromSource = (source) => {
+    if (source == this.SRC_DEFAULT) {
+      return this.DEFAULT_COLOR;
+    } else if (typeof source == 'number' && Number.isInteger(source)) {
+      return this.colorPalette[source];
+    } else {
+      return source.toString();
+    }
+  };
+
+  this.foreground = colorFromSource(this.foregroundSource);
 
   if (this.faint) {
     const colorToMakeFaint =
@@ -16499,12 +17537,7 @@ hterm.TextAttributes.prototype.syncColors = function() {
     this.foreground = lib.colors.mix(colorToMakeFaint, 'rgb(0, 0, 0)', 0.3333);
   }
 
-  if (backgroundSource == this.SRC_DEFAULT)
-    this.background = this.DEFAULT_COLOR;
-  else if (Number.isInteger(backgroundSource))
-    this.background = this.colorPalette[backgroundSource];
-  else
-    this.background = backgroundSource;
+  this.background = colorFromSource(this.backgroundSource);
 
   // Once we've processed the bold-as-bright and faint attributes, swap.
   // This matches xterm/gnome-terminal.
@@ -16518,12 +17551,7 @@ hterm.TextAttributes.prototype.syncColors = function() {
   if (this.invisible)
     this.foreground = this.background;
 
-  if (this.underlineSource == this.SRC_DEFAULT)
-    this.underlineColor = this.DEFAULT_COLOR;
-  else if (Number.isInteger(this.underlineSource))
-    this.underlineColor = this.colorPalette[this.underlineSource];
-  else
-    this.underlineColor = this.underlineSource;
+  this.underlineColor = colorFromSource(this.underlineSource);
 };
 
 /**
@@ -16532,8 +17560,8 @@ hterm.TextAttributes.prototype.syncColors = function() {
  *
  * For the purposes of this method, a string is considered a text node.
  *
- * @param {string|HTMLNode} obj1 An object to test.
- * @param {string|HTMLNode} obj2 Another object to test.
+ * @param {string|!Node} obj1 An object to test.
+ * @param {string|!Node} obj2 Another object to test.
  * @return {boolean} True if the containers have the same style.
  */
 hterm.TextAttributes.containersMatch = function(obj1, obj2) {
@@ -16565,7 +17593,7 @@ hterm.TextAttributes.containersMatch = function(obj1, obj2) {
  *
  * For the purposes of this method, a string is considered a text node.
  *
- * @param {string|HTMLNode} obj1 An object to test.
+ * @param {string|!Node} obj An object to test.
  * @return {boolean} True if the object is unstyled.
  */
 hterm.TextAttributes.containerIsDefault = function(obj) {
@@ -16575,9 +17603,9 @@ hterm.TextAttributes.containerIsDefault = function(obj) {
 /**
  * Static method to get the column width of a node's textContent.
  *
- * @param {HTMLElement} node The HTML element to get the width of textContent
+ * @param {!Node} node The HTML element to get the width of textContent
  *     from.
- * @return {integer} The column width of the node's textContent.
+ * @return {number} The column width of the node's textContent.
  */
 hterm.TextAttributes.nodeWidth = function(node) {
   if (!node.asciiNode) {
@@ -16591,11 +17619,11 @@ hterm.TextAttributes.nodeWidth = function(node) {
  * Static method to get the substr of a node's textContent.  The start index
  * and substr width are computed in column width.
  *
- * @param {HTMLElement} node The HTML element to get the substr of textContent
+ * @param {!Node} node The HTML element to get the substr of textContent
  *     from.
- * @param {integer} start The starting offset in column width.
- * @param {integer} width The width to capture in column width.
- * @return {integer} The extracted substr of the node's textContent.
+ * @param {number} start The starting offset in column width.
+ * @param {number=} width The width to capture in column width.
+ * @return {string} The extracted substr of the node's textContent.
  */
 hterm.TextAttributes.nodeSubstr = function(node, start, width) {
   if (!node.asciiNode) {
@@ -16609,11 +17637,11 @@ hterm.TextAttributes.nodeSubstr = function(node, start, width) {
  * Static method to get the substring based of a node's textContent.  The
  * start index of end index are computed in column width.
  *
- * @param {HTMLElement} node The HTML element to get the substr of textContent
+ * @param {!Element} node The HTML element to get the substr of textContent
  *     from.
- * @param {integer} start The starting offset in column width.
- * @param {integer} end The ending offset in column width.
- * @return {integer} The extracted substring of the node's textContent.
+ * @param {number} start The starting offset in column width.
+ * @param {number} end The ending offset in column width.
+ * @return {string} The extracted substring of the node's textContent.
  */
 hterm.TextAttributes.nodeSubstring = function(node, start, end) {
   if (!node.asciiNode) {
@@ -16628,11 +17656,12 @@ hterm.TextAttributes.nodeSubstring = function(node, start, end) {
  * characters and runs of double-width characters.
  *
  * @param {string} str The string to split.
- * @return {Array} An array of objects that contain substrings of str, where
- *     each substring is either a contiguous runs of single-width characters
- *     or a double-width character.  For objects that contain a double-width
- *     character, its wcNode property is set to true.  For objects that contain
- *     only ASCII content, its asciiNode property is set to true.
+ * @return {!Array<{str:string, wcNode:boolean, asciiNode:boolean,
+ *     wcStrWidth:number}>} An array of objects that contain substrings of str,
+ *     where each substring is either a contiguous runs of single-width
+ *     characters or a double-width character.  For objects that contain a
+ *     double-width character, its wcNode property is set to true.  For objects
+ *     that contain only ASCII content, its asciiNode property is set to true.
  */
 hterm.TextAttributes.splitWidecharString = function(str) {
   const asciiRegex = new RegExp('^[\u0020-\u007f]*$');
@@ -16701,7 +17730,8 @@ hterm.TextAttributes.splitWidecharString = function(str) {
  *
  * Control sequences are documented in hterm/doc/ControlSequences.md.
  *
- * @param {hterm.Terminal} terminal Terminal to use with the interpreter.
+ * @param {!hterm.Terminal} terminal Terminal to use with the interpreter.
+ * @constructor
  */
 hterm.VT = function(terminal) {
   /**
@@ -16876,8 +17906,10 @@ hterm.VT.prototype.MOUSE_COORDINATES_SGR = 2;
  * This object tracks the current state of the parse.  It has fields for the
  * current buffer, position in the buffer, and the parse function.
  *
- * @param {function} defaultFunc The default parser function.
- * @param {string} opt_buf Optional string to use as the current buffer.
+ * @param {function(!hterm.VT.ParseState)=} defaultFunction The default parser
+ *     function.
+ * @param {string=} opt_buf Optional string to use as the current buffer.
+ * @constructor
  */
 hterm.VT.ParseState = function(defaultFunction, opt_buf) {
   this.defaultFunction = defaultFunction;
@@ -16893,6 +17925,8 @@ hterm.VT.ParseState = function(defaultFunction, opt_buf) {
 
 /**
  * Reset the parser function, buffer, and position.
+ *
+ * @param {string=} opt_buf Optional string to use as the current buffer.
  */
 hterm.VT.ParseState.prototype.reset = function(opt_buf) {
   this.resetParseFunction();
@@ -16910,7 +17944,7 @@ hterm.VT.ParseState.prototype.resetParseFunction = function() {
 /**
  * Reset the buffer and position only.
  *
- * @param {string} buf Optional new value for buf, defaults to null.
+ * @param {string=} opt_buf Optional new value for buf, defaults to null.
  */
 hterm.VT.ParseState.prototype.resetBuf = function(opt_buf) {
   this.buf = (typeof opt_buf == 'string') ? opt_buf : null;
@@ -16925,7 +17959,7 @@ hterm.VT.ParseState.prototype.resetBuf = function(opt_buf) {
  * confusion during debugging where args from a previous sequence appear to be
  * "sticking around" in other sequences (which in reality don't use args).
  *
- * @param {string} opt_arg_zero Optional initial value for args[0].
+ * @param {string=} opt_arg_zero Optional initial value for args[0].
  */
 hterm.VT.ParseState.prototype.resetArguments = function(opt_arg_zero) {
   this.args.length = 0;
@@ -16993,7 +18027,7 @@ hterm.VT.ParseState.prototype.argSetSubargs = function(argnum) {
 /**
  * Advance the parse position.
  *
- * @param {integer} count The number of bytes to advance.
+ * @param {number} count The number of bytes to advance.
  */
 hterm.VT.ParseState.prototype.advance = function(count) {
   this.pos += count;
@@ -17031,6 +18065,9 @@ hterm.VT.ParseState.prototype.consumeChar = function() {
 
 /**
  * Return true if the buffer is empty, or the position is past the end.
+ *
+ * @return {boolean} Whether the buffer is empty, or the position is past the
+ *     end.
  */
 hterm.VT.ParseState.prototype.isComplete = function() {
   return this.buf == null || this.buf.length <= this.pos;
@@ -17055,6 +18092,8 @@ hterm.VT.prototype.reset = function() {
  * Handle terminal mouse events.
  *
  * See the "Mouse Tracking" section of [xterm].
+ *
+ * @param {!MouseEvent} e
  */
 hterm.VT.prototype.onTerminalMouse_ = function(e) {
   // Short circuit a few events to avoid unnecessary processing.
@@ -17100,6 +18139,7 @@ hterm.VT.prototype.onTerminalMouse_ = function(e) {
       break;
   }
 
+  let b;
   switch (e.type) {
     case 'wheel':
       // Mouse wheel is treated as button 1 or 2 plus an additional 64.
@@ -17118,7 +18158,7 @@ hterm.VT.prototype.onTerminalMouse_ = function(e) {
 
     case 'mousedown':
       // Buttons are encoded as button number.
-      var b = Math.min(e.button, 2);
+      b = Math.min(e.button, 2);
       // X10 based modes (including UTF8) add 32 for legacy encoding reasons.
       if (this.mouseCoordinates != this.MOUSE_COORDINATES_SGR)
         b += 32;
@@ -17208,14 +18248,16 @@ hterm.VT.prototype.onTerminalMouse_ = function(e) {
  * terminal object.
  *
  * The buffer will be decoded according to the 'receive-encoding' preference.
+ *
+ * @param {string} buf The buffer to interpret.
  */
 hterm.VT.prototype.interpret = function(buf) {
   this.parseState_.resetBuf(buf);
 
   while (!this.parseState_.isComplete()) {
-    var func = this.parseState_.func;
-    var pos = this.parseState_.pos;
-    var buf = this.parseState_.buf;
+    const func = this.parseState_.func;
+    const pos = this.parseState_.pos;
+    const buf = this.parseState_.buf;
 
     this.parseState_.func.call(this, this.parseState_);
 
@@ -17272,6 +18314,8 @@ hterm.VT.prototype.updateEncodingState_ = function() {
  * This will scan the string for the first 1-byte control character (C0/C1
  * characters from [CTRL]).  Any plain text coming before the code will be
  * printed to the terminal, then the control character will be dispatched.
+ *
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.prototype.parseUnknown_ = function(parseState) {
   var self = this;
@@ -17310,6 +18354,8 @@ hterm.VT.prototype.parseUnknown_ = function(parseState) {
  * Parse a Control Sequence Introducer code and dispatch it.
  *
  * See [CSI] for some useful information about these codes.
+ *
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.prototype.parseCSI_ = function(parseState) {
   var ch = parseState.peekChar();
@@ -17394,6 +18440,7 @@ hterm.VT.prototype.parseCSI_ = function(parseState) {
  * You can detect that parsing in complete by checking that the parse
  * function has changed back to the default parse function.
  *
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  * @return {boolean} If true, parsing is ongoing or complete.  If false, we've
  *     exceeded the max string sequence.
  */
@@ -17468,24 +18515,31 @@ hterm.VT.prototype.parseUntilStringTerminator_ = function(parseState) {
 
 /**
  * Dispatch to the function that handles a given CC1, ESC, or CSI or VT52 code.
+ *
+ * @param {string} type
+ * @param {string} code
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.prototype.dispatch = function(type, code, parseState) {
   var handler = hterm.VT[type][code];
   if (!handler) {
-    if (this.warnUnimplemented)
-      console.warn('Unknown ' + type + ' code: ' + JSON.stringify(code));
+    if (this.warnUnimplemented) {
+      console.warn(`Unknown ${type} code: ${JSON.stringify(code)}`);
+    }
     return;
   }
 
   if (handler == hterm.VT.ignore) {
-    if (this.warnUnimplemented)
-      console.warn('Ignored ' + type + ' code: ' + JSON.stringify(code));
+    if (this.warnUnimplemented) {
+      console.warn(`Ignored ${type} code: ${JSON.stringify(code)}`);
+    }
     return;
   }
 
   if (parseState.subargs && !handler.supportsSubargs) {
-    if (this.warnUnimplemented)
-      console.warn('Ignored ' + type + ' code w/subargs: ' + JSON.stringify(code));
+    if (this.warnUnimplemented) {
+      console.warn(`Ignored ${type} code w/subargs: ${JSON.stringify(code)}`);
+    }
     return;
   }
 
@@ -17512,6 +18566,9 @@ hterm.VT.prototype.dispatch = function(type, code, parseState) {
  * Invoked in response to SM/RM.
  *
  * Unexpected and unimplemented values are silently ignored.
+ *
+ * @param {string} code
+ * @param {boolean} state
  */
 hterm.VT.prototype.setANSIMode = function(code, state) {
   if (code == 4) {  // Insert Mode (IRM)
@@ -17527,6 +18584,9 @@ hterm.VT.prototype.setANSIMode = function(code, state) {
  * Set or reset one of the DEC Private modes.
  *
  * Invoked in response to DECSET/DECRST.
+ *
+ * @param {string} code
+ * @param {boolean} state
  */
 hterm.VT.prototype.setDECMode = function(code, state) {
   switch (parseInt(code, 10)) {
@@ -17742,6 +18802,8 @@ hterm.VT.CC1['\x05'] = hterm.VT.ignore;
 
 /**
  * Ring Bell (BEL).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x07'] = function() {
   this.terminal.ringBell();
@@ -17752,6 +18814,8 @@ hterm.VT.CC1['\x07'] = function() {
  *
  * Move the cursor to the left one character position, unless it is at the
  * left margin, in which case no action occurs.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x08'] = function() {
   this.terminal.cursorLeft(1);
@@ -17762,6 +18826,8 @@ hterm.VT.CC1['\x08'] = function() {
  *
  * Move the cursor to the next tab stop, or to the right margin if no further
  * tab stops are present on the line.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x09'] = function() {
   this.terminal.forwardTabStop();
@@ -17772,6 +18838,8 @@ hterm.VT.CC1['\x09'] = function() {
  *
  * This code causes a line feed or a new line operation.  See Automatic
  * Newline (LNM).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x0a'] = function() {
   this.terminal.formFeed();
@@ -17795,6 +18863,8 @@ hterm.VT.CC1['\x0c'] = hterm.VT.CC1['\x0a'];
  * Carriage Return (CR).
  *
  * Move cursor to the left margin on the current line.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x0d'] = function() {
   this.terminal.setCursorColumn(0);
@@ -17803,6 +18873,7 @@ hterm.VT.CC1['\x0d'] = function() {
 /**
  * Shift Out (SO), aka Lock Shift 0 (LS1).
  *
+ * @this {!hterm.VT}
  * Invoke G1 character set in GL.
  */
 hterm.VT.CC1['\x0e'] = function() {
@@ -17813,6 +18884,8 @@ hterm.VT.CC1['\x0e'] = function() {
  * Shift In (SI), aka Lock Shift 0 (LS0).
  *
  * Invoke G0 character set in GL.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x0f'] = function() {
   this.GL = 'G0';
@@ -17843,6 +18916,9 @@ hterm.VT.CC1['\x13'] = hterm.VT.ignore;
  * and not executed.
  *
  * It also causes the error character to be displayed.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x18'] = function(parseState) {
   // If we've shifted in the G1 character set, shift it back out to
@@ -17863,6 +18939,9 @@ hterm.VT.CC1['\x1a'] = hterm.VT.CC1['\x18'];
 
 /**
  * Escape (ESC).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x1b'] = function(parseState) {
   function parseESC(parseState) {
@@ -17891,6 +18970,8 @@ hterm.VT.CC1['\x7f'] = hterm.VT.ignore;
  * Index (IND).
  *
  * Like newline, only keep the X position
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x84'] =
 hterm.VT.ESC['D'] = function() {
@@ -17901,6 +18982,8 @@ hterm.VT.ESC['D'] = function() {
  * Next Line (NEL).
  *
  * Like newline, but doesn't add lines.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x85'] =
 hterm.VT.ESC['E'] = function() {
@@ -17910,6 +18993,8 @@ hterm.VT.ESC['E'] = function() {
 
 /**
  * Horizontal Tabulation Set (HTS).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x88'] =
 hterm.VT.ESC['H'] = function() {
@@ -17920,6 +19005,8 @@ hterm.VT.ESC['H'] = function() {
  * Reverse Index (RI).
  *
  * Move up one line.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x8d'] =
 hterm.VT.ESC['M'] = function() {
@@ -17953,6 +19040,9 @@ hterm.VT.ESC['O'] = hterm.VT.ignore;
  * Not currently implemented.
  *
  * TODO(rginda): Consider implementing DECRQSS, the rest don't seem applicable.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x90'] =
 hterm.VT.ESC['P'] = function(parseState) {
@@ -17988,6 +19078,8 @@ hterm.VT.ESC['X'] = hterm.VT.ignore;
  * Single Character Introducer (SCI, also DECID).
  *
  * Return Terminal ID.  Obsolete form of 'ESC [ c' (DA).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CC1['\x9a'] =
 hterm.VT.ESC['Z'] = function() {
@@ -17998,6 +19090,9 @@ hterm.VT.ESC['Z'] = function() {
  * Control Sequence Introducer (CSI).
  *
  * The lead into most escape sequences.  See [CSI].
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x9b'] =
 hterm.VT.ESC['['] = function(parseState) {
@@ -18022,11 +19117,17 @@ hterm.VT.ESC['\\'] = hterm.VT.ignore;
  * Operating System Command (OSC).
  *
  * Commands relating to the operating system.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x9d'] =
 hterm.VT.ESC[']'] = function(parseState) {
   parseState.resetArguments();
 
+  /**
+   * @param {!hterm.VT.ParseState} parseState The current parse state.
+   */
   function parseOSC(parseState) {
     if (!this.parseUntilStringTerminator_(parseState)) {
       // The string sequence was too long.
@@ -18060,6 +19161,9 @@ hterm.VT.ESC[']'] = function(parseState) {
  * Privacy Message (PM).
  *
  * Will not implement.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x9e'] =
 hterm.VT.ESC['^'] = function(parseState) {
@@ -18071,6 +19175,9 @@ hterm.VT.ESC['^'] = function(parseState) {
  * Application Program Control (APC).
  *
  * Will not implement.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CC1['\x9f'] =
 hterm.VT.ESC['_'] = function(parseState) {
@@ -18090,6 +19197,9 @@ hterm.VT.ESC['_'] = function(parseState) {
  *   ESC \x20 L - Set ANSI conformance level 1.
  *   ESC \x20 M - Set ANSI conformance level 2.
  *   ESC \x20 N - Set ANSI conformance level 3.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.ESC['\x20'] = function(parseState) {
   parseState.func = function(parseState) {
@@ -18102,6 +19212,9 @@ hterm.VT.ESC['\x20'] = function(parseState) {
 
 /**
  * DEC 'ESC #' sequences.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.ESC['#'] = function(parseState) {
   parseState.func = function(parseState) {
@@ -18118,6 +19231,9 @@ hterm.VT.ESC['#'] = function(parseState) {
 
 /**
  * Designate Other Coding System (DOCS).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.ESC['%'] = function(parseState) {
   parseState.func = function(parseState) {
@@ -18183,6 +19299,10 @@ hterm.VT.ESC['%'] = function(parseState) {
  *   ESC / Ps - Set G3 character set (VT300).
  *
  * All other sequences are echoed to the terminal.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
+ * @param {string} code
  */
 hterm.VT.ESC['('] =
 hterm.VT.ESC[')'] =
@@ -18227,6 +19347,8 @@ hterm.VT.ESC['6'] = hterm.VT.ignore;
 
 /**
  * Save Cursor (DECSC).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['7'] = function() {
   this.terminal.saveCursorAndState();
@@ -18234,6 +19356,8 @@ hterm.VT.ESC['7'] = function() {
 
 /**
  * Restore Cursor (DECRC).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['8'] = function() {
   this.terminal.restoreCursorAndState();
@@ -18248,6 +19372,8 @@ hterm.VT.ESC['9'] = hterm.VT.ignore;
 
 /**
  * Application keypad (DECKPAM).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['='] = function() {
   this.terminal.keyboard.applicationKeypad = true;
@@ -18255,6 +19381,8 @@ hterm.VT.ESC['='] = function() {
 
 /**
  * Normal keypad (DECKPNM).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['>'] = function() {
   this.terminal.keyboard.applicationKeypad = false;
@@ -18272,6 +19400,8 @@ hterm.VT.ESC['F'] = hterm.VT.ignore;
 
 /**
  * Full Reset (RIS).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['c'] = function() {
   this.terminal.reset();
@@ -18289,6 +19419,8 @@ hterm.VT.ESC['m'] = hterm.VT.ignore;
  * Lock Shift 2 (LS2)
  *
  * Invoke the G2 Character Set as GL.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['n'] = function() {
   this.GL = 'G2';
@@ -18298,6 +19430,8 @@ hterm.VT.ESC['n'] = function() {
  * Lock Shift 3 (LS3)
  *
  * Invoke the G3 Character Set as GL.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['o'] = function() {
   this.GL = 'G3';
@@ -18307,6 +19441,8 @@ hterm.VT.ESC['o'] = function() {
  * Lock Shift 2, Right (LS3R)
  *
  * Invoke the G3 Character Set as GR.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['|'] = function() {
   this.GR = 'G3';
@@ -18316,6 +19452,8 @@ hterm.VT.ESC['|'] = function() {
  * Lock Shift 2, Right (LS2R)
  *
  * Invoke the G2 Character Set as GR.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['}'] = function() {
   this.GR = 'G2';
@@ -18325,6 +19463,8 @@ hterm.VT.ESC['}'] = function() {
  * Lock Shift 1, Right (LS1R)
  *
  * Invoke the G1 Character Set as GR.
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.ESC['~'] = function() {
   this.GR = 'G1';
@@ -18334,6 +19474,9 @@ hterm.VT.ESC['~'] = function() {
  * Change icon name and window title.
  *
  * We only change the window title.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['0'] = function(parseState) {
   this.terminal.setWindowTitle(parseState.args[0]);
@@ -18346,18 +19489,21 @@ hterm.VT.OSC['2'] = hterm.VT.OSC['0'];
 
 /**
  * Set/read color palette.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['4'] = function(parseState) {
   // Args come in as a single 'index1;rgb1 ... ;indexN;rgbN' string.
   // We split on the semicolon and iterate through the pairs.
   var args = parseState.args[0].split(';');
 
-  var pairCount = parseInt(args.length / 2);
+  var pairCount = Math.floor(args.length / 2);
   var colorPalette = this.terminal.getTextAttributes().colorPalette;
   var responseArray = [];
 
   for (var pairNumber = 0; pairNumber < pairCount; ++pairNumber) {
-    var colorIndex = parseInt(args[pairNumber * 2]);
+    var colorIndex = parseInt(args[pairNumber * 2], 10);
     var colorValue = args[pairNumber * 2 + 1];
 
     if (colorIndex >= colorPalette.length)
@@ -18391,6 +19537,9 @@ hterm.VT.OSC['4'] = function(parseState) {
  * Calling with a non-blank URI starts it.  A blank URI stops it.
  *
  * https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['8'] = function(parseState) {
   const args = parseState.args[0].split(';');
@@ -18431,6 +19580,8 @@ hterm.VT.OSC['8'] = function(parseState) {
 
 /**
  * iTerm2 growl notifications.
+ *
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['9'] = function(parseState) {
   // This just dumps the entire string as the message.
@@ -18439,6 +19590,9 @@ hterm.VT.OSC['9'] = function(parseState) {
 
 /**
  * Change VT100 text foreground color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['10'] = function(parseState) {
   // Args come in as a single string, but extra args will chain to the following
@@ -18447,7 +19601,6 @@ hterm.VT.OSC['10'] = function(parseState) {
   if (!args)
     return;
 
-  var colorArg;
   var colorX11 = lib.colors.x11ToCSS(args.shift());
   if (colorX11)
     this.terminal.setForegroundColor(colorX11);
@@ -18460,6 +19613,9 @@ hterm.VT.OSC['10'] = function(parseState) {
 
 /**
  * Change VT100 text background color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['11'] = function(parseState) {
   // Args come in as a single string, but extra args will chain to the following
@@ -18468,7 +19624,6 @@ hterm.VT.OSC['11'] = function(parseState) {
   if (!args)
     return;
 
-  var colorArg;
   var colorX11 = lib.colors.x11ToCSS(args.shift());
   if (colorX11)
     this.terminal.setBackgroundColor(colorX11);
@@ -18481,6 +19636,9 @@ hterm.VT.OSC['11'] = function(parseState) {
 
 /**
  * Change text cursor color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['12'] = function(parseState) {
   // Args come in as a single string, but extra args will chain to the following
@@ -18489,7 +19647,6 @@ hterm.VT.OSC['12'] = function(parseState) {
   if (!args)
     return;
 
-  var colorArg;
   var colorX11 = lib.colors.x11ToCSS(args.shift());
   if (colorX11)
     this.terminal.setCursorColor(colorX11);
@@ -18516,6 +19673,9 @@ hterm.VT.OSC['12'] = function(parseState) {
  * also: DECSCUSR.
  *
  * Invalid numbers will restore the cursor to the block shape.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['50'] = function(parseState) {
   var args = parseState.args[0].match(/CursorShape=(.)/i);
@@ -18547,6 +19707,9 @@ hterm.VT.OSC['50'] = function(parseState) {
  *
  * The clipboard data will be decoded according to the 'receive-encoding'
  * preference.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['52'] = function(parseState) {
   if (!this.enableClipboardWrite)
@@ -18568,7 +19731,7 @@ hterm.VT.OSC['52'] = function(parseState) {
   }
   if (this.characterEncoding == 'utf-8') {
     const decoder = new TextDecoder();
-    const bytes = lib.codec.stringToCodeUnitArray(data, Uint8Array);
+    const bytes = lib.codec.stringToCodeUnitArray(data);
     data = decoder.decode(bytes);
   }
   if (data)
@@ -18577,6 +19740,9 @@ hterm.VT.OSC['52'] = function(parseState) {
 
 /**
  * Reset color palette.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['104'] = function(parseState) {
   const attrs = this.terminal.getTextAttributes();
@@ -18595,6 +19761,9 @@ hterm.VT.OSC['104'] = function(parseState) {
 
 /**
  * Reset foreground color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['110'] = function(parseState) {
   this.terminal.setForegroundColor();
@@ -18602,6 +19771,9 @@ hterm.VT.OSC['110'] = function(parseState) {
 
 /**
  * Reset background color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['111'] = function(parseState) {
   this.terminal.setBackgroundColor();
@@ -18609,6 +19781,9 @@ hterm.VT.OSC['111'] = function(parseState) {
 
 /**
  * Reset text cursor color.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['112'] = function(parseState) {
   this.terminal.setCursorColor();
@@ -18618,6 +19793,9 @@ hterm.VT.OSC['112'] = function(parseState) {
  * iTerm2 extended sequences.
  *
  * We only support image display atm.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['1337'] = function(parseState) {
   // Args come in as a set of key value pairs followed by data.
@@ -18638,7 +19816,7 @@ hterm.VT.OSC['1337'] = function(parseState) {
     height: 'auto',
     align: 'left',
     type: '',
-    buffer: lib.codec.stringToCodeUnitArray(atob(args[2]), Uint8Array).buffer,
+    buffer: lib.codec.stringToCodeUnitArray(atob(args[2])).buffer,
   };
   // Walk the "key=value;" sets.
   args[1].split(';').forEach((ele) => {
@@ -18655,7 +19833,7 @@ hterm.VT.OSC['1337'] = function(parseState) {
         break;
       case 'size':
         try {
-          options.size = parseInt(kv[2]);
+          options.size = parseInt(kv[2], 10);
         } catch (e) {}
         break;
       case 'width':
@@ -18706,6 +19884,8 @@ hterm.VT.OSC['1337'] = function(parseState) {
  *
  * Technically there is no format here, but most modules obey:
  * <module name>;<module args, usually ; delimited>
+ *
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.OSC['777'] = function(parseState) {
   var ary;
@@ -18732,6 +19912,9 @@ hterm.VT.OSC['777'] = function(parseState) {
 
 /**
  * Insert (blank) characters (ICH).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['@'] = function(parseState) {
   this.terminal.insertSpace(parseState.iarg(0, 1));
@@ -18739,6 +19922,9 @@ hterm.VT.CSI['@'] = function(parseState) {
 
 /**
  * Cursor Up (CUU).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['A'] = function(parseState) {
   this.terminal.cursorUp(parseState.iarg(0, 1));
@@ -18746,6 +19932,9 @@ hterm.VT.CSI['A'] = function(parseState) {
 
 /**
  * Cursor Down (CUD).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['B'] = function(parseState) {
   this.terminal.cursorDown(parseState.iarg(0, 1));
@@ -18753,6 +19942,9 @@ hterm.VT.CSI['B'] = function(parseState) {
 
 /**
  * Cursor Forward (CUF).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['C'] = function(parseState) {
   this.terminal.cursorRight(parseState.iarg(0, 1));
@@ -18760,6 +19952,9 @@ hterm.VT.CSI['C'] = function(parseState) {
 
 /**
  * Cursor Backward (CUB).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['D'] = function(parseState) {
   this.terminal.cursorLeft(parseState.iarg(0, 1));
@@ -18770,6 +19965,9 @@ hterm.VT.CSI['D'] = function(parseState) {
  *
  * This is like Cursor Down, except the cursor moves to the beginning of the
  * line as well.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['E'] = function(parseState) {
   this.terminal.cursorDown(parseState.iarg(0, 1));
@@ -18781,6 +19979,9 @@ hterm.VT.CSI['E'] = function(parseState) {
  *
  * This is like Cursor Up, except the cursor moves to the beginning of the
  * line as well.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['F'] = function(parseState) {
   this.terminal.cursorUp(parseState.iarg(0, 1));
@@ -18791,6 +19992,9 @@ hterm.VT.CSI['F'] = function(parseState) {
  * Cursor Horizontal Absolute (CHA).
  *
  * Xterm calls this Cursor Character Absolute.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['G'] = function(parseState) {
   this.terminal.setCursorColumn(parseState.iarg(0, 1) - 1);
@@ -18798,6 +20002,9 @@ hterm.VT.CSI['G'] = function(parseState) {
 
 /**
  * Cursor Position (CUP).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['H'] = function(parseState) {
   this.terminal.setCursorPosition(parseState.iarg(0, 1) - 1,
@@ -18806,6 +20013,9 @@ hterm.VT.CSI['H'] = function(parseState) {
 
 /**
  * Cursor Forward Tabulation (CHT).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['I'] = function(parseState) {
   var count = parseState.iarg(0, 1);
@@ -18817,9 +20027,12 @@ hterm.VT.CSI['I'] = function(parseState) {
 
 /**
  * Erase in Display (ED, DECSED).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['J'] =
-hterm.VT.CSI['?J'] = function(parseState, code) {
+hterm.VT.CSI['?J'] = function(parseState) {
   var arg = parseState.args[0];
 
   if (!arg || arg == 0) {
@@ -18837,9 +20050,12 @@ hterm.VT.CSI['?J'] = function(parseState, code) {
 
 /**
  * Erase in line (EL, DECSEL).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['K'] =
-hterm.VT.CSI['?K'] = function(parseState, code) {
+hterm.VT.CSI['?K'] = function(parseState) {
   var arg = parseState.args[0];
 
   if (!arg || arg == 0) {
@@ -18853,6 +20069,9 @@ hterm.VT.CSI['?K'] = function(parseState, code) {
 
 /**
  * Insert Lines (IL).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['L'] = function(parseState) {
   this.terminal.insertLines(parseState.iarg(0, 1));
@@ -18860,6 +20079,9 @@ hterm.VT.CSI['L'] = function(parseState) {
 
 /**
  * Delete Lines (DL).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['M'] = function(parseState) {
   this.terminal.deleteLines(parseState.iarg(0, 1));
@@ -18869,6 +20091,9 @@ hterm.VT.CSI['M'] = function(parseState) {
  * Delete Characters (DCH).
  *
  * This command shifts the line contents left, starting at the cursor position.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['P'] = function(parseState) {
   this.terminal.deleteChars(parseState.iarg(0, 1));
@@ -18876,6 +20101,9 @@ hterm.VT.CSI['P'] = function(parseState) {
 
 /**
  * Scroll Up (SU).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['S'] = function(parseState) {
   this.terminal.vtScrollUp(parseState.iarg(0, 1));
@@ -18884,6 +20112,9 @@ hterm.VT.CSI['S'] = function(parseState) {
 /**
  * Scroll Down (SD).
  * Also 'Initiate highlight mouse tracking'.  Will not implement this part.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['T'] = function(parseState) {
   if (parseState.args.length <= 1)
@@ -18911,6 +20142,9 @@ hterm.VT.CSI['>T'] = hterm.VT.ignore;
 
 /**
  * Erase Characters (ECH).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['X'] = function(parseState) {
   this.terminal.eraseToRight(parseState.iarg(0, 1));
@@ -18918,6 +20152,9 @@ hterm.VT.CSI['X'] = function(parseState) {
 
 /**
  * Cursor Backward Tabulation (CBT).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['Z'] = function(parseState) {
   var count = parseState.iarg(0, 1);
@@ -18936,6 +20173,9 @@ hterm.VT.CSI['`'] = hterm.VT.CSI['G'];
 
 /**
  * Character Position Relative (HPR).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['a'] = function(parseState) {
   this.terminal.setCursorColumn(this.terminal.getCursorColumn() +
@@ -18955,6 +20195,9 @@ hterm.VT.CSI['b'] = hterm.VT.ignore;
  * TODO(rginda): This is hardcoded to send back 'VT100 with Advanced Video
  * Option', but it may be more correct to send a VT220 response once
  * we fill out the 'Not currently implemented' parts.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['c'] = function(parseState) {
   if (!parseState.args[0] || parseState.args[0] == 0) {
@@ -18968,6 +20211,9 @@ hterm.VT.CSI['c'] = function(parseState) {
  * TODO(rginda): This is hardcoded to send back 'VT100' but it may be more
  * correct to send a VT220 response once we fill out more 'Not currently
  * implemented' parts.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['>c'] = function(parseState) {
   this.terminal.io.sendString('\x1b[>0;256;0c');
@@ -18975,6 +20221,9 @@ hterm.VT.CSI['>c'] = function(parseState) {
 
 /**
  * Line Position Absolute (VPA).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['d'] = function(parseState) {
   this.terminal.setAbsoluteCursorRow(parseState.iarg(0, 1) - 1);
@@ -18989,11 +20238,14 @@ hterm.VT.CSI['f'] = hterm.VT.CSI['H'];
 
 /**
  * Tab Clear (TBC).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['g'] = function(parseState) {
   if (!parseState.args[0] || parseState.args[0] == 0) {
     // Clear tab stop at cursor.
-    this.terminal.clearTabStopAtCursor(false);
+    this.terminal.clearTabStopAtCursor();
   } else if (parseState.args[0] == 3) {
     // Clear all tab stops.
     this.terminal.clearAllTabStops();
@@ -19002,6 +20254,9 @@ hterm.VT.CSI['g'] = function(parseState) {
 
 /**
  * Set Mode (SM).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['h'] = function(parseState) {
   for (var i = 0; i < parseState.args.length; i++) {
@@ -19011,6 +20266,9 @@ hterm.VT.CSI['h'] = function(parseState) {
 
 /**
  * DEC Private Mode Set (DECSET).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['?h'] = function(parseState) {
   for (var i = 0; i < parseState.args.length; i++) {
@@ -19029,6 +20287,9 @@ hterm.VT.CSI['?i'] = hterm.VT.ignore;
 
 /**
  * Reset Mode (RM).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['l'] = function(parseState) {
   for (var i = 0; i < parseState.args.length; i++) {
@@ -19038,6 +20299,9 @@ hterm.VT.CSI['l'] = function(parseState) {
 
 /**
  * DEC Private Mode Reset (DECRST).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current parse state.
  */
 hterm.VT.CSI['?l'] = function(parseState) {
   for (var i = 0; i < parseState.args.length; i++) {
@@ -19051,10 +20315,11 @@ hterm.VT.CSI['?l'] = function(parseState) {
  * This deals with the various ISO 8613-6 forms, and with legacy xterm forms
  * that are common in the wider application world.
  *
- * @param {hterm.VT.ParseState} parseState The current input state.
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState The current input state.
  * @param {number} i The argument in parseState to start processing.
- * @param {hterm.TextAttributes} attrs The current text attributes.
- * @return {Object} The skipCount member defines how many arguments to skip
+ * @param {!hterm.TextAttributes} attrs The current text attributes.
+ * @return {!Object} The skipCount member defines how many arguments to skip
  *     (i.e. how many were processed), and the color member is the color that
  *     was successfully processed, or undefined if not.
  */
@@ -19085,7 +20350,7 @@ hterm.VT.prototype.parseSgrExtendedColors = function(parseState, i, attrs) {
   }
 
   // Figure out which form to parse.
-  switch (parseInt(ary[0])) {
+  switch (parseInt(ary[0], 10)) {
     default:  // Unknown.
     case 0:  // Implementation defined.  We ignore it.
       return {skipCount: 0};
@@ -19148,9 +20413,9 @@ hterm.VT.prototype.parseSgrExtendedColors = function(parseState, i, attrs) {
         return {skipCount: 0};
 
       // TODO: See CMYK below.
-      const c = parseState.parseInt(ary[1]);
-      const m = parseState.parseInt(ary[2]);
-      const y = parseState.parseInt(ary[3]);
+      // const c = parseState.parseInt(ary[1]);
+      // const m = parseState.parseInt(ary[2]);
+      // const y = parseState.parseInt(ary[3]);
       return {skipCount: 0};
     }
 
@@ -19170,10 +20435,10 @@ hterm.VT.prototype.parseSgrExtendedColors = function(parseState, i, attrs) {
       // https://www.w3.org/TR/css-color-4/#cmyk-colors
       // Or normalize it to RGB ourselves:
       // https://www.w3.org/TR/css-color-4/#cmyk-rgb
-      const c = parseState.parseInt(ary[1]);
-      const m = parseState.parseInt(ary[2]);
-      const y = parseState.parseInt(ary[3]);
-      const k = parseState.parseInt(ary[4]);
+      // const c = parseState.parseInt(ary[1]);
+      // const m = parseState.parseInt(ary[2]);
+      // const y = parseState.parseInt(ary[3]);
+      // const k = parseState.parseInt(ary[4]);
       return {skipCount: 0};
     }
 
@@ -19201,6 +20466,9 @@ hterm.VT.prototype.parseSgrExtendedColors = function(parseState, i, attrs) {
  *
  * Iterate through the list of arguments, applying the attribute changes based
  * on the argument value...
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI['m'] = function(parseState) {
   var attrs = this.terminal.getTextAttributes();
@@ -19334,6 +20602,9 @@ hterm.VT.CSI['>m'] = hterm.VT.ignore;
  *
  * 5 - Status Report. Result (OK) is CSI 0 n
  * 6 - Report Cursor Position (CPR) [row;column]. Result is CSI r ; c R
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI['n'] = function(parseState) {
   if (parseState.args[0] == 5) {
@@ -19364,6 +20635,9 @@ hterm.VT.CSI['>n'] = hterm.VT.ignore;
  *      and LK01 respectively.
  * 53 - Report Locator status as CSI ? 5 3 n Locator available, if compiled-in,
  *      or CSI ? 5 0 n No Locator, if not.
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI['?n'] = function(parseState) {
   if (parseState.args[0] == 6) {
@@ -19398,6 +20672,8 @@ hterm.VT.CSI['>p'] = hterm.VT.ignore;
 
 /**
  * Soft terminal reset (DECSTR).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CSI['!p'] = function() {
   this.terminal.softReset();
@@ -19428,6 +20704,9 @@ hterm.VT.CSI['q'] = hterm.VT.ignore;
 
 /**
  * Set cursor style (DECSCUSR, VT520).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI[' q'] = function(parseState) {
   var arg = parseState.args[0];
@@ -19464,6 +20743,9 @@ hterm.VT.CSI['"q'] = hterm.VT.ignore;
 
 /**
  * Set Scrolling Region (DECSTBM).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI['r'] = function(parseState) {
   var args = parseState.args;
@@ -19489,6 +20771,8 @@ hterm.VT.CSI['$r'] = hterm.VT.ignore;
 
 /**
  * Save cursor (ANSI.SYS)
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CSI['s'] = function() {
   this.terminal.saveCursorAndState();
@@ -19531,6 +20815,8 @@ hterm.VT.CSI[' t'] = hterm.VT.ignore;
 
 /**
  * Restore cursor (ANSI.SYS).
+ *
+ * @this {!hterm.VT}
  */
 hterm.VT.CSI['u'] = function() {
   this.terminal.restoreCursorAndState();
@@ -19583,6 +20869,9 @@ hterm.VT.CSI['$x'] = hterm.VT.ignore;
  * (see https://nethackwiki.com/wiki/Vt_tiledata for more info)
  *
  * Implemented as far as we care (start a glyph and end a glyph).
+ *
+ * @this {!hterm.VT}
+ * @param {!hterm.VT.ParseState} parseState
  */
 hterm.VT.CSI['z'] = function(parseState) {
   if (parseState.args.length < 1)
@@ -19654,7 +20943,8 @@ hterm.VT.CSI['\'~'] = hterm.VT.ignore;
  * GR maps are not currently supported.
  *
  * @param {string} description A human readable description of this map.
- * @param {Object} glmap The GL mapping from input to output characters.
+ * @param {?Object} glmap The GL mapping from input to output characters.
+ * @constructor
  */
 hterm.VT.CharacterMap = function(description, glmap) {
   /**
@@ -19680,7 +20970,7 @@ hterm.VT.CharacterMap = function(description, glmap) {
  *
  * Used when the mappings change.
  *
- * @param {Object?} opt_glmap Additional mappings to overlay on top of the
+ * @param {!Object=} opt_glmap Additional mappings to overlay on top of the
  *     base mapping.
  */
 hterm.VT.CharacterMap.prototype.sync_ = function(opt_glmap) {
@@ -19699,8 +20989,8 @@ hterm.VT.CharacterMap.prototype.sync_ = function(opt_glmap) {
   else
     this.glmap_ = this.glmapBase_;
 
-  var glchars = Object.keys(this.glmap_).map((key) =>
-      '\\x' + lib.f.zpad(key.charCodeAt(0).toString(16)));
+  var glchars = Object.keys(lib.notNull(this.glmap_)).map((key) =>
+      '\\x' + lib.f.zpad(key.charCodeAt(0).toString(16), 2));
   this.glre_ = new RegExp('[' + glchars.join('') + ']', 'g');
 
   this.GL = (str) => str.replace(this.glre_, (ch) => this.glmap_[ch]);
@@ -19724,7 +21014,7 @@ hterm.VT.CharacterMap.prototype.reset = function() {
  * the existing base map (what was created with).  Subsequent calls to this
  * will throw away previous override settings.
  *
- * @param {Object} glmap The custom map to override existing mappings.
+ * @param {!Object} glmap The custom map to override existing mappings.
  */
 hterm.VT.CharacterMap.prototype.setOverrides = function(glmap) {
   this.sync_(glmap);
@@ -19733,7 +21023,7 @@ hterm.VT.CharacterMap.prototype.setOverrides = function(glmap) {
 /**
  * Return a copy of this mapping.
  *
- * @return {hterm.VT.CharacterMap} A new hterm.VT.CharacterMap instance.
+ * @return {!hterm.VT.CharacterMap} A new hterm.VT.CharacterMap instance.
  */
 hterm.VT.CharacterMap.prototype.clone = function() {
   var map = new hterm.VT.CharacterMap(this.description, this.glmapBase_);
@@ -19744,6 +21034,8 @@ hterm.VT.CharacterMap.prototype.clone = function() {
 
 /**
  * Table of character maps.
+ *
+ * @constructor
  */
 hterm.VT.CharacterMaps = function() {
   this.maps_ = hterm.VT.CharacterMaps.DefaultMaps;
@@ -19756,8 +21048,9 @@ hterm.VT.CharacterMaps = function() {
 /**
  * Look up a previously registered map.
  *
- * @param {String} name The name of the map to lookup.
- * @return {hterm.VT.CharacterMap} The map, if it's been registered.
+ * @param {string} name The name of the map to lookup.
+ * @return {!hterm.VT.CharacterMap|undefined} The map, if it's been registered
+ *     or undefined.
  */
 hterm.VT.CharacterMaps.prototype.getMap = function(name) {
   if (this.maps_.hasOwnProperty(name))
@@ -19771,8 +21064,8 @@ hterm.VT.CharacterMaps.prototype.getMap = function(name) {
  *
  * Any previously registered maps by this name will be discarded.
  *
- * @param {String} name The name of the map.
- * @param {hterm.VT.CharacterMap} map The map to register.
+ * @param {string} name The name of the map.
+ * @param {!hterm.VT.CharacterMap} map The map to register.
  */
 hterm.VT.CharacterMaps.prototype.addMap = function(name, map) {
   if (this.maps_ === this.mapsBase_)
@@ -19791,7 +21084,7 @@ hterm.VT.CharacterMaps.prototype.reset = function() {
 /**
  * Merge custom changes to this table.
  *
- * @param {Object} maps A set of hterm.VT.CharacterMap objects.
+ * @param {!Object} maps A set of hterm.VT.CharacterMap objects.
  */
 hterm.VT.CharacterMaps.prototype.setOverrides = function(maps) {
   if (this.maps_ === this.mapsBase_)
@@ -20292,18 +21585,18 @@ lib.resource.add('hterm/images/icon-96', 'image/png;base64',
 );
 
 lib.resource.add('hterm/concat/date', 'text/plain',
-'Mon, 17 Jun 2019 10:35:22 +0000'
+'Tue, 10 Dec 2019 10:23:39 +0000'
 );
 
 lib.resource.add('hterm/changelog/version', 'text/plain',
-'1.84'
+'1.87'
 );
 
 lib.resource.add('hterm/changelog/date', 'text/plain',
-'2019-01-19'
+'2019-11-28'
 );
 
 lib.resource.add('hterm/git/HEAD', 'text/plain',
-'234142542d397fd244059df7c3c2bb745a26e9f7'
+'69e9c6ca4cd309bb7042bb6d79f18cf391b37df8'
 );
 

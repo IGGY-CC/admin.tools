@@ -4,6 +4,7 @@ import (
 	"../otp"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -20,47 +21,50 @@ func webSocketOTPInit(writer http.ResponseWriter, action string, jsonString stri
 	var otpData = new(OTPData)
 	err := json.Unmarshal([]byte(jsonString), &otpData)
 	if err != nil {
-		Log.Println("Cannot unmarshal provided data", jsonString, otpData)
+		log.Println("Cannot unmarshal provided data", jsonString, otpData)
 	}
 
 	switch action {
 	case "create":
 		err = otpManager.GenerateTOTP()
 		if err != nil {
-			Log.Println("Couldn't generate a new TOTP: ", err)
+			log.Println("Couldn't generate a new TOTP: ", err)
 			// TODO
 			WriteHTTP(err.Error(), writer)
 		}
 		// TODO
 		WriteHTTP(doMarshall(otpManager), writer)
 		break
+	case "delete":
+		otpManager.DeleteEntry(otpData.Name)
+		break
 	case "list":
 		strings, err := otpManager.GetKeys()
 		if err != nil {
-			Log.Println("Couldn't retrieve any list")
+			log.Println("Couldn't retrieve any list")
 		}
-		Log.Println("Retrieved list: ", strings)
+		log.Println("Retrieved list: ", strings)
 		// TODO
 		WriteHTTP(doMarshall(strings), writer)
 		break
 	case "validate":
 		valid := otpManager.ValidateOTP(otpData.Name, otpData.OTP)
 		if !valid {
-			Log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
+			log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "validate-check":
 		err := otpManager.ValidateAndSave(otpData.Name, otpData.OTP)
 		if err != nil {
-			Log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
+			log.Println("Failed to authenticate with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "add-new":
 		err = otpManager.CheckAndSave(otpData.Name, otpData.Key, otpData.OTP)
 		if err != nil {
-			Log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
+			log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
 			return
 		}
 		WriteHTTP(doMarshall([]string {"success!"}), writer)
@@ -68,30 +72,30 @@ func webSocketOTPInit(writer http.ResponseWriter, action string, jsonString stri
 	case "add-new-with-OTP":
 		err = otpManager.CheckAndSave(otpData.Name, otpData.Key, otpData.OTP)
 		if err != nil {
-			Log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
+			log.Println("Failed to authenticate the Key with requested OTP", jsonString, otpData, err)
 			return
 		}
 		break
 	case "generate-otp":
 		otp2, err := otpManager.GenerateCodeFromNames(otpData.All)
 		if err != nil {
-			Log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
+			log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
 			return
 		}
-		Log.Println("Generated codes successfully!", otp2)
+		log.Println("Generated codes successfully!", otp2)
 		break
 	case "generate-otp-names":
 		otp, err := otpManager.GenerateCodeFromName(otpData.Name)
 		if err != nil {
-			Log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
+			log.Println("Couldn't generate a code from the given name, doesn't the name/key pair exists?", err)
 			return
 		}
-		Log.Println("Generated code successfully!", otp)
+		log.Println("Generated code successfully!", otp)
 		WriteHTTP(doMarshall([]string{otp}), writer)
 		break
 	}
 
-	Log.Println("OTP Validated Successfully!")
+	log.Println("OTP Validated Successfully!")
 	//createAndClose = true
 
 	return
@@ -100,7 +104,7 @@ func webSocketOTPInit(writer http.ResponseWriter, action string, jsonString stri
 func doMarshall(v interface{}) string {
 	bytes, err := json.Marshal(v)
 	if err != nil {
-		Log.Println("There is an error Marshalling object to Json string", err)
+		log.Println("There is an error Marshalling object to Json string", err)
 	}
 	return string(bytes)
 }
@@ -110,6 +114,6 @@ func WriteHTTP(data string, writer http.ResponseWriter) {
 	//as.httpWriter.(http.Flusher).Flush()
 	//code, err := fmt.Fprintf(*as.httpWriter, data)
 	if err != nil {
-		Log.Println("Error while writing to http(s) stream", err, code)
+		log.Println("Error while writing to http(s) stream", err, code)
 	}
 }

@@ -88,8 +88,13 @@ db/
 db/*.db
 .db
 
-ignore log.txt
+# ignore log.txt
 log.txt
 node_modules
 /src/main/scripts/assistants/dialogflow/AppointmentScheduler-8ba0293f3f52.json
 /src/plugins/guacamole/.guacamole/user-mapping.xml
+
+# ignore ssl certificates and private keys
+*.pem
+*.crt
+

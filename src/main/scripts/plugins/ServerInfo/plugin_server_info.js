@@ -16,6 +16,7 @@ let ServerInfo = function () {
     this.logs = null; // div array
     this.connected = false;
     this.tfaManager = null;
+    this.elements = new Map();
 };
 
 ServerInfo.prototype = Object.create(PluginRegister.prototype);
@@ -42,6 +43,7 @@ ServerInfo.prototype.Start = function () {
     this.getSlideOutContent();
     this.setupHTML();
     window.addEventListener('resize', this.getSlideOutContent.bind(this));
+    SystemInfoCallback["ServerInfo"] = this.updateData.bind(this);
 };
 
 
@@ -57,9 +59,10 @@ ServerInfo.prototype.setupHTML = function() {
     icon.src = iconArray[selected];
     icon.width = "14";
     icon.height = "16";
-    UtilsUI.createNewElement('div', propertyServer, "host-name", "server-text").innerHTML = "jumpbox";
-    UtilsUI.createNewElement('div', propertyServer, "host-cpu", "server-resources").innerHTML = "90%";
-    UtilsUI.createNewElement('div', propertyServer, "host-mem", "server-resources").innerHTML = "70%";
+
+    this.elements.set("hostname", UtilsUI.createNewElement('div', propertyServer, "host-name", "server-text"));
+    // this.elements.set("cpu", UtilsUI.createNewElement('div', propertyServer, "host-cpu", "server-resources"));
+    // this.elements.set("mem", UtilsUI.createNewElement('div', propertyServer, "host-mem", "server-resources"));
 
     let serverInfo = UtilsUI.createNewElement('div', property, 'server-info', 'server-info');
     let info = UtilsUI.createNewElement('div', serverInfo, 'info', 'info');
@@ -80,13 +83,17 @@ ServerInfo.prototype.setupHTML = function() {
     right.style.paddingRight = "4px";
     UtilsUI.createNewElement('i', right, null, "far fa-calendar-check");
 
-    this.setInfo(2, serverInfo, "ARCH", "x86-64");
+    this.setInfo(2, serverInfo, "UPTIME", "x86-64");
+    this.setInfo(2, serverInfo, "MEM", "x86-64");
+    this.setInfo(2, serverInfo, "CPU", "x86-64");
+    this.setInfo(2, serverInfo, "KERNEL", "x86-64");
+    this.setInfo(2, serverInfo, "SERVER", "Bare Machine");
     this.setInfo(3, serverInfo, "DISTRIB", "centos-7");
     this.setInfo(4, serverInfo, "GATEWAY", "10.1.1.2");
     this.setInfo(5, serverInfo, "PUBLIC IP", "no");
     this.setInfo(6, serverInfo, "PORTS", "80, 443");
 
-    this.setExpandInfo(7, serverInfo, "IP ADDR", "10.246.225.238");
+    this.setExpandInfo(7, serverInfo, "IP", "10.246.225.238");
     this.setExpandInfo(8, serverInfo, "/", "90%");
 
     //TOP
@@ -129,7 +136,7 @@ ServerInfo.prototype.setupResData = function(parent, pid, user, cpuMem, command)
 
 ServerInfo.prototype.setupTopHeader = function(parent, name, value) {
     UtilsUI.createNewElement('div', parent, null, "top-header top-" + name).innerHTML = value;
-}
+};
 
 ServerInfo.prototype.setInfoResources = function(id, parent, key, value) {
     let info7 = UtilsUI.createNewElement('div', parent, 'info-resources' + id, 'info-resources');
@@ -144,22 +151,38 @@ ServerInfo.prototype.setExpandInfo = function(id, parent, key, value) {
     let infoKey7 = UtilsUI.createNewElement('div', info7, 'info-key' + id, 'info-key');
     UtilsUI.createNewElement('div', infoKey7, 'info-expand' + id, 'info-expand').innerHTML = "<div>+</div>";
     UtilsUI.createNewElement('div', infoKey7, 'info-expand-content' + id, 'info-expand-content').innerHTML = key;
-    UtilsUI.createNewElement('div', info7, 'info-value' + id, 'info-value').innerHTML = value;
+    this.elements.set(key, UtilsUI.createNewElement('div', info7, 'info-value' + id, 'info-value'));
 };
 
 ServerInfo.prototype.setInfo = function(id, parent, key, value) {
     let info = UtilsUI.createNewElement('div', parent, 'info' + id, 'info');
     UtilsUI.createNewElement('div', info, 'info-key' + id, 'info-key').innerHTML = key;
-    UtilsUI.createNewElement('div', info, 'info-value' + id, 'info-value').innerHTML = value;
-}
+    this.elements.set(key, UtilsUI.createNewElement('div', info, 'info-value' + id, 'info-value'));
+};
 
 ServerInfo.prototype.getSlideOutContent = function() {
     // TODO: BAD CODE, JUST FOR DEMO PURPOSES
     const rightContent = document.querySelector("#right-tab-bar");
     const cs = getComputedStyle(rightContent);
     this.slideOut.content.style.height = parseInt(cs.height) - this.slideOut.headerHeight + "px";
-
+    this.updateData();
     // let hostdata = Jarvis
+};
+
+ServerInfo.prototype.updateData = function() {
+    let data = SystemInfo[ActiveTab.id];
+    if(data) {
+        this.elements.forEach((element, key) => {
+            let value = data[key];
+            if(value) {
+                if(key === "hostname") {
+                    element.innerHTML = value;
+                } else {
+                    element.innerHTML = value.substring(0, 15);
+                }
+            }
+        });
+    }
 };
 
 ServerInfo.prototype.removeSlideOutContent = function() {
@@ -169,8 +192,6 @@ ServerInfo.prototype.removeSlideOutContent = function() {
 ServerInfo.prototype.refreshSlideOutContent = function() {
     console.log("TODO: Refresh default log content");
 };
-
-
 
 // init logic
 module.exports = ServerInfo;

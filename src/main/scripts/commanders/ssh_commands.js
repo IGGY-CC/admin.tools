@@ -14,8 +14,8 @@ ssh.Commands = function (id) {
     commander.Command.call(this);
     this.id = id;
     this.groups = {
-        vms: ["jumpbox", "pxe"],
-        all: ["windows", "jumpbox", "pxe", "jumpbox2"],
+        vms: ["jumpbox", "pxe", "kali"],
+        all: ["windows", "jumpbox", "pxe", "jumpbox2", "kali"],
     }
 };
 
@@ -31,12 +31,13 @@ ssh.Commands.prototype.serverName = function (serverName) {
 
 ssh.Commands.prototype.execute = async function (command, terminal, returnData=false) {
     let term = terminal.executeContext;
+    console.error("Command: ", command);
     let cmdArray = command.split(" ");
     let servers = this.groups[cmdArray[0]];
     if (typeof servers === "undefined") {
         servers = [cmdArray[0]];
     }
-    let serverCommand = cmdArray.splice(1).join(" ");
+    let serverCommand = [ cmdArray.splice(1).join(" ") ];
 
     let collectedData = [];
     for(let index = 0; index < servers.length; index++) {
@@ -101,7 +102,6 @@ ssh.Commands.prototype.checkAndSetupParams = function (server, command, wss) {
 };
 
 ssh.Commands.prototype.getParamsByID = function (server, command) {
-    console.log("ID IS: ", this.id);
     console.log("SSH MANAGER: ", sshManager);
     const data = sshManager.connectTo(this.id, server);
     console.log("FOUND DATA: ", data);
@@ -118,7 +118,7 @@ ssh.Commands.prototype.getParamsByID = function (server, command) {
         sshObject.ChallengePasswords = [params[5]];
     }
 
-    sshObject.Command = command;
+    sshObject.Commands = command;
 
     return sshObject;
 };

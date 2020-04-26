@@ -40,6 +40,10 @@ class SSHManager {
                 this.servers.set(server, id);
                 this.ids.set(id, server);
                 return "root;localhost;9022;12345678;Verification code: ;12345678";
+            case("kali"):
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "sanjeev;localhost;9222;Xx1oMlgl;Verification code: ;Xx1oMlgl";
             case("windows"):
                 this.servers.set(server, id);
                 this.ids.set(id, server);
@@ -48,6 +52,10 @@ class SSHManager {
                 this.servers.set(server, id);
                 this.ids.set(id, server);
                 return "@jumpbox;admin;10.1.1.148;22;;Verification code: ;12345678;~/.ssh/id_rsa";
+            case("admin"):
+                this.servers.set(server, id);
+                this.ids.set(id, server);
+                return "@jumpbox2-/home/sanjeev/fwknop.sh;admin;10.1.1.148;22;;Verification code: ;12345678;~/.ssh/id_rsa";
         }
     }
 }

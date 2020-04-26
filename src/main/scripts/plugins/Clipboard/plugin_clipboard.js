@@ -168,15 +168,57 @@ Clipboard.prototype.getSlideOutContent = function() {
     });
 };
 
+// https://stackoverflow.com/questions/6003271/substring-text-with-html-tags-in-javascript
+function html_substr( str, count ) {
+
+    var div = document.createElement('div');
+    div.innerHTML = str;
+
+    walk( div, track );
+
+    function track( el ) {
+        if( count > 0 ) {
+            var len = el.data.length;
+            count -= len;
+            if( count <= 0 ) {
+                el.data = el.substringData( 0, el.data.length + count );
+            }
+        } else {
+            el.data = '';
+        }
+    }
+
+    function walk( el, fn ) {
+        var node = el.firstChild;
+        do {
+            if( node.nodeType === 3 ) {
+                fn(node);
+                    //          Added this >>------------------------------------<<
+            } else if( node.nodeType === 1 && node.childNodes && node.childNodes[0] ) {
+                walk( node, fn );
+            }
+        } while( node = node.nextSibling );
+    }
+    return div.innerHTML;
+}
+
 Clipboard.prototype.displayEntry = function(element, entry) {
     const space = "␣";
     const tab = "→→→→";
     const newLine = "↵\n";
 
-    element.innerHTML = entry.replace(/ /gi, "<span class='whitespace-symbols'>" + space + "</span>")
-                                .replace(/\t/gi, "<span class='whitespace-symbols'>" + tab + "</span>")
-                                .replace(/\n/gi, "<span class='whitespace-symbols'>" + newLine + "</span>")
-                                .replace(/</gi, "&lt;");
+    entry = entry.replace(/</gi, "&lt;");
+    const updated_entry = entry; //entry.replace(/ /gi, "<span class='whitespace-symbols'>" + space + "</span>")
+                                 // .replace(/\t/gi, "<span class='whitespace-symbols'>" + tab + "</span>")
+                                 //.replace(/\n/gi, "<span class='whitespace-symbols'>" + newLine + "</span>");
+
+   
+    element.innerHTML = html_substr(updated_entry, 34)
+    if(entry.length != element.innerHTML.length) {
+	element.innerHTML = element.innerHTML + " <a>...</a>";
+    }
+    element.title = entry;
+    element.style.wordBreak = "break-all";
 };
 
 Clipboard.prototype.showEntry = function(parent, entry, isPin=false) {

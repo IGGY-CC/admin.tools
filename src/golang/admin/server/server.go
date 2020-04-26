@@ -4,12 +4,13 @@ import (
 	_ssh "../ssh"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"flag"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
+		"os"
 	"strings"
 	"time"
 	"mime"
@@ -232,7 +233,7 @@ func  WebSocketHandlerFunc(writer http.ResponseWriter, reader *http.Request) {
 	 * /ws/name/action/security 	TODO: Add some security so that others cannot hijack this connection
 	**/
 
-	Log.Println("received websocket connection")
+	//Log.Println("received websocket connection")
 
 	params 		:= strings.Split(reader.URL.Path, "/")
 	if len(params) < 5 {
@@ -260,7 +261,77 @@ func  WebSocketHandlerFunc(writer http.ResponseWriter, reader *http.Request) {
 		}
 		break
 	case "otp":
+		//_, err := setupWebSocket(writer, reader)
+		//if err != nil {
+		//	Log.Printf("Cannot create a web socket")
+		//}
 		webSocketOTPInit(writer, action, jsonString)
+	case "system-info":
+		// TODO: DANGER HARD CODED CODE -- FOR DEMO PURPOSE ONLY
+
+		var key string
+		switch action {
+		case "pxe":
+			key = "root:localhost:9022"
+			break
+		case "jumpbox":
+			key = "admin:localhost:9038"
+			break
+		case "kali":
+			key = "sanjeev:localhost:9222"
+			break
+		case "jumpbox2":
+			key = "admin:10.1.1.148:22"
+			break
+		}
+		//
+		//commands := []string{
+		//	"hostnamectl",
+		//	"uname -a",
+		//	"free | grep Mem | awk '{print $3/$2 * 100.0}'",
+		//	"awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print ($2+$4-u1) * 100 / (t-t1) \"%\"; }' <(grep 'cpu ' /proc/stat) <(sleep 1;grep 'cpu ' /proc/stat)",
+		//}
+
+		var serverInfo map[string]string = make(map[string]string)
+		var data string
+
+		data, _ = ExecuteCommandsOnParent("hostnamectl | grep -i hostname | awk -F: '{ print $2 }'", key)
+		serverInfo["hostname"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("hostnamectl | grep -i chassis | awk -F: '{ print $2 }'", key)
+		serverInfo["SERVER"] = strings.ToUpper(strings.TrimSpace(data))
+		data, _ = ExecuteCommandsOnParent("hostnamectl | grep -i operating | awk -F: '{ print $2 }'", key)
+		serverInfo["DISTRIB"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("hostnamectl | grep -i kernel | awk -F: '{ print $2 }'", key)
+		serverInfo["KERNEL"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("hostnamectl | grep -i architecture | awk -F: '{ print $2 }'", key)
+		serverInfo["ARCH"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("free -mh | grep Mem | awk '{ print $3 \" / \" $2 }'", key)
+		serverInfo["MEM"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent(" uptime | awk '{ print $10 \" \" $11 \" \" $12}'", key)
+		serverInfo["CPU"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("uptime | awk '{ print $3 \" \" $4 \" \" $5 }' | sed 's/,$//'", key)
+		serverInfo["UPTIME"] = strings.TrimSpace(data)
+		//data, _ = ExecuteCommandsOnParent("ip route get 1.1.1.1 | grep -oP 'src \\K\\S+'", key)
+		data, _ = ExecuteCommandsOnParent("ip route get 1.1.1.1 | grep src | awk '{ print $7 }'", key)
+		serverInfo["IP"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("/sbin/ip route | awk '/default/ { print $3 }'", key)
+		serverInfo["GATEWAY"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("curl gu.ms/ip", key)
+		serverInfo["PUBLIC IP"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("netstat -anptl 2>/dev/null | head -n 10 | grep -i tcp | awk '{ print $4 }' | awk -F: '{ print $2 }' | tr '\n' ', ' | sed 's/,$//'", key)
+		serverInfo["PORTS"] = strings.TrimSpace(data)
+		data, _ = ExecuteCommandsOnParent("df -h / | tail -n1 | awk '{ print $3 \"/\" $2 }'", key)
+		serverInfo["/"] = strings.TrimSpace(data)
+
+		jsonString, err := json.Marshal(serverInfo)
+		if err != nil {
+			Log.Printf("There is an error marshalling the server info object %v", err)
+		}
+		response := string(jsonString)
+		//Log.Printf("JSON RESPONSE STRING %s", response)
+		//WriteHTTP(url.QueryEscape(response), writer)
+		WriteHTTP(response, writer)
+		break
 	case "logs":
 	    socket, err := setupWebSocket(writer, reader)
 		if err != nil {

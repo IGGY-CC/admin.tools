@@ -61,6 +61,7 @@
         "dialogflow": "^0.12.2",
         "electron-clipboard-watcher": "^1.0.1",
         "electron-reload": "^1.5.0",
+        "electron-settings": "^3.2.0",
         "nedb": "^1.8.0",
         "node-pty": "^0.9.0",
         "node-rdpjs": "^0.3.0",

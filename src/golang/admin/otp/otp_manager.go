@@ -86,6 +86,20 @@ func (otpManager Manager) GetKeyFromName(name string) (schema *DBSchema, err err
 	return
 }
 
+func (otpManager Manager) DeleteEntry(name string) (err error) {
+	schema, err := otpManager.GetKeyFromName(name)
+	if err != nil {
+		return
+	}
+
+	if schema != nil {
+		log.Printf("FOUND key %v", schema)
+		otpManager.dbManager.Delete(schema.ID)
+		log.Printf("Deleted entry %s with ID %s successfully!", name, schema.ID)
+	}
+	return nil
+}
+
 func (otpManager Manager) GetKeys() (strings []string, err error) {
 	log.Println("Requesting database for data: ", otpManager.dbManager)
 	strings, err = otpManager.dbManager.GetAll()

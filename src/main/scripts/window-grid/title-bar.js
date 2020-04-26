@@ -22,7 +22,7 @@
     UtilsUI.createNewElement('div', container, null, "resize-win");
     const icon = UtilsUI.createNewElement('div', container, null, "at-win icon");
     UtilsUI.createNewElement('span', icon, null, "fab fa-pagelines");
-    UtilsUI.createNewElement('div', container, null, "title").innerHTML = "hello, world";
+    UtilsUI.createNewElement('div', container, null, "titlebar-title").innerHTML = "hello, world";
     UtilsUI.createNewElement('div', container, null, "notifications");
     const minimize = UtilsUI.createNewElement('div', container, "minimize", "at-win");
     const maximize = UtilsUI.createNewElement('div', container, "maximize", "at-win");
