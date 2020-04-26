@@ -76,7 +76,10 @@ RemoteViewer.prototype.setupMenuItems = function() {
 };
 
 RemoteViewer.prototype.onNewConnection = function(name) {
-
+    if(TabContent.has(ActiveTab.id)) { //TODO DEMO PURPOSE
+        console.error("There already exists an object in this window");
+        // return
+    }
 
     let serverContainerID = this.getActiveElement().id + "-remote-" + name;
     let serverContainer = UtilsUI.createNewElement('div', this.getActiveElement(), serverContainerID);
@@ -90,12 +93,13 @@ RemoteViewer.prototype.onNewConnection = function(name) {
     const URL = this.scrapeURL(name, serverContainer);
     serverContainer.style.visibility = "hidden";
     setTimeout(() => {serverContainer.style.visibility = ""}, 2000);
+    TabContent.set(ActiveTab.id, serverContainer);
 };
 
 RemoteViewer.prototype.scrapeURL = function(name, parent) {
     let sandbox = UtilsUI.createNewElement('iframe', parent, parent.id + "-frame");
     sandbox.sandbox="allow-same-origin allow-scripts allow-forms";
-    sandbox.src="http://localhost:8080/guacamole-1.1.0/#/";
+    sandbox.src="http://localhost:8888/guacamole-1.1.0/#/";
     sandbox.style="border: 0; overflow: hidden";
     sandbox.style.width = parent.style.width;
     sandbox.style.height = parent.style.height;

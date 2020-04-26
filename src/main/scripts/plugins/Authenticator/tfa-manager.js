@@ -16,17 +16,26 @@ tfa.UI = function(tfaManager) {
 
 tfa.UI.prototype.activateTFAClick = function() {
     let otp_servers = document.querySelectorAll(".tfa");
+    let timerSav = new Map();
+
     otp_servers.forEach(otp_server => {
        otp_server.onclick = () => {
             let otp_code  = document.querySelector("#" + otp_server.id + "-otp");
             if(otp_code.style.display === "none") {
                 otp_code.style.display = "";
                 this.tfaManager.getOTP(otp_server.id);
+                let _timer = setInterval(() => {
+                    this.tfaManager.getOTP(otp_server.id);
+                }, 15000);
+                timerSav.set(otp_server.id, _timer);
                 if(this.timer) {
                     this.timer(30);
                 }
             } else {
                 otp_code.style.display = "none";
+                if(timerSav.has(otp_server.id)) {
+                    clearInterval(timerSav.get(otp_server.id));
+                }
             }
        }
     });
@@ -196,7 +205,10 @@ tfa.UI.prototype.displayServers = function(name) {
     let deleteIconDiv = this.createNewElement("div", serverElement, name + "-delete", "tfa-delete");
     let deleteIcon = this.createNewElement("div", deleteIconDiv);
     deleteIcon.className = "fa fa-lg fa-fw fa-trash";
-    deleteIcon.onclick = this.confirmDelete.bind(null, name, () => serverElement.parentNode.removeChild(serverElement));
+    deleteIcon.onclick = this.confirmDelete.bind(null, name, () => {
+        this.tfaManager.deleteServer(name);
+        serverElement.parentNode.removeChild(serverElement)
+    });
 
     let serverOTP = this.createNewElement("div", parent, name + "-otp", "tfa-otp");
     let tfaTimerCircle = this.createNewElement("div", serverOTP, name + "-timer", "tfa-timer-circle");
@@ -245,17 +257,15 @@ tfa.Manager = function() {
 
 tfa.Manager.prototype.getRegisteredList = function() {
     // let _ws = new ws.Manager("https", undefined, undefined, true);
-    let _ws = new ws.Manager();
+    let _ws = new ws.Manager("https");
     _ws.prepareDefaultEndPoint(this.sessionID, "otp", "list");
-    let promise = _ws.makeConnection(() => {}, () => {});
-    promise.then(response => {
-        return response.json();
-    }).catch(err => {
-        console.error("ERROR: ", err);
-    }).then(data => {
-        this.prepareList(data);
-    }).catch(err => {
-        console.error("Error: ", err);
+    let promise = _ws.makeConnection((response) => {
+        response.then(data => {
+            // console.log("RESPONSE: ", data);
+            this.prepareList(data);
+        })
+    }, (error) => {
+        console.error(error);
     });
 };
 
@@ -281,13 +291,16 @@ tfa.Manager.prototype.addNewServer = function(name, key) {
     otpData.Key = key;
 
     // let _ws = new ws.Manager("http", null, null, false);
-    let _ws = new ws.Manager();
+    let _ws = new ws.Manager("https");
     _ws.prepareDefaultEndPoint("new-otp-gen", "otp", "add-new", otpData);
-    let promise = _ws.makeConnection(()=>{}, ()=>{});
-    promise.then(response => {
-        console.log("Fulfilled with response: ", response.json());
-    }).catch(err => {
-       console.log("ERROR: ", err);
+    let promise = _ws.makeConnection((response)=>{
+        response.then(response => {
+            // console.log("Fulfilled with response: ", response.json());
+        }).catch(err => {
+            console.log("ERROR: ", err);
+        });
+    }, (err)=>{
+        console.log("ERROR: ", err);
     });
 };
 
@@ -295,12 +308,11 @@ tfa.Manager.prototype.deleteServer = function(name) {
     let otpData = {};
     otpData.Name = name;
 
-    let _ws = new ws.Manager("http", null, null, false);
-    _ws.prepareDefaultEndPoint(this.sessionID, "otp", "", otpData);
-    let promise = _ws.makeConnection(()=>{}, ()=>{});
-    promise.then(response => {
-        console.log("Fulfilled with response: ", response.json());
-    }).catch(err => {
+    let _ws = new ws.Manager("https");
+    _ws.prepareDefaultEndPoint(this.sessionID, "otp", "delete", otpData);
+    let promise = _ws.makeConnection((response)=>{
+        // console.log("Fulfilled with response: ", response);
+    }, (err)=>{
         console.log("ERROR: ", err);
     });
 };
@@ -309,19 +321,17 @@ tfa.Manager.prototype.getOTP = function(name) {
     let otpData = {};
     otpData.Name = name;
 
-    let _ws = new ws.Manager("http", undefined, undefined, false);
+    let _ws = new ws.Manager("https");
     _ws.prepareDefaultEndPoint(this.sessionID, "otp", "generate-otp-names", otpData);
-    let promise = _ws.makeConnection(()=>{}, ()=>{});
-
-    promise.then(response => {
-        console.log("Fulfilled with response: ", response.json());
-    }).catch(err => {
-        console.log("ERROR: ", err);
-    }).then(data => {
-        let otp_value = document.querySelector("#" + name + "-otp-value");
-        otp_value.innerHTML = data || 123456;
-        console.log("GOT VALUE FROM SERVER FOR ", name, data);
-    }).catch(err => {
+    let promise = _ws.makeConnection((response)=>{
+        response.then(data => {
+            let otp_value = document.querySelector("#" + name + "-otp-value");
+            otp_value.innerHTML = data || 123456;
+            // console.log("GOT VALUE FROM SERVER FOR ", name, data);
+        }).catch(err => {
+            console.error("Error: ", err);
+        });
+    }, (err)=>{
         console.error("Error: ", err);
     });
 };

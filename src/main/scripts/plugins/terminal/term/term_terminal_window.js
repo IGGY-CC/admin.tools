@@ -108,6 +108,32 @@ term.TerminalWindow.prototype.setTerminalDefaults = function() {
     this.term.prefs_.set('cursor-shape', "BLOCK");
     this.term.prefs_.set('cursor-blink-cycle', [600, 300]);
     this.changeBackground();
+    this.loadTerminalUserSettings();
+};
+
+term.TerminalWindow.prototype.loadTerminalUserSettings = function() {
+    if(userSettings.has("foreground.terminal.muse.am")) {
+        this.switchColor(userSettings.has("foreground.terminal.muse.am"));
+    }
+
+    if(userSettings.has("switch.background.terminal.muse.am")) {
+        this.changeBackground(userSettings.get("switch.background.terminal.muse.am"));
+    }
+
+    if(userSettings.has("no.background.terminal.muse.am")) {
+        this.changeBackground(true);
+        this.switchColor("white");
+    }
+
+    if(userSettings.has("size.font.terminal.muse.am")) {
+        this.changeFontSize(userSettings.get("size.font.terminal.muse.am"));
+    }
+
+    if(userSettings.has("name.font.terminal.muse.am")) {
+        this.changeFontFamily(userSettings.get("name.font.terminal.muse.am"));
+    }
+
+
 };
 
 term.TerminalWindow.prototype.changeFontSize = function(size) {

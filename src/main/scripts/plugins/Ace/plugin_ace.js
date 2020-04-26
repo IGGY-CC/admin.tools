@@ -172,11 +172,17 @@ Ace.prototype.setFontSize = function(selected) {
 
 
 Ace.prototype.onIconClick = function() {
+    if(TabContent.has(ActiveTab.id)) { //TODO DEMO PURPOSE
+        console.error("There already exists an object in this window");
+        return
+    }
+
     let editorCell = this.getActiveElement().id;
     let currentEditor = this.registeredEditors.get(editorCell);
     let editor = null;
     if(typeof currentEditor === "undefined") {
         editor = ace.edit(this.getActiveElement().id);
+        TabContent.set(ActiveTab.id, editor);
         this.registeredEditors.set(editorCell, editor);
     } else {
         console.warn("An editor is already present in the selected cell! Select another cell to create a new editor");

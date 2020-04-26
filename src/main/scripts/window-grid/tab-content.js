@@ -63,7 +63,7 @@ TabObject.prototype.createNewTab = function(text, icon) {
     this.tabs.push(newTab);
 
     /* Create new TAB Content Pane */
-    let container = this.createNewGridObject();
+    let container = this.createNewGridObject(newTabID, textDiv);
     this.tabMap.set(newTabID, container);
     this.tabClicked(newTab.id);
     return container.grid;
@@ -76,6 +76,10 @@ TabObject.prototype.tabClicked = function(tabID) {
             let container = this.tabMap.get(tabID).element;
             container.style.display = "";
             this.activeTab = tab;
+            ActiveTab.id = tabID;
+            if(SystemInfoCallback["ServerInfo"]) {
+                SystemInfoCallback["ServerInfo"]()
+            }
         } else {
             tab.className = "tab";
             let container = this.tabMap.get(tab.id).element;
@@ -91,13 +95,13 @@ TabObject.prototype.tabCloseClicked = function() {
 };
 
 TabObject.prototype.closeTab = function() {
-    console.error("CLOSE TAB CLICKED: TODO!");
+
 };
 
-TabObject.prototype.createNewGridObject = function(container, name) {
+TabObject.prototype.createNewGridObject = function(tabID, textDiv) {
     let parentElement = document.querySelector(ROOT_CONTAINER);
     let contentTab = UtilsUI.createNewElement('div', parentElement, "main-container-" + this.tabCount, "grid-container");
-    let gridObject = gridOnTabs.createNewGrid(contentTab, "grid-" + this.tabCount);
+    let gridObject = gridOnTabs.createNewGrid(contentTab, "grid-" + this.tabCount, tabID, textDiv);
 
     return { grid: gridObject, element: contentTab };
 };

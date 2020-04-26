@@ -269,35 +269,41 @@ func (manager *Manager) executeCommand(key string, command string, stdout *bytes
 	return err
 }
 
-func (manager *Manager) ExecuteCommand(key string, command string, socket *websocket.Conn) error {
+func (manager *Manager) ExecuteCommand(key string, command string, socket *websocket.Conn) (output string, err error) {
 	connection, ok := manager.connections[key]
 	if !ok {
 		str := "Couldn't create a Terminal Session for requested key: " + key
 		Log.Printf(str)
-		return errors.New(str)
+		return "", errors.New(str)
 	}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	err := connection.ExecuteCommand(command, &stdout, &stderr)
+	err = connection.ExecuteCommand(command, &stdout, &stderr)
 
-	w, err := socket.NextWriter(websocket.TextMessage)
-	if err != nil {
-		return err
+	if socket != nil {
+		w, err := socket.NextWriter(websocket.TextMessage)
+		if err != nil {
+			return "", err
+		}
+
+		_, _ = w.Write(stdout.Bytes())
+		//errorBytes := append([]byte("\u001b[31m"), stderr.Bytes()...)
+		//_, _ = w.Write(append(errorBytes, []byte("\u001b[0m")...))
+		Log.Printf("RECEIVED FROM STDERR: %s", string(stderr.Bytes()))
+
+		if err := w.Close(); err != nil {
+			Log.Printf("Error cloising socket next writer in Stdout")
+			return "", err
+		}
+
+		socket.Close()
+	} else {
+		//log.Printf("RECEIVED DATA: %s ", string(stdout.Bytes()))
+		//log.Printf("RECEIVED ERR DATA: %s ", string(stderr.Bytes()))
+		return string(stdout.Bytes()), err
 	}
-
-	_, _ = w.Write(stdout.Bytes())
-	//errorBytes := append([]byte("\u001b[31m"), stderr.Bytes()...)
-	//_, _ = w.Write(append(errorBytes, []byte("\u001b[0m")...))
-	Log.Printf("RECEIVED FROM STDERR: %s", string(stderr.Bytes()))
-
-	if err := w.Close(); err != nil {
-		Log.Printf("Error cloising socket next writer in Stdout")
-		return err
-	}
-
-	socket.Close()
-	return err
+	return "", err
 }
 
 func (manager *Manager) createTerminal(id string, connection *ServerConnection, rows int, cols int) (*Terminal, error) {

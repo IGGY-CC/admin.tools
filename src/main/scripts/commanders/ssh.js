@@ -21,7 +21,7 @@ ssh.Commander = function (id) {
     this.connected = false;
     this.action = "init";
     this.host = null;
-    this.serverMap =null;
+    this.serverMap = null;
     this.route = false;
     this.callback = null;
 };
@@ -74,7 +74,7 @@ ssh.Commander.prototype.execute = async function (command, terminal, serverMap, 
             sshManager.addSocket(this.sessionID, connection);
             this.connecting(term);
             term.stdin = (ch) => connection.send(ch);
-            terminal.inRemote = true;
+            terminal.inRemote   = true;
             // executeContext.onRoute(connection.send);
         }, () => {
             this.closed(term);

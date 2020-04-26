@@ -76,6 +76,11 @@ Terminal.prototype.setupMenuItems = function() {
 };
 
 Terminal.prototype.onIconClick = function() {
+    if(TabContent.has(ActiveTab.id)) { //TODO DEMO PURPOSE
+        console.error("There already exists an object in this window");
+        // return
+    }
+
     let termContainerID = this.getActiveElement().id + "-term";
     let termContainer = UtilsUI.createNewElement('div', this.getActiveElement(), termContainerID);
     termContainer.style.position = "relative";
@@ -87,6 +92,7 @@ Terminal.prototype.onIconClick = function() {
     let terminalWindow = new TerminalWindow(this.getActiveElement().id, "#" + termContainerID);
     this.setActiveTabName("Terminal");
     this.activeTerminals.set(termContainerID, terminalWindow);
+    TabContent.set(ActiveTab.id, terminalWindow);
 };
 
 Terminal.prototype.changeBackground = function(doTurnoff) {

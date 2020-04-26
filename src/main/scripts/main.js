@@ -81,7 +81,41 @@ app.on('ready', function() {
 
     const ctxMenu = new Menu();
     ctxMenu.append(new MenuItem({
-        label: 'Hello'
+        role: 'copy'
+    }));
+ 
+    ctxMenu.append(new MenuItem({
+        role: 'paste'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        role: 'pasteAndMatchStyle'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        role: 'selectAll'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        type: 'separator'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        role: 'reload'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        role: 'forceReload',
+        label: "Full Reload"
+    }));
+
+    ctxMenu.append(new MenuItem({
+        type: 'separator'
+    }));
+
+    ctxMenu.append(new MenuItem({
+        role: 'toggleDevTools',
+        label: "Tools"
     }));
 
     mainWindow.webContents.on('context-menu', function(e, params) {

@@ -254,22 +254,39 @@ GridObject.prototype.onResize = function() {
 
 GridObject.prototype.onClick = function(event) {
     if(this.element === event.target) {
+        // console.log("TAB CLICKED");
         this.activeCellCallback(this);
     }
 };
 
-let GridsOnTabs = function () {
+let GridsOnTabs =   function () {
     this.tabGrids = [];
     this.activeGrid = null;
     // this.createNewGrid(DEFAULT_CONTAINER, "start");
 };
 
-GridsOnTabs.prototype.createNewGrid = function (container, name) {
+GridsOnTabs.prototype.createNewGrid = function (container, name, tabID, textDiv) {
     const updateActiveGrid = activeGrid => this.activeGrid = activeGrid;
     const computedStyle = Object.assign({}, getComputedStyle(document.querySelector(ROOT_CONTAINER)));
     const width = parseInt(computedStyle.width);
     let height = parseInt(computedStyle.height);
     let gridObject = new GridObject(name, name, updateActiveGrid, null, container, width, height);
+    if(tabID) {
+        // TODO: FOR DEMO PURPOSE ONLY
+        RootTabMapByID.set(tabID, {
+            textDiv: textDiv,
+            name: name,
+            gridObject: gridObject,
+            activeGrid: this.activeGrid,
+        });
+
+        RootTabMapByContainer.set(name, {
+            tabID: tabID,
+            textDiv: textDiv,
+            gridObject: gridObject,
+            activeGrid: this.activeGrid
+        });
+    }
 
     this.tabGrids.push(gridObject);
     this.activeGrid = gridObject;

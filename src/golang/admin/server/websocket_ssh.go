@@ -1,8 +1,10 @@
 package server
 
 import (
+	_otp "../otp"
 	_ssh "../ssh"
 	"strconv"
+	"strings"
 
 	"encoding/json"
 	"net/url"
@@ -20,8 +22,8 @@ type ConnectionParams []struct {
 	ChallengePasswords []string
 	Rows               int
 	Cols               int
-	Command            string
-	Key                 string
+	Commands           []string
+	Key                string
 }
 
 var sshManager = _ssh.NewManager()
@@ -36,7 +38,29 @@ func keyToByteArray(key string) []byte {
 	}
 }
 
+func generatePasswordFromOTP(challenges []string) (password string, err error) {
+	if len(challenges) > 0 {
+		challenge := challenges[0]
+		strs := strings.Split(challenge, "@")
+		if len(strs) == 2 {
+			var otpManager = _otp.New()
+			password, err = otpManager.GenerateCodeFromName(strs[1])
+			if err != nil {
+				Log.Printf("Couldn't fetch the OTP for server %s: %v", strs[1], err)
+				password = strs[0]
+			}
+		} else {
+			password = strs[0]
+		}
+	}
+
+	return password, err
+}
+
 func createSSHConnection(name string, params ConnectionParams, socket *websocket.Conn) (err error) {
+	challenges := params[0].ChallengePasswords
+	password, _ := generatePasswordFromOTP(challenges)
+
 	err = sshManager.InitSSHConnection(
 		name,
 		params[0].Host,
@@ -44,7 +68,7 @@ func createSSHConnection(name string, params ConnectionParams, socket *websocket
 		params[0].User,
 		params[0].Pass,
 		params[0].Challenges,
-		params[0].ChallengePasswords,
+		[]string{password},
 		true,
 		socket,
 		keyToByteArray(params[0].Key),
@@ -75,6 +99,12 @@ func createTerminalSession(name string, key string, socket *websocket.Conn, rows
 	return
 }
 
+func ExecuteCommandsOnParent(command string, key string) (data string, err error) {
+	data, err = sshManager.ExecuteCommand(key, command, nil)
+	return
+}
+
+
 func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonString string) (err error) {
 	Log.Print("Executing given action: ", action)
 	switch action {
@@ -102,6 +132,18 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 				socket.Close()
 				return err
 			}
+			// If there exists a command to be executed, then the command needs to be executed on parent
+			// before making the connection attempt
+			if params[1].Commands != nil {
+				_, err := ExecuteCommandsOnParent(params[1].Commands[0], parentKey)
+				if err != nil {
+					Log.Println("Error executing command on parent terminal: ", err)
+				}
+			}
+
+			challenges := params[1].ChallengePasswords
+			password, _ := generatePasswordFromOTP(challenges)
+
 			// TODO: THIS IS INSECURE WAY OF GETTING HOLD OF A SERVER USING KEY. A CALL TO InitSSHConnection should send in
 			// an identifier (if all the connection params are correct, only that identifier shall be used to connect further
 			serverKey, err := sshManager.TunnelConnection(
@@ -109,9 +151,9 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 				params[1].Host,
 				params[1].Port,
 				params[1].User,
-				params[1].Pass,
+				password,
 				params[1].Challenges,
-				params[1].ChallengePasswords,
+				[]string{password},
 				true,
 				socket,
 				parentKey,
@@ -145,13 +187,14 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 		if err != nil {
 			Log.Printf("Couldn't allow shared connection to %s from %s. Thrown Error %v", sess.ID, name, err)
 		}
+		Log.Printf("Allowed shared connection to #{sess.ID} from #{name}")
 	case "share-session":
 		type session struct {
 			ID string
 		}
 		var sess session
 		deconstruct(&sess, jsonString)
-		sshManager.ShareSession(name, sess.ID, socket)
+		sshManager.ShareSession(sess.ID, name, socket)
 	case "sub-command-init":
 	case "exec":
 		var params ConnectionParams
@@ -160,14 +203,14 @@ func webSocketSSHInit(name string, socket *websocket.Conn, action string, jsonSt
 		var key string
 		if len(params) == 2 {
 			key = params[1].User + ":" + params[1].Host + ":" + strconv.Itoa(params[1].Port)
-			err = sshManager.ExecuteCommand(key, params[1].Command, socket)
+			_, err = sshManager.ExecuteCommand(key, params[1].Commands[0], socket)
 		} else {
 			key = params[0].User + ":" + params[0].Host + ":" + strconv.Itoa(params[0].Port)
-			err = sshManager.ExecuteCommand(key, params[0].Command, socket)
+			_, err = sshManager.ExecuteCommand(key, params[0].Commands[0], socket)
 		}
 
 		if err != nil {
-			Log.Printf("Received err %v while executing command %s for: %s", err, params[0].Command, name)
+			Log.Printf("Received err %v while executing command %s for: %s", err, params[0].Commands, name)
 		}
 		socket.Close()
 	case "resize":
